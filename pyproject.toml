@@ -7,7 +7,14 @@ authors = [
   {name = "Josh Thomas", email = "josh@joshthomas.dev"},
 ]
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 3 - Alpha",
+  "Framework :: Django",
+  "Framework :: Django :: 3",
+  "Framework :: Django :: 3.2",
+  "Framework :: Django :: 4",
+  "Framework :: Django :: 4.0",
+  "Framework :: Django :: 4.1",
+  "Framework :: Django :: 4.2",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Programming Language :: Python",
@@ -17,13 +24,14 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: Implementation :: CPython",
 ]
 dependencies = [
   "django>=3.2",
   "dj-database-url",
 ]
-description = "A Django app to relay emails to a single address."
+description = "A Django app for relaying email to an external service via a database."
 dynamic = ["version"]
 keywords = []
 license = "MIT"
@@ -51,9 +59,9 @@ psycopg = ["psycopg[binary]"]
 psycopg2 = ["psycopg2-binary"]
 
 [project.urls]
-Documentation = "https://github.com/joshuadavidthomas/django-email-relay#readme"
-Issues = "https://github.com/joshuadavidthomas/django-email-relay/issues"
-Source = "https://github.com/joshuadavidthomas/django-email-relay"
+Documentation = "https://github.com/westerveltco/django-email-relay#readme"
+Issues = "https://github.com/westerveltco/django-email-relay/issues"
+Source = "https://github.com/westerveltco/django-email-relay"
 
 [tool.hatch.build]
 exclude = [
