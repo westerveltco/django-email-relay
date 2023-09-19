@@ -105,7 +105,6 @@ version_pattern = "YYYY.INC1"
 [tool.coverage.run]
 omit = [
   "src/email_relay/*/migrations/*",
-  "templates/*",
   "tests/*",
   "manage.py",
   "service.py"
