@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Sequence
+
 from django.core.mail import EmailMessage
 from django.core.mail.backends.base import BaseEmailBackend
 
@@ -8,9 +10,9 @@ from email_relay.models import Message
 
 
 class RelayDatabaseEmailBackend(BaseEmailBackend):
-    def send_messages(self, email_messages: list[EmailMessage]) -> int:
+    def send_messages(self, email_messages: Sequence[EmailMessage]) -> int:
         messages = Message.objects.bulk_create(
-            [Message(email=email) for email in email_messages],
+            [Message(email=email) for email in email_messages],  # type: ignore[misc]
             app_settings.MESSAGES_BATCH_SIZE,
         )
         return len(messages)
