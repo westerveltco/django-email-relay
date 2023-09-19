@@ -104,8 +104,8 @@ enter CONTAINER="relay[-_]devcontainer[-_]app" SHELL="zsh" WORKDIR="/workspace" 
 testbuild:
     docker build -t relay:latest .
 
-testrun:
-    docker run -it --rm -p 8000:8000 relay:latest
+testrun *ARGS:
+    docker run -it --rm -p 8000:8000 {{ ARGS }} relay:latest
 
 createdb CONTAINER_NAME="relay_postgres" VERSION="15.3":
     #!/usr/bin/env python
