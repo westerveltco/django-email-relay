@@ -108,9 +108,8 @@ omit = [
   "templates/*",
   "tests/*",
   "manage.py",
-  "requirements.txt",
+  "service.py"
 ]
-plugins = ["django_coverage_plugin"]
 source = ["src/email_relay"]
 
 [tool.django-stubs]
