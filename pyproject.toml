@@ -35,6 +35,8 @@ requires-python = ">=3.8"
 dev = [
   "black",
   "coverage[toml]",
+  "django-stubs",
+  "django-stubs-ext",
   "hatch",
   "mypy",
   "nox",
@@ -45,6 +47,8 @@ dev = [
   "pytest-xdist",
   "ruff",
 ]
+psycopg = ["psycopg[binary]"]
+psycopg2 = ["psycopg2-binary"]
 
 [project.urls]
 Documentation = "https://github.com/joshuadavidthomas/django-email-relay#readme"

@@ -3,26 +3,18 @@ set dotenv-load := true
 @_default:
     just --list
 
-dev:
-    python -m pip install -U pip
-    python -m pip install -e '.[dev]'
-
 ##################
 #  DEPENDENCIES  #
 ##################
 
-pip-compile *ARGS:
-    pip-compile --resolver=backtracking {{ ARGS }} --generate-hashes requirements.in
-
 install:
-    python -m pip install --upgrade -r requirements.txt
+    python -m pip install --editable '.[dev]'
 
 pup:
-    python -m pip install --upgrade pip pip-tools
+    python -m pip install --upgrade pip
 
 update:
     @just pup
-    @just pip-compile --upgrade
     @just install
 
 venv PY_VERSION="3.11.5":
