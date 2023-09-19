@@ -36,7 +36,7 @@ from email_relay.db import get_email_relay_database_settings
 DATABASES = {
     ...
     **EMAIL_RELAY_DB_SETTINGS,
-    # get_email_relay_database_settings(os.environ.get("EMAIL_RELAY_DATABASE_URL"))
+    # get_email_relay_database_settings(os.environ.get("EMAIL_RELAY_DATABASE_URL"))  <- this doesn't work with the service
     ...
 }
 ```

@@ -10,6 +10,5 @@ fly.toml
 Dockerfile
 Justfile
 LICENSE
-README.md
 requirements.in
 __pycache__
