@@ -55,6 +55,16 @@ Documentation = "https://github.com/joshuadavidthomas/django-email-relay#readme"
 Issues = "https://github.com/joshuadavidthomas/django-email-relay/issues"
 Source = "https://github.com/joshuadavidthomas/django-email-relay"
 
+[tool.hatch.build]
+exclude = [
+  ".dockerignore",
+  ".editorconfig",
+  ".pre-commit-config.yaml",
+  "Dockerfile",
+  "Justfile",
+  "service.py",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/email_relay"]
 
