@@ -1,0 +1,12 @@
+black
+coverage[toml]
+django
+django-stubs
+django-stubs-ext
+mypy
+pytest
+pytest-django
+pytest-randomly
+pytest-reverse
+pytest-xdist
+ruff

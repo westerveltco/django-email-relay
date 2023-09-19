@@ -1,0 +1,15 @@
+fly.toml
+.git/
+*.sqlite3
+.editorconfig
+.env*
+.gitignore
+.pre-commit-config.yaml
+.python-version
+.yarnrc.yml
+Dockerfile
+Justfile
+LICENSE
+README.md
+requirements.in
+__pycache__
