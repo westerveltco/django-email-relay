@@ -9,7 +9,7 @@
 
 ## Requirements
 
-- Python 3.6, 3.7, 3.8, or 3.9
+- Python 3.8, 3.9, 3.10, 3.11, or 3.12
 - Django 3.2, 4.0, 4.1, or 4.2
 - PostgreSQL (for provided Docker image)
 
