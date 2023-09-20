@@ -59,7 +59,7 @@ DATABASES = {
 }
 ```
 
-If you would like to use a different database alias, you will also need to set the `EMAIL_RELAY_DB_ALIAS` setting within your `DJANGO_EMAIL_RELAY` settings:
+If you would like to use a different database alias, you will also need to set the `DATABASE_ALIAS` setting within your `DJANGO_EMAIL_RELAY` settings:
 ```python
 DATABASES = {
   ...
@@ -76,7 +76,7 @@ DATABASES = {
 
 DJANGO_EMAIL_RELAY = {
   ...
-  "EMAIL_RELAY_DB_ALIAS": "some_alias",
+  "DATABASE_ALIAS": "some_alias",
   ...
 }
 ```
