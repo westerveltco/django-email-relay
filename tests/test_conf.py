@@ -6,12 +6,10 @@ from django.test import override_settings
 from email_relay.conf import app_settings
 
 
-def test_default_user_settings():
+def test_default_settings():
     relay_settings = getattr(settings, "DJANGO_EMAIL_RELAY", {})
+
     assert relay_settings == {}
-
-
-def test_default_app_settings():
     assert app_settings.DATABASE_ALIAS == "email_relay_db"
     assert app_settings.MESSAGES_BATCH_SIZE is None
     assert app_settings.EMAIL_MAX_RETRIES is None
