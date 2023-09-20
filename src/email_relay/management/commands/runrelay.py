@@ -20,8 +20,7 @@ class Command(BaseCommand):
                 and not Message.objects.deferred().exists()
             ):
                 logger.debug(
-                    "sleeping for %s seconds before checking queue again"
-                    % app_settings.EMPTY_QUEUE_SLEEP
+                    f"sleeping for {app_settings.EMPTY_QUEUE_SLEEP} seconds before checking queue again"
                 )
                 time.sleep(app_settings.EMPTY_QUEUE_SLEEP)
 
