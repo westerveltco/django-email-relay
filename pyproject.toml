@@ -41,11 +41,11 @@ requires-python = ">=3.8"
 
 [project.optional-dependencies]
 dev = [
-  "black",
   "coverage[toml]",
   "django-stubs",
   "django-stubs-ext",
   "hatch",
+  "model_bakery",
   "mypy",
   "nox",
   "pytest",
