@@ -16,13 +16,14 @@ DATABASES = {
 }
 
 DATABASE_ROUTERS = [
-    "email_relay.db.EmailRelayDatabaseRouter",
+    "email_relay.db.EmailDatabaseRouter",
 ]
 
 
 EMAIL_BACKEND = "email_relay.backend.DatabaseEmailBackend"
 
 INSTALLED_APPS = [
+    "django.contrib.contenttypes",
     "email_relay",
 ]
 
