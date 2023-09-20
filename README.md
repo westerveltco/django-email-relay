@@ -11,9 +11,13 @@
 
 - Python 3.6, 3.7, 3.8, or 3.9
 - Django 3.2, 4.0, 4.1, or 4.2
-- PostgreSQL only
+- PostgreSQL (for provided Docker image)
 
 ## Installation
+
+### Relay Service
+
+### Django App
 
 1. Install the package from PyPI:
 
