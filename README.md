@@ -7,6 +7,10 @@
 <!-- django-3.2 | 4.0 | 4.1 | 4.2-#44B78B-->
 <!-- labelColor=%23092E20 -->
 
+`django-email-relay` enables Django projects without direct access to a preferred SMTP server to use that server for email dispatch. It consists of two parts: a Django app with a custom email backend that stores emails in a central database queue, and a relay service that reads from this queue to orchestrate email sending, available as either a standalone Docker image or a management command to be used within a Django project that does have access to the preferred SMTP server.
+
+Why opt for this setup? One reason is the potential for emails sent through an external Email Service Provider (ESP) to be marked as spam or filtered, a common issue when routing transactional emails from internal applications to internal users via an ESP. Moreover, it eliminates the necessity to open firewall ports or to need to utilize services like Tailscale for SMTP server access. Additionally, this approach decouples the emailing process from the main web application, enhancing both performance and reliability.
+
 ## Requirements
 
 - Python 3.8, 3.9, 3.10, 3.11, or 3.12
