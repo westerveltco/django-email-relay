@@ -23,12 +23,17 @@ def send_all():
         "deferred": 0,
     }
 
-    for message in list(
+    message_batch = list(
         chain(
             Message.objects.queued().prioritized(),
             Message.objects.deferred().prioritized(),
         )
-    ):
+    )
+
+    if app_settings.EMAIL_MAX_BATCH is not None:
+        message_batch = message_batch[: app_settings.EMAIL_MAX_BATCH]
+
+    for message in message_batch:
         with transaction.atomic():
             try:
                 message = (
@@ -48,7 +53,7 @@ def send_all():
                     message.mark_sent()
                     counts["sent"] += 1
                 else:
-                    msg = "Message %s has no email object" % message.id
+                    msg = f"Message {message.id} has no email object"
                     message.fail(log=msg)
                     logger.warning(msg)
             except Exception as err:
@@ -69,12 +74,6 @@ def send_all():
                     counts["deferred"] += 1
                 else:
                     raise err
-
-        if (
-            app_settings.EMAIL_MAX_BATCH is not None
-            and counts["sent"] >= app_settings.EMAIL_MAX_BATCH
-        ):
-            break
 
         if (
             app_settings.EMAIL_MAX_DEFERRED is not None
