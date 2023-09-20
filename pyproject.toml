@@ -119,9 +119,6 @@ omit = [
 ]
 source = ["src/email_relay"]
 
-[tool.django-stubs]
-django_settings_module = "tests.settings"
-
 [tool.mypy]
 check_untyped_defs = true
 files = [
@@ -149,7 +146,6 @@ module = []
 ignore_missing_model_attributes = true
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "tests.settings"
 django_find_project = false
 pythonpath = ". src"
 addopts = "--create-db -n auto --dist loadfile"
