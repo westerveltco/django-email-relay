@@ -41,13 +41,13 @@ INSTALLED_APPS = [
 EMAIL_BACKEND = 'email_relay.backend.RelayDatabaseEmailBackend'
 ```
 
-4. Add the email relay database to your `DATABASES` setting. A default database alias is provided at `email_relay.conf.EMAIL_RELAY_DB_ALIAS`:
+4. Add the email relay database to your `DATABASES` setting. A default database alias is pfrom email_relay.conf import `EMAIL_RELAY_DATABASE_ALIAS`:
 ```python
-from email_relay.conf import EMAIL_RELAY_DB_ALIAS
+from email_relay.conf import EMAIL_RELAY_DATABASE_ALIAS
 
 DATABASES = {
   ...
-  EMAIL_RELAY_DB_ALIAS: {
+  EMAIL_RELAY_DATABASE_ALIAS: {
     "ENGINE": "django.db.backends.postgresql",
     "NAME": "email_relay_db",
     "USER": "email_relay_user",
