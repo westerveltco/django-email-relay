@@ -24,24 +24,25 @@ INSTALLED_APPS = [
 EMAIL_BACKEND = 'email_relay.backend.RelayDatabaseEmailBackend'
 ```
 
-4. Add the `EMAIL_RELAY_DB_SETTINGS` to your `DATABASES` setting.
-
-This can be done either using the `EMAIL_RELAY_DATABASE_SETTINGS` dictionary which gets the database URL from the environment variable `EMAIL_RELAY_DATABASE_URL` by default, or by using the `get_email_relay_database_settings` function to get the database settings from a custom environment variable.
-
+4. Add the email relay database to your `DATABASES` setting. A default database alias is provided at `email_relay.conf.EMAIL_RELAY_DB_ALIAS`:
 ```python
-import os
-from email_relay.db import EMAIL_RELAY_DB_SETTINGS
-from email_relay.db import get_email_relay_database_settings
+from email_relay.conf import EMAIL_RELAY_DB_ALIAS
 
 DATABASES = {
-    ...
-    **EMAIL_RELAY_DB_SETTINGS,
-    # get_email_relay_database_settings(os.environ.get("EMAIL_RELAY_DATABASE_URL"))  <- this doesn't work with the service
-    ...
+  ...
+  EMAIL_RELAY_DB_ALIAS: {
+    "ENGINE": "django.db.backends.postgresql",
+    "NAME": "email_relay_db",
+    "USER": "email_relay_user",
+    "PASSWORD": "email_relay_password",
+    "HOST": "localhost",
+    "PORT": "5432",
+  },
+  ...
 }
 ```
 
-Alternatively, you can manually configure the database settings like any other Django database. If you do this, you can either use 'email_relay_db' as the database alias or a custom one. If you choose a custom one you must also this custom alias to the `EMAIL_RELAY_DB_ALIAS` setting to your `settings.py` file.
+If you would like to use a different database alias, you will also need to set the `EMAIL_RELAY_DB_ALIAS` setting within your `DJANGO_EMAIL_RELAY` settings:
 ```python
 DATABASES = {
   ...

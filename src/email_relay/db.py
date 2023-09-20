@@ -1,20 +1,6 @@
 from __future__ import annotations
 
-import os
-from typing import Any
-
-import dj_database_url
-
 from email_relay.conf import app_settings
-
-
-def get_email_relay_database_settings(database_url: str) -> dict[str, Any]:
-    return {app_settings.DATABASE_ALIAS: dj_database_url.parse(database_url)}
-
-
-EMAIL_RELAY_DATABASE_SETTINGS = get_email_relay_database_settings(
-    os.environ.get("EMAIL_RELAY_DATABASE_URL", "")
-)
 
 
 class EmailDatabaseRouter:

@@ -5,10 +5,12 @@ from typing import Any
 
 from django.conf import settings
 
+EMAIL_RELAY_DATABASE_ALIAS = "email_relay_db"
+
 
 @dataclass
 class AppSettings:
-    DATABASE_ALIAS: str = "email_relay_db"
+    DATABASE_ALIAS: str = EMAIL_RELAY_DATABASE_ALIAS
     EMAIL_BACKEND: str = "django.core.mail.backends.smtp.EmailBackend"
     EMAIL_MAX_BATCH: int | None = None
     EMAIL_MAX_DEFERRED: int | None = None
