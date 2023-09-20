@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import logging
 
-import pytest
 from django.conf import settings
-from django.test.utils import override_settings
 
 from email_relay.conf import EMAIL_RELAY_DATABASE_ALIAS
 
@@ -16,13 +14,13 @@ def pytest_configure(config):
     logging.disable(logging.CRITICAL)
 
     settings.configure(
-        ALLOWED_HOSTS = ["*"],
+        ALLOWED_HOSTS=["*"],
         CACHES={
             "default": {
                 "BACKEND": "django.core.cache.backends.dummy.DummyCache",
             }
         },
-        DATABASES = {
+        DATABASES={
             "default": {
                 "ENGINE": "django.db.backends.sqlite3",
                 "NAME": ":memory:",
@@ -32,16 +30,16 @@ def pytest_configure(config):
                 "NAME": ":memory:",
             },
         },
-        DATABASE_ROUTERS = [
+        DATABASE_ROUTERS=[
             "email_relay.db.EmailDatabaseRouter",
         ],
-        EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend",
-        INSTALLED_APPS = [
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        INSTALLED_APPS=[
             "django.contrib.contenttypes",
             "email_relay",
         ],
-        LOGGING_CONFIG = None,
-        PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"],
-        SECRET_KEY = "NOTASECRET",
-        USE_TZ = True,
+        LOGGING_CONFIG=None,
+        PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"],
+        SECRET_KEY="NOTASECRET",
+        USE_TZ=True,
     )
