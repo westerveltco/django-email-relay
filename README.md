@@ -1,5 +1,18 @@
 # django-email-relay
 
+[![PyPI](https://img.shields.io/pypi/v/django-email-relay)](https://pypi.org/project/django-email-relay/)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/django-email-relay)
+![Django Version](https://img.shields.io/badge/django-3.2%20%7C%204.0%20%7C%204.1%20%7C%204.2-%2344B78B?labelColor=%23092E20)
+<!-- https://shields.io/badges -->
+<!-- django-3.2 | 4.0 | 4.1 | 4.2-#44B78B-->
+<!-- labelColor=%23092E20 -->
+
+## Requirements
+
+- Python 3.6, 3.7, 3.8, or 3.9
+- Django 3.2, 4.0, 4.1, or 4.2
+- PostgreSQL only
+
 ## Installation
 
 1. Install the package from PyPI:
