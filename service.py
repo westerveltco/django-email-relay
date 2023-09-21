@@ -7,10 +7,16 @@ import django
 from django.conf import settings
 from django.core.management import call_command
 
+DEBUG = os.getenv("EMAIL_RELAY_DEBUG", False)
+
 SETTINGS = {
-    "DEBUG": os.getenv("EMAIL_RELAY_DEBUG", False),
+    "DEBUG": DEBUG,
     "DATABASES": {
-        "default": dj_database_url.parse(os.getenv("EMAIL_RELAY_DATABASE_URL", "")),
+        "default": dj_database_url.parse(
+            os.getenv("EMAIL_RELAY_DATABASE_URL", ""),
+            conn_max_age=600,  # 10 minutes
+            conn_health_checks=True,
+        ),
     },
     "LOGGING": {
         "version": 1,
@@ -29,6 +35,8 @@ SETTINGS = {
         "email_relay",
     ],
 }
+if not DEBUG:
+    SETTINGS["DATABASES"]["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True
 
 if __name__ == "__main__":
     settings.configure(**SETTINGS)
