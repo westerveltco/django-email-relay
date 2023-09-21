@@ -18,6 +18,7 @@ on:
 
 jobs:
   pypi:
+    if: ${{ github.event_name == 'release' || inputs.pypi }}
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -45,6 +46,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
 
   docker:
+    if: ${{ github.event_name == 'release' || inputs.docker }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
