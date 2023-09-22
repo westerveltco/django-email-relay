@@ -2,9 +2,9 @@
 
 [![PyPI](https://img.shields.io/pypi/v/django-email-relay)](https://pypi.org/project/django-email-relay/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/django-email-relay)
-![Django Version](https://img.shields.io/badge/django-3.2%20%7C%204.0%20%7C%204.1%20%7C%204.2-%2344B78B?labelColor=%23092E20)
+![Django Version](https://img.shields.io/badge/django-3.2%20%7C%204.1%20%7C%204.2-%2344B78B?labelColor=%23092E20)
 <!-- https://shields.io/badges -->
-<!-- django-3.2 | 4.0 | 4.1 | 4.2-#44B78B-->
+<!-- django-3.2 | 4.1 | 4.2-#44B78B -->
 <!-- labelColor=%23092E20 -->
 
 `django-email-relay` enables Django projects without direct access to a preferred SMTP server to use that server for email dispatch.
@@ -20,7 +20,7 @@ Why opt for this setup?
 ## Requirements
 
 - Python 3.8, 3.9, 3.10, 3.11, or 3.12
-- Django 3.2, 4.0, 4.1, or 4.2
+- Django 3.2, 4.1, or 4.2
 - PostgreSQL (for provided Docker image)
 
 ## Installation
