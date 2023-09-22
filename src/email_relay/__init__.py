@@ -1,3 +1,5 @@
 from __future__ import annotations
 
-__version__ = "2023.0"
+import importlib.metadata
+
+__version__ = importlib.metadata.version("email_relay")
