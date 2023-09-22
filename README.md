@@ -45,7 +45,7 @@ INSTALLED_APPS = [
 ]
 ```
 
-3. Add the `EmailRelayBackend` to your `EMAIL_BACKEND` setting:
+3. Add the `RelayDatabaseEmailBackend` to your `EMAIL_BACKEND` setting:
 
 ```python
 EMAIL_BACKEND = 'email_relay.backend.RelayDatabaseEmailBackend'
