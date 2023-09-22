@@ -32,12 +32,12 @@ dependencies = [
   "dj-database-url",
 ]
 description = "A Django app for relaying email to an external service via a database."
-dynamic = ["version"]
 keywords = []
 license = "MIT"
 name = "django-email-relay"
 readme = "README.md"
 requires-python = ">=3.8"
+version = "0.1.0"
 
 [project.optional-dependencies]
 dev = [
@@ -76,9 +76,6 @@ exclude = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/email_relay"]
-
-[tool.hatch.version]
-path = "src/email_relay/__init__.py"
 
 [tool.black]
 exclude = '''
