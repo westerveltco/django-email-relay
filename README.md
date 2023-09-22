@@ -91,12 +91,12 @@ DJANGO_EMAIL_RELAY = {
 }
 ```
 
-4. Add the `EmailRelayDatabaseRouter` to your `DATABASE_ROUTERS` setting:
+4. Add the `EmailDatabaseRouter` to your `DATABASE_ROUTERS` setting:
 
 ```python
 DATABASE_ROUTERS = [
     ...
-    'email_relay.db.EmailRelayDatabaseRouter',
+    'email_relay.db.EmailDatabaseRouter',
     ...
 ]
 ```
