@@ -235,4 +235,7 @@ envsync:
 ##################
 
 lint:
-    pre-commit run --all-files
+    python -m nox --reuse-existing-virtualenvs --session "lint"
+
+mypy:
+    python -m nox --reuse-existing-virtualenvs --session "mypy"

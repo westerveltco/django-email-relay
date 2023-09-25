@@ -51,3 +51,15 @@ def tests(session, django):
         session.install(f"django=={django}")
 
     session.run("pytest", "-n", "auto", "--dist", "loadfile")
+
+
+@nox.session
+def lint(session):
+    session.install(".[lint]")
+    session.run("pre-commit", "run", "--all-files")
+
+
+@nox.session
+def mypy(session):
+    session.install(".[dev]")
+    session.run("mypy")
