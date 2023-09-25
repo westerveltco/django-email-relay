@@ -1,20 +1,50 @@
 from __future__ import annotations
 
+import ast
+import copy
 import os
 from typing import Any
 
 import dj_database_url
 import django
+from django.conf import global_settings
 from django.conf import settings
 from django.core.management import call_command
 
 
 def get_user_settings_from_env() -> dict[str, Any]:
+    """Get user-defined Django settings from environment variables.
+
+    Returns:
+        dict[str, Any]: Filtered and coerced dictionary containing valid Django settings.
+
+    Example:
+        >>> import os
+        >>> os.environ['DEBUG'] = 'True'
+        >>> get_user_settings_from_env()
+        {'DEBUG': True}
+    """
     all_env_vars = {k: v for k, v in os.environ.items()}
-    return env_vars_to_nested_dict(all_env_vars)
+    env_vars_dict = env_vars_to_nested_dict(all_env_vars)
+    valid_dj_settings = {
+        k: v for k, v in env_vars_dict.items() if k in set(dir(global_settings))
+    }
+    return coerce_dict_values(valid_dj_settings)
 
 
 def env_vars_to_nested_dict(env_vars: dict[str, Any]) -> dict[str, Any]:
+    """Convert environment variables to a nested dictionary.
+
+    Args:
+        env_vars (dict[str, Any]): Dictionary of environment variables.
+
+    Returns:
+        dict[str, Any]: Nested dictionary derived from environment variables.
+
+    Example:
+        >>> env_vars_to_nested_dict({'DATABASES__default__ENGINE': 'django.db.backends.sqlite3'})
+        {'DATABASES': {'default': {'ENGINE': 'django.db.backends.sqlite3'}}}
+    """
     config: dict[str, Any] = {}
     for key, value in env_vars.items():
         keys = key.split("__")
@@ -25,13 +55,57 @@ def env_vars_to_nested_dict(env_vars: dict[str, Any]) -> dict[str, Any]:
     return config
 
 
-def merge_dicts(dict1: dict[str, Any], dict2: dict[str, Any]) -> dict[str, Any]:
-    for key, value in dict2.items():
-        if isinstance(value, dict) and isinstance(dict1.get(key), dict):
-            merge_dicts(dict1[key], value)
+def coerce_dict_values(d: dict[str, Any]) -> dict[str, Any]:
+    """Recursively coerces dictionary values using ast.literal_eval.
+
+    Args:
+        d (dict[str, Any]): Input dictionary.
+
+    Returns:
+        dict[str, Any]: Dictionary with values coerced.
+
+    Example:
+        >>> coerce_dict_values({'DEBUG': 'True', 'DATABASES': {'default': {'ENGINE': 'str', 'CONN_MAX_AGE': '600'}}})
+        {'DEBUG': True, 'DATABASES': {'default': {'ENGINE': 'str', 'CONN_MAX_AGE': 600}}}
+    """
+    for key, value in d.items():
+        if isinstance(value, dict):
+            d[key] = coerce_dict_values(value)
         else:
-            dict1[key] = value
-    return dict1
+            try:
+                d[key] = ast.literal_eval(value)
+            except (ValueError, SyntaxError):
+                d[key] = value
+    return d
+
+
+def merge_with_defaults(
+    default_dict: dict[str, Any], override_dict: dict[str, Any]
+) -> dict[str, Any]:
+    """Merge two dictionaries, updating and merging nested dictionaries. The override_dict takes precedence.
+
+    Args:
+        default_dict (dict[str, Any]): The dictionary containing default settings.
+        override_dict (dict[str, Any]): The dictionary containing settings that should override the defaults.
+
+    Returns:
+        dict[str, Any]: Merged dictionary.
+
+    Example:
+        >>> default_dict = {'DEBUG': False, 'DATABASES': {'default': {'ENGINE': 'django.db.backends.sqlite3', 'CONN_MAX_AGE': 600}}}
+        >>> override_dict = {'DEBUG': True, 'DATABASES': {'default': {'ENGINE': 'django.db.backends.postgresql'}}}
+        >>> merge_with_defaults(default_dict, override_dict)
+        {'DEBUG': True, 'DATABASES': {'default': {'ENGINE': 'django.db.backends.postgresql', 'CONN_MAX_AGE': 600}}}
+    """
+    return_dict = copy.deepcopy(default_dict)
+
+    for key, value in override_dict.items():
+        if isinstance(value, dict) and isinstance(return_dict.get(key), dict):
+            return_dict[key] = merge_with_defaults(return_dict[key], value)
+        else:
+            return_dict[key] = value
+
+    return return_dict
 
 
 default_settings = {
@@ -58,9 +132,13 @@ default_settings = {
 
 
 def main() -> int:
-    user_settings = get_user_settings_from_env()
-    SETTINGS = merge_dicts(default_settings, user_settings)
+    """Main entrypoint for the email relay service, designed to be run independently of a Django project.
 
+    Returns:
+        int: Exit code. Should always return 0 as `runrelay` is expected to run indefinitely.
+    """
+    user_settings = get_user_settings_from_env()
+    SETTINGS = merge_with_defaults(default_settings, user_settings)
     settings.configure(**SETTINGS)
     django.setup()
     call_command("migrate")

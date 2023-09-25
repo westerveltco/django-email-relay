@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import os
+
 from service import env_vars_to_nested_dict
-from service import merge_dicts
+from service import get_user_settings_from_env
+from service import merge_with_defaults
 
 
 def test_env_vars_to_nested_dict():
@@ -20,7 +23,7 @@ def test_env_vars_to_nested_dict():
     }
 
 
-def test_merge_dicts():
+def test_merge_with_defaults():
     default_settings = {
         "DATABASES": {
             "default": {
@@ -38,7 +41,7 @@ def test_merge_dicts():
         "DEBUG": True,
     }
 
-    assert merge_dicts(default_settings, user_settings) == {
+    assert merge_with_defaults(default_settings, user_settings) == {
         "DATABASES": {
             "default": {
                 "CONN_MAX_AGE": 300,
@@ -46,3 +49,25 @@ def test_merge_dicts():
         },
         "DEBUG": True,
     }
+
+
+def test_get_user_settings_from_env():
+    env_vars = {
+        "DATABASES__default__CONN_MAX_AGE": "600",
+        "DEBUG": "True",
+        "INVALID_KEY": "True",
+    }
+    for k, v in env_vars.items():
+        os.environ[k] = v
+
+    assert get_user_settings_from_env() == {
+        "DATABASES": {
+            "default": {
+                "CONN_MAX_AGE": 600,
+            }
+        },
+        "DEBUG": True,
+    }
+
+    for k in env_vars.keys():
+        del os.environ[k]
