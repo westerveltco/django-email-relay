@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 def send_all():
+    logger.info("sending emails")
+
     connection = get_connection(backend=app_settings.EMAIL_BACKEND)
 
     counts = {
@@ -29,8 +31,13 @@ def send_all():
             Message.objects.deferred().prioritized(),
         )
     )
+    logger.debug(f"found {len(message_batch)} messages to send")
 
     if app_settings.EMAIL_MAX_BATCH is not None:
+        msg = f"max batch size is {app_settings.EMAIL_MAX_BATCH}"
+        if len(message_batch) > app_settings.EMAIL_MAX_BATCH:
+            msg += ", truncating"
+        logger.debug(msg)
         message_batch = message_batch[: app_settings.EMAIL_MAX_BATCH]
 
     for message in message_batch:
@@ -50,6 +57,7 @@ def send_all():
                 if email is not None:
                     email.connection = connection
                     email.send()
+                    logger.debug(f"sent message {message.id}")
                     message.mark_sent()
                     counts["sent"] += 1
                 else:
@@ -67,8 +75,12 @@ def send_all():
                         socket_error,
                     ),
                 ):
+                    logger.debug(f"deferring message {message.id} due to {err}")
                     message.defer(log=str(err))
                     if message.retry_count >= app_settings.EMAIL_MAX_RETRIES:
+                        logger.warning(
+                            f"max retries reached, marking message {message.id} as failed"
+                        )
                         message.fail(log=str(err))
                     connection = None
                     counts["deferred"] += 1
@@ -79,7 +91,15 @@ def send_all():
             app_settings.EMAIL_MAX_DEFERRED is not None
             and counts["deferred"] >= app_settings.EMAIL_MAX_DEFERRED
         ):
+            logger.debug(
+                f"max deferred emails reached ({app_settings.EMAIL_MAX_DEFERRED}), stopping"
+            )
             break
 
         if app_settings.EMAIL_THROTTLE > 0:
+            logger.debug(
+                f"throttling enabled, sleeping for {app_settings.EMAIL_THROTTLE} seconds"
+            )
             time.sleep(app_settings.EMAIL_THROTTLE)
+
+    logger.info(f"sent {counts['sent']} emails, deferred {counts['deferred']} emails")
