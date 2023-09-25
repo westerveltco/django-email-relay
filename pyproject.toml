@@ -41,20 +41,21 @@ requires-python = ">=3.8"
 
 [project.optional-dependencies]
 dev = [
-  "black",
   "coverage[toml]",
   "django-stubs",
   "django-stubs-ext",
   "hatch",
+  "model_bakery",
   "mypy",
   "nox",
   "pytest",
+  "pytest-cov",
   "pytest-django",
   "pytest-randomly",
   "pytest-reverse",
   "pytest-xdist",
-  "ruff",
 ]
+lint = ["pre-commit"]
 psycopg = ["psycopg[binary]"]
 psycopg2 = ["psycopg2-binary"]
 
@@ -112,21 +113,25 @@ version_pattern = "YYYY.INC1"
 
 [tool.coverage.run]
 omit = [
-  "src/email_relay/*/migrations/*",
-  "tests/*",
   "manage.py",
-  "service.py"
+  "service.py",
+  "src/email_relay/migrations/*",
+  "tests/*",
 ]
-source = ["src/email_relay"]
+source = ["email_relay"]
+
+[tool.coverage.paths]
+source = ["src"]
+
 
 [tool.django-stubs]
 django_settings_module = "tests.settings"
+strict_settings = false
 
 [tool.mypy]
+mypy_path = "src/"
+namespace_packages = false
 check_untyped_defs = true
-files = [
-  "src.email_relay",
-]
 no_implicit_optional = true
 plugins = [
   "mypy_django_plugin.main",
@@ -137,24 +142,19 @@ warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
 ignore_errors = true
-module = [
-  "src.email_relay.*.migrations.*",
-]
-
-[[tool.mypy.overrides]]
 ignore_missing_imports = true
-module = []
+module = "tests.*"
 
 [tool.mypy_django_plugin]
 ignore_missing_model_attributes = true
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "tests.settings"
 django_find_project = false
 pythonpath = ". src"
-addopts = "--create-db -n auto --dist loadfile"
+addopts = "--create-db --cov=email_relay -n auto --dist loadfile"
 norecursedirs = ".* bin build dist *.egg htmlcov logs node_modules templates venv"
 python_files = "tests.py test_*.py *_tests.py"
+testpaths = ["tests"]
 
 [tool.ruff]
 ignore = ["E501", "E741"] # temporary

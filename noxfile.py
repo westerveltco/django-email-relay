@@ -49,4 +49,24 @@ def tests(session, django):
     else:
         session.install(f"django=={django}")
 
-    session.run("pytest", "-n", "auto", "--dist", "loadfile")
+    session.run("python", "-m", "pytest", "-n", "auto", "--dist", "loadfile")
+
+
+@nox.session
+def coverage(session):
+    session.install(".[dev]")
+    session.run("python", "-m", "pytest")
+    session.run("python", "-m", "coverage", "html", "--skip-covered", "--skip-empty")
+    session.run("python", "-m", "coverage", "report", "--fail-under=50")
+
+
+@nox.session
+def lint(session):
+    session.install(".[lint]")
+    session.run("pre-commit", "run", "--all-files")
+
+
+@nox.session
+def mypy(session):
+    session.install(".[dev]")
+    session.run("mypy")
