@@ -48,9 +48,7 @@ test:
     python -m nox --reuse-existing-virtualenvs
 
 coverage:
-    rm -rf htmlcov
-    python -m coverage run -m pytest
-    python -m coverage html --skip-covered --skip-empty
+    python -m nox --reuse-existing-virtualenvs --session "coverage"
 
 types:
     python -m mypy .
@@ -235,4 +233,7 @@ envsync:
 ##################
 
 lint:
-    pre-commit run --all-files
+    python -m nox --reuse-existing-virtualenvs --session "lint"
+
+mypy:
+    python -m nox --reuse-existing-virtualenvs --session "mypy"
