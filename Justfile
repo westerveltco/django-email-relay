@@ -48,10 +48,7 @@ test:
     python -m nox --reuse-existing-virtualenvs
 
 coverage:
-    rm -rf .coverage htmlcov
-    pytest -vv
-    python -m coverage html --skip-empty  # --skip-covered
-    python -m coverage report --fail-under=100
+    python -m nox --reuse-existing-virtualenvs --session "coverage"
 
 types:
     python -m mypy .
