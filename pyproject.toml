@@ -49,6 +49,7 @@ dev = [
   "mypy",
   "nox",
   "pytest",
+  "pytest-cov",
   "pytest-django",
   "pytest-randomly",
   "pytest-reverse",
@@ -112,12 +113,16 @@ version_pattern = "YYYY.INC1"
 
 [tool.coverage.run]
 omit = [
+  "manage.py",
+  "service.py",
   "src/email_relay/migrations/*",
   "tests/*",
-  "manage.py",
-  "service.py"
 ]
-source = ["src/email_relay"]
+source = ["email_relay"]
+
+[tool.coverage.paths]
+source = ["src"]
+
 
 [tool.django-stubs]
 django_settings_module = "tests.settings"
@@ -146,9 +151,10 @@ ignore_missing_model_attributes = true
 [tool.pytest.ini_options]
 django_find_project = false
 pythonpath = ". src"
-addopts = "--create-db -n auto --dist loadfile"
+addopts = "--create-db --cov=email_relay -n auto --dist loadfile"
 norecursedirs = ".* bin build dist *.egg htmlcov logs node_modules templates venv"
 python_files = "tests.py test_*.py *_tests.py"
+testpaths = ["tests"]
 
 [tool.ruff]
 ignore = ["E501", "E741"] # temporary
