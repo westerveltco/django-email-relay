@@ -4,6 +4,7 @@ import os
 
 from service import coerce_dict_values
 from service import env_vars_to_nested_dict
+from service import filter_valid_django_settings
 from service import get_user_settings_from_env
 from service import merge_with_defaults
 
@@ -100,5 +101,22 @@ def test_coerce_dict_values():
             "STRING": "str",
             "FLOAT": 3.14,
             "NONE": None,
+        },
+    }
+
+
+def test_filter_valid_django_settings():
+    d = {
+        "DEBUG": True,
+        "INVALID_KEY": "invalid value",
+        "DJANGO_EMAIL_RELAY": {
+            "VALID_KEY": "valid value",
+        },
+    }
+
+    assert filter_valid_django_settings(d) == {
+        "DEBUG": True,
+        "DJANGO_EMAIL_RELAY": {
+            "VALID_KEY": "valid value",
         },
     }

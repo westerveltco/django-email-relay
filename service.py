@@ -10,6 +10,8 @@ from django.conf import global_settings
 from django.conf import settings
 from django.core.management import call_command
 
+from email_relay.conf import EMAIL_RELAY_SETTINGS_NAME
+
 
 def get_user_settings_from_env() -> dict[str, Any]:
     """Get user-defined Django settings from environment variables.
@@ -25,10 +27,8 @@ def get_user_settings_from_env() -> dict[str, Any]:
     """
     all_env_vars = {k: v for k, v in os.environ.items()}
     env_vars_dict = env_vars_to_nested_dict(all_env_vars)
-    valid_dj_settings = {
-        k: v for k, v in env_vars_dict.items() if k in set(dir(global_settings))
-    }
-    return coerce_dict_values(valid_dj_settings)
+    valid_settings = filter_valid_django_settings(env_vars_dict)
+    return coerce_dict_values(valid_settings)
 
 
 def env_vars_to_nested_dict(env_vars: dict[str, Any]) -> dict[str, Any]:
@@ -52,6 +52,24 @@ def env_vars_to_nested_dict(env_vars: dict[str, Any]) -> dict[str, Any]:
             d = d.setdefault(k, {})
         d[keys[-1]] = value
     return config
+
+
+def filter_valid_django_settings(d: dict[str, Any]) -> dict[str, Any]:
+    """Filter dictionary to only include valid Django settings.
+
+    Args:
+        d (dict[str, Any]): Input dictionary.
+
+    Returns:
+        dict[str, Any]: Filtered dictionary.
+
+    Example:
+        >>> filter_valid_django_settings({'DEBUG': True, 'INVALID_KEY': "invalid value"})
+        {'DEBUG': True}
+    """
+    valid_settings = set(dir(global_settings))
+    valid_settings.add(EMAIL_RELAY_SETTINGS_NAME)
+    return {k: v for k, v in d.items() if k in valid_settings}
 
 
 def coerce_dict_values(d: dict[str, Any]) -> dict[str, Any]:
