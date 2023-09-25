@@ -91,4 +91,4 @@ jobs:
         pytest -vv
         python -m coverage html --skip-covered --skip-empty
         python -m coverage report | sed 's/^/    /' >> $GITHUB_STEP_SUMMARY
-        python -m coverage report --fail-under=30
+        python -m coverage report --fail-under=50
