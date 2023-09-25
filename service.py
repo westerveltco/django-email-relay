@@ -1,48 +1,43 @@
 from __future__ import annotations
 
 import os
+from typing import Any
 
 import dj_database_url
 import django
-from django.conf import global_settings
 from django.conf import settings
 from django.core.management import call_command
 
-DEBUG = os.getenv("EMAIL_RELAY_DEBUG", False)
 
-SETTINGS = {
+def get_user_settings_from_env() -> dict[str, Any]:
+    all_env_vars = {k: v for k, v in os.environ.items()}
+    return env_vars_to_nested_dict(all_env_vars)
+
+
+def env_vars_to_nested_dict(env_vars: dict[str, Any]) -> dict[str, Any]:
+    config: dict[str, Any] = {}
+    for key, value in env_vars.items():
+        keys = key.split("__")
+        d = config
+        for k in keys[:-1]:
+            d = d.setdefault(k, {})
+        d[keys[-1]] = value
+    return config
+
+
+def merge_dicts(dict1: dict[str, Any], dict2: dict[str, Any]) -> dict[str, Any]:
+    for key, value in dict2.items():
+        if isinstance(value, dict) and isinstance(dict1.get(key), dict):
+            merge_dicts(dict1[key], value)
+        else:
+            dict1[key] = value
+    return dict1
+
+
+default_settings = {
     "DATABASES": {
-        "default": dj_database_url.parse(
-            os.getenv("DATABASE_URL", ""),
-            conn_max_age=600,  # 10 minutes
-            conn_health_checks=True,
-        ),
+        "default": dj_database_url.parse(os.getenv("DATABASE_URL", "sqlite://:memory:"))
     },
-    "DEBUG": DEBUG,
-    "DEFAULT_FROM_EMAIL": os.getenv(
-        "DEFAULT_FROM_EMAIL", global_settings.DEFAULT_FROM_EMAIL
-    ),
-    "EMAIL_HOST": os.getenv("EMAIL_HOST", global_settings.EMAIL_HOST),
-    "EMAIL_HOST_PASSWORD": os.getenv(
-        "EMAIL_HOST_PASSWORD", global_settings.EMAIL_HOST_PASSWORD
-    ),
-    "EMAIL_HOST_USER": os.getenv("EMAIL_HOST_USER", global_settings.EMAIL_HOST_USER),
-    "EMAIL_PORT": os.getenv("EMAIL_PORT", global_settings.EMAIL_PORT),
-    "EMAIL_SUBJECT_PREFIX": os.getenv(
-        "EMAIL_SUBJECT_PREFIX", global_settings.EMAIL_SUBJECT_PREFIX
-    ),
-    "EMAIL_SSL_CERTFILE": os.getenv(
-        "EMAIL_SSL_CERTFILE", global_settings.EMAIL_SSL_CERTFILE
-    ),
-    "EMAIL_SSL_KEYFILE": os.getenv(
-        "EMAIL_SSL_KEYFILE", global_settings.EMAIL_SSL_KEYFILE
-    ),
-    "EMAIL_TIMEOUT": os.getenv("EMAIL_TIMEOUT", global_settings.EMAIL_TIMEOUT),
-    "EMAIL_USE_LOCALTIME": os.getenv(
-        "EMAIL_USE_LOCALTIME", global_settings.EMAIL_USE_LOCALTIME
-    ),
-    "EMAIL_USE_SSL": os.getenv("EMAIL_USE_SSL", global_settings.EMAIL_USE_SSL),
-    "EMAIL_USE_TLS": os.getenv("EMAIL_USE_TLS", global_settings.EMAIL_USE_TLS),
     "LOGGING": {
         "version": 1,
         "disable_existing_loggers": False,
@@ -59,13 +54,21 @@ SETTINGS = {
     "INSTALLED_APPS": [
         "email_relay",
     ],
-    "SERVER_EMAIL": os.getenv("SERVER_EMAIL", global_settings.SERVER_EMAIL),
 }
-if not DEBUG:
-    SETTINGS["DATABASES"]["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True
 
-if __name__ == "__main__":
+
+def main() -> int:
+    user_settings = get_user_settings_from_env()
+    SETTINGS = merge_dicts(default_settings, user_settings)
+
     settings.configure(**SETTINGS)
     django.setup()
     call_command("migrate")
     call_command("runrelay")
+    # should never get here, `runrelay` is an infinite loop
+    # but if it does, exit with 0
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
