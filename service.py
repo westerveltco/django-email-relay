@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import ast
 import copy
 import os
 from typing import Any
@@ -56,7 +55,7 @@ def env_vars_to_nested_dict(env_vars: dict[str, Any]) -> dict[str, Any]:
 
 
 def coerce_dict_values(d: dict[str, Any]) -> dict[str, Any]:
-    """Recursively coerces dictionary values using ast.literal_eval.
+    """Recursively coerces dictionary values to the appropriate type.
 
     Args:
         d (dict[str, Any]): Input dictionary.
@@ -72,9 +71,17 @@ def coerce_dict_values(d: dict[str, Any]) -> dict[str, Any]:
         if isinstance(value, dict):
             d[key] = coerce_dict_values(value)
         else:
-            try:
-                d[key] = ast.literal_eval(value)
-            except (ValueError, SyntaxError):
+            if value.lower() == "true":
+                d[key] = True
+            elif value.lower() == "false":
+                d[key] = False
+            elif value.lower() == "none":
+                d[key] = None
+            elif value.isdigit():
+                d[key] = int(value)
+            elif value.replace(".", "", 1).isdigit():
+                d[key] = float(value)
+            else:
                 d[key] = value
     return d
 

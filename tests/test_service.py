@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 
+from service import coerce_dict_values
 from service import env_vars_to_nested_dict
 from service import get_user_settings_from_env
 from service import merge_with_defaults
@@ -71,3 +72,33 @@ def test_get_user_settings_from_env():
 
     for k in env_vars.keys():
         del os.environ[k]
+
+
+def test_coerce_dict_values():
+    types_dict = {
+        "BOOLEAN": "True",
+        "INTEGER": "600",
+        "STRING": "str",
+        "FLOAT": "3.14",
+        "NONE": "None",
+    }
+
+    d = {
+        **types_dict,
+        "NESTED": types_dict,
+    }
+
+    assert coerce_dict_values(d) == {
+        "BOOLEAN": True,
+        "INTEGER": 600,
+        "STRING": "str",
+        "FLOAT": 3.14,
+        "NONE": None,
+        "NESTED": {
+            "BOOLEAN": True,
+            "INTEGER": 600,
+            "STRING": "str",
+            "FLOAT": 3.14,
+            "NONE": None,
+        },
+    }
