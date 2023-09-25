@@ -88,7 +88,7 @@ jobs:
     # https://hynek.me/articles/ditch-codecov-python/
     - name: Run tests
       run: |
-        coverage run -m pytest
+        pytest -vv
         python -m coverage html --skip-covered --skip-empty
         python -m coverage report | sed 's/^/    /' >> $GITHUB_STEP_SUMMARY
         python -m coverage report --fail-under=30
