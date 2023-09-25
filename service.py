@@ -15,7 +15,7 @@ def get_user_settings_from_env() -> dict[str, Any]:
 
 
 def env_vars_to_nested_dict(env_vars: dict[str, Any]) -> dict[str, Any]:
-    config = {}
+    config: dict[str, Any] = {}
     for key, value in env_vars.items():
         keys = key.split("__")
         d = config
@@ -57,7 +57,7 @@ default_settings = {
 }
 
 
-def main() -> None:
+def main() -> int:
     user_settings = get_user_settings_from_env()
     SETTINGS = merge_dicts(default_settings, user_settings)
 
@@ -65,6 +65,9 @@ def main() -> None:
     django.setup()
     call_command("migrate")
     call_command("runrelay")
+    # should never get here, `runrelay` is an infinite loop
+    # but if it does, exit with 0
+    return 0
 
 
 if __name__ == "__main__":
