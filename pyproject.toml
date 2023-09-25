@@ -53,8 +53,8 @@ dev = [
   "pytest-randomly",
   "pytest-reverse",
   "pytest-xdist",
-  "ruff",
 ]
+lint = ["pre-commit"]
 psycopg = ["psycopg[binary]"]
 psycopg2 = ["psycopg2-binary"]
 
@@ -119,11 +119,14 @@ omit = [
 ]
 source = ["src/email_relay"]
 
+[tool.django-stubs]
+django_settings_module = "tests.settings"
+strict_settings = false
+
 [tool.mypy]
+mypy_path = "src/"
+namespace_packages = false
 check_untyped_defs = true
-files = [
-  "src.email_relay",
-]
 no_implicit_optional = true
 plugins = [
   "mypy_django_plugin.main",
@@ -134,13 +137,8 @@ warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
 ignore_errors = true
-module = [
-  "src.email_relay.*.migrations.*",
-]
-
-[[tool.mypy.overrides]]
 ignore_missing_imports = true
-module = []
+module = "tests.*"
 
 [tool.mypy_django_plugin]
 ignore_missing_model_attributes = true
