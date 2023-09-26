@@ -90,5 +90,5 @@ jobs:
       run: |
         python -m pytest --cov=email_relay
         python -m coverage html --skip-covered --skip-empty
-        python -m coverage report | sed 's/^/    /' >> $GITHUB_STEP_SUMMARY
+        python -m coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
         python -m coverage report
