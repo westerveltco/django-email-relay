@@ -72,7 +72,8 @@ def coverage(session):
                 "coverage",
                 "report",
                 "--skip-covered",
-                "--skip-empty" "--format=markdown",
+                "--skip-empty",
+                "--format=markdown",
                 stdout=output_buffer,
             )
     except KeyError:
