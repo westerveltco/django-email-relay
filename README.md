@@ -39,16 +39,16 @@ pip install django-email-relay
 
 ```python
 INSTALLED_APPS = [
-    ...
-    'email_relay',
-    ...
+    # ...
+    "email_relay",
+    # ...
 ]
 ```
 
 3. Add the `RelayDatabaseEmailBackend` to your `EMAIL_BACKEND` setting:
 
 ```python
-EMAIL_BACKEND = 'email_relay.backend.RelayDatabaseEmailBackend'
+EMAIL_BACKEND = "email_relay.backend.RelayDatabaseEmailBackend"
 ```
 
 4. Add the email relay database to your `DATABASES` setting. A default database alias is pfrom email_relay.conf import `EMAIL_RELAY_DATABASE_ALIAS`:
@@ -56,38 +56,38 @@ EMAIL_BACKEND = 'email_relay.backend.RelayDatabaseEmailBackend'
 from email_relay.conf import EMAIL_RELAY_DATABASE_ALIAS
 
 DATABASES = {
-  ...
-  EMAIL_RELAY_DATABASE_ALIAS: {
-    "ENGINE": "django.db.backends.postgresql",
-    "NAME": "email_relay_db",
-    "USER": "email_relay_user",
-    "PASSWORD": "email_relay_password",
-    "HOST": "localhost",
-    "PORT": "5432",
-  },
-  ...
+    # ...
+    EMAIL_RELAY_DATABASE_ALIAS: {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "email_relay_db",
+        "USER": "email_relay_user",
+        "PASSWORD": "email_relay_password",
+        "HOST": "localhost",
+        "PORT": "5432",
+    },
+    # ...
 }
 ```
 
 If you would like to use a different database alias, you will also need to set the `DATABASE_ALIAS` setting within your `DJANGO_EMAIL_RELAY` settings:
 ```python
 DATABASES = {
-  ...
-  "some_alias": {
-    "ENGINE": "django.db.backends.postgresql",
-    "NAME": "email_relay_db",
-    "USER": "email_relay_user",
-    "PASSWORD": "email_relay_password",
-    "HOST": "localhost",
-    "PORT": "5432",
-  },
-  ...
+    # ...
+    "some_alias": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "email_relay_db",
+        "USER": "email_relay_user",
+        "PASSWORD": "email_relay_password",
+        "HOST": "localhost",
+        "PORT": "5432",
+    },
+    # ...
 }
 
 DJANGO_EMAIL_RELAY = {
-  ...
-  "DATABASE_ALIAS": "some_alias",
-  ...
+    # ...
+    "DATABASE_ALIAS": "some_alias",
+    # ...
 }
 ```
 
@@ -95,9 +95,9 @@ DJANGO_EMAIL_RELAY = {
 
 ```python
 DATABASE_ROUTERS = [
-    ...
-    'email_relay.db.EmailDatabaseRouter',
-    ...
+    # ...
+    "email_relay.db.EmailDatabaseRouter",
+    # ...
 ]
 ```
 
