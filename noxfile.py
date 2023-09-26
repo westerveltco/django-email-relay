@@ -93,4 +93,4 @@ def lint(session):
 @nox.session
 def mypy(session):
     session.install(".[dev]")
-    session.run("mypy", ".")
+    session.run("python", "-m", "mypy", ".")
