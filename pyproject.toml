@@ -151,7 +151,7 @@ ignore_missing_model_attributes = true
 [tool.pytest.ini_options]
 django_find_project = false
 pythonpath = ". src"
-addopts = "--create-db -n auto --dist loadfile"
+addopts = "--create-db -n auto --dist loadfile --doctest-modules"
 norecursedirs = ".* bin build dist *.egg htmlcov logs node_modules templates venv"
 python_files = "tests.py test_*.py *_tests.py"
 testpaths = ["tests"]

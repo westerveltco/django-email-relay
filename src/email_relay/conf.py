@@ -5,6 +5,7 @@ from typing import Any
 
 from django.conf import settings
 
+EMAIL_RELAY_SETTINGS_NAME = "DJANGO_EMAIL_RELAY"
 EMAIL_RELAY_DATABASE_ALIAS = "email_relay_db"
 
 
@@ -20,7 +21,7 @@ class AppSettings:
     MESSAGES_BATCH_SIZE: int | None = None
 
     def __getattribute__(self, __name: str) -> Any:
-        user_settings = getattr(settings, "DJANGO_EMAIL_RELAY", {})
+        user_settings = getattr(settings, EMAIL_RELAY_SETTINGS_NAME, {})
         return user_settings.get(__name, super().__getattribute__(__name))
 
 
