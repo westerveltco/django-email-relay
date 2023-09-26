@@ -87,7 +87,7 @@ def coverage(session):
 @nox.session
 def lint(session):
     session.install(".[lint]")
-    session.run("pre-commit", "run", "--all-files")
+    session.run("python", "-m", "pre_commit", "run", "--all-files")
 
 
 @nox.session
