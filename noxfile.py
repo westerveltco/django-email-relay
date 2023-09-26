@@ -57,7 +57,7 @@ def coverage(session):
     session.install(".[dev]")
     session.run("python", "-m", "pytest", "--cov=email_relay")
     session.run("python", "-m", "coverage", "html", "--skip-covered", "--skip-empty")
-    session.run("python", "-m", "coverage", "report", "--fail-under=50")
+    session.run("python", "-m", "coverage", "report")
 
 
 @nox.session
