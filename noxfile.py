@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import os
 import nox
+from pathlib import Path
+
 
 PY38 = "3.8"
 PY39 = "3.9"
@@ -56,7 +59,26 @@ def tests(session, django):
 def coverage(session):
     session.install(".[dev]")
     session.run("python", "-m", "pytest", "--cov=email_relay")
-    session.run("python", "-m", "coverage", "html", "--skip-covered", "--skip-empty")
+
+    try:
+        summary = os.environ["GITHUB_STEP_SUMMARY"]
+        with Path(summary).open("a") as output_buffer:
+            output_buffer.write("")
+            output_buffer.write("### Coverage\n\n")
+            output_buffer.flush()
+            session.run(
+                "python",
+                "-m",
+                "coverage",
+                "report",
+                "--skip-covered",
+                "--skip-empty"
+                "--format=markdown",
+                stdout=output_buffer,
+            )
+    except KeyError:
+        session.run("python", "-m", "coverage", "html", "--skip-covered", "--skip-empty")
+
     session.run("python", "-m", "coverage", "report")
 
 
