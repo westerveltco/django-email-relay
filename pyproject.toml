@@ -111,6 +111,12 @@ version_pattern = "YYYY.INC1"
     '__version__ = "{version}"',
 ]
 
+[tool.coverage.paths]
+source = ["src"]
+
+[tool.coverage.report]
+fail_under = 50
+
 [tool.coverage.run]
 omit = [
   "manage.py",
@@ -119,10 +125,6 @@ omit = [
   "tests/*",
 ]
 source = ["email_relay"]
-
-[tool.coverage.paths]
-source = ["src"]
-
 
 [tool.django-stubs]
 django_settings_module = "tests.settings"
