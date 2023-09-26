@@ -16,6 +16,12 @@ repos:
       - id: django-upgrade
         args: [--target-version, "4.2"]
 
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.13.0
+    hooks:
+      - id: pyupgrade
+        args: ["--py38-plus"]
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.0.291
     hooks:
