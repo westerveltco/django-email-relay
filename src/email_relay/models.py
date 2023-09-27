@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 from email.mime.base import MIMEBase
 
 from django.core.mail import EmailMessage
@@ -38,6 +39,15 @@ class MessageQuerySet(models.QuerySet):
 
     def deferred(self):
         return self.filter(status=Status.DEFERRED)
+
+    def failed(self):
+        return self.filter(status=Status.FAILED)
+
+    def sent(self):
+        return self.filter(status=Status.SENT)
+
+    def sent_before(self, dt: datetime.datetime):
+        return self.sent().filter(created_at__lte=dt)
 
 
 class Message(models.Model):
