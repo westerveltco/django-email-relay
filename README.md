@@ -139,6 +139,7 @@ DJANGO_EMAIL_RELAY = {
     "EMAIL_THROTTLE": 0,
     "MESSAGES_BATCH_SIZE": None,
 }
+```
 
 #### `DATABASE_ALIAS`
 
