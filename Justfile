@@ -59,8 +59,6 @@ types:
 
 manage *COMMAND:
     #!/usr/bin/env python
-    import sys
-
     try:
         from django.conf import settings
         from django.core.management import execute_from_command_line
@@ -72,7 +70,7 @@ manage *COMMAND:
         ) from exc
 
     settings.configure(INSTALLED_APPS=["email_relay"])
-    execute_from_command_line(sys.argv + ["{{ COMMAND }}"])
+    execute_from_command_line(["{{ COMMAND }}"])
 
 alias mm := makemigrations
 
