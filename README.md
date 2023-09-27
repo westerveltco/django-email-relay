@@ -128,6 +128,7 @@ When running the relay service from a Django project, config values are read fro
 ### Django App
 
 Configuration of the Django app is done through the `DJANGO_EMAIL_RELAY` dictionary in your Django settings. All settings are optional. Here is an example configuration, with the default values shown:
+
 ```python
 DJANGO_EMAIL_RELAY = {
     "DATABASE_ALIAS": email_relay.conf.EMAIL_RELAY_DATABASE_ALIAS,  # "email_relay_db"
