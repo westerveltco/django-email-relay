@@ -58,7 +58,19 @@ types:
 ##################
 
 manage *COMMAND:
-    python -m manage {{ COMMAND }}
+    #!/usr/bin/env python
+    try:
+        from django.conf import settings
+        from django.core.management import execute_from_command_line
+    except ImportError as exc:
+        raise ImportError(
+            "Couldn't import Django. Are you sure it's installed and "
+            "available on your PYTHONPATH environment variable? Did you "
+            "forget to activate a virtual environment?"
+        ) from exc
+
+    settings.configure(INSTALLED_APPS=["email_relay"])
+    execute_from_command_line(["{{ COMMAND }}"])
 
 alias mm := makemigrations
 
