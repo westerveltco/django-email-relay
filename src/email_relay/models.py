@@ -47,7 +47,7 @@ class MessageQuerySet(models.QuerySet):
         return self.filter(status=Status.FAILED)
 
     def sent_before(self, dt: datetime.datetime):
-        return self.filter(created_at__lte=dt)
+        return self.sent().filter(created_at__lte=dt)
 
 
 class Message(models.Model):
