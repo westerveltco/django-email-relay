@@ -6,6 +6,7 @@ from email.mime.base import MIMEBase
 from django.core.mail import EmailMessage
 from django.core.mail import EmailMultiAlternatives
 from django.db import models
+from django.utils import timezone
 
 
 class Priority(models.IntegerChoices):
@@ -65,6 +66,7 @@ class Message(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    sent_at = models.DateTimeField(null=True, blank=True)
 
     objects = MessageQuerySet.as_manager()
 
@@ -89,6 +91,7 @@ class Message(models.Model):
 
     def mark_sent(self):
         self.status = Status.SENT
+        self.sent_at = timezone.now()
         self.save()
 
     def defer(self, log: str = ""):
