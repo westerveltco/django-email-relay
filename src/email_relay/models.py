@@ -16,8 +16,8 @@ class Priority(models.IntegerChoices):
 class Status(models.IntegerChoices):
     QUEUED = 1, "Queued"
     DEFERRED = 2, "Deferred"
-    SENT = 3, "Sent"
-    FAILED = 4, "Failed"
+    FAILED = 3, "Failed"
+    SENT = 4, "Sent"
 
 
 class MessageQuerySet(models.QuerySet):
