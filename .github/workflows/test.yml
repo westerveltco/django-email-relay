@@ -57,36 +57,17 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.8
-        cache: 'pip'
+    - uses: wntrblm/nox@main
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip nox
-
-    - name: Run coverage
-      run: |
-        python -m nox --session mypy
+    - name: Run mypy
+      run: nox --session mypy
 
   coverage:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.8
-        cache: 'pip'
+    - uses: wntrblm/nox@main
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip nox
-
-    # https://hynek.me/articles/ditch-codecov-python/
     - name: Run coverage
-      run: |
-        python -m nox --session coverage
+      run: nox --session coverage
