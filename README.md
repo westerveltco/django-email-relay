@@ -111,6 +111,69 @@ DATABASE_ROUTERS = [
 
 ## Configuration
 
+### Relay Service
+
+Configuration of the relay service differs depending on whether you are using the provided Docker image or the management command within a Django project.
+
+#### Docker
+
+When running the relay service using Docker, config values are set via environment variables. The names of the environment variables are the same as the Django settings, e.g. to set `DEBUG` to `True`, you would set `-e DEBUG=True` when running the container.
+
+For settings that are dictionaries, a `__` is used to separate the keys, e.g. to set `DATABASES["default"]["MAX_CONN_AGE"]` to `600` or 10 minutes, you would set `-e DATABASES__default__MAX_CONN_AGE=600`.
+
+#### Django
+
+When running the relay service from a Django project, config values are read from the Django settings for that project.
+
+### Django App
+
+Configuration of the Django app is done through the `DJANGO_EMAIL_RELAY` dictionary in your Django settings. All settings are optional. Here is an example configuration, with the default values shown:
+```python
+DJANGO_EMAIL_RELAY = {
+    "DATABASE_ALIAS": email_relay.conf.EMAIL_RELAY_DATABASE_ALIAS,  # "email_relay_db"
+    "EMAIL_BACKEND": "django.core.mail.backends.smtp.EmailBackend",
+    "EMAIL_MAX_BATCH": None,
+    "EMAIL_MAX_DEFERRED": None,
+    "EMAIL_MAX_RETRIES": None,
+    "EMPTY_QUEUE_SLEEP": 30,
+    "EMAIL_THROTTLE": 0,
+    "MESSAGES_BATCH_SIZE": None,
+}
+
+#### `DATABASE_ALIAS`
+
+The database alias to use for the email relay database. This must match the database alias used in your `DATABASES` setting. A default is provided at `email_relay.conf.EMAIL_RELAY_DATABASE_ALIAS`. You should only need to set this if you are using a different database alias.
+
+#### `EMAIL_BACKEND`
+
+The email backend to use for sending emails. This must be a fully qualified Python path to a Django email backend. The default is Django's builtin SMTP backend, located at `django.core.mail.backends.smtp.EmailBackend`.
+
+#### `EMAIL_MAX_BATCH`
+
+The maximum number of emails to send in a single batch. The default is `None`, which means there is no limit.
+
+
+#### `EMAIL_MAX_DEFERRED`
+
+The maximum number of emails that can be deferred before the relay service stops sending emails. The default is `None`, which means there is no limit.
+
+
+#### `EMAIL_MAX_RETRIES`
+
+The maximum number of times an email can be deferred before being marked as failed. The default is `None`, which means there is no limit.
+
+#### `EMPTY_QUEUE_SLEEP`
+
+The time in seconds to wait before checking the queue for new emails to send. The default is `30` seconds.
+
+#### `EMAIL_THROTTLE`
+
+The time in seconds to sleep between sending emails, to avoid potential rate limits or overloading your SMTP server. The default is `0` seconds.
+
+#### `MESSAGES_BATCH_SIZE`
+
+The batch size to use when bulk creating `Messages` in the database. The default is `None`, which means Django's default batch size will be used.
+
 ## Inspiration
 
 This package is heavily inspired by the [`django-mailer`](https://github.com/pinax/django-mailer) package. `django-mailer` is licensed under the MIT license, which is also the license used for this package. The required copyright notice is included in the [`LICENSE`](LICENSE) file for this package.
