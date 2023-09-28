@@ -24,7 +24,7 @@ class Status(models.IntegerChoices):
 
 class MessageQuerySet(models.QuerySet):
     def prioritized(self):
-        return self.order_by("priority", "created_at")
+        return self.order_by("-priority", "created_at")
 
     def high_priority(self):
         return self.filter(priority=Priority.HIGH)
@@ -48,7 +48,7 @@ class MessageQuerySet(models.QuerySet):
         return self.filter(status=Status.SENT)
 
     def sent_before(self, dt: datetime.datetime):
-        return self.sent().filter(created_at__lte=dt)
+        return self.sent().filter(sent_at__lte=dt)
 
 
 class Message(models.Model):
