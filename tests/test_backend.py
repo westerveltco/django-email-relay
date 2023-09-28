@@ -23,6 +23,8 @@ def test_fixture():
 
 @pytest.mark.django_db(databases=["default", "email_relay_db"])
 def test_send_mail():
+    assert Message.objects.count() == 0
+
     send_mail(
         "Subject here",
         "Here is the message.",
@@ -35,6 +37,8 @@ def test_send_mail():
 
 @pytest.mark.django_db(databases=["default", "email_relay_db"])
 def test_email_message():
+    assert Message.objects.count() == 0
+
     email = EmailMessage(
         "Subject here",
         "Here is the message.",
