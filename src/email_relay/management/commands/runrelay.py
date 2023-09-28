@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import datetime
 import logging
 import time
 
 from django.core.management import BaseCommand
+from django.utils import timezone
 
 from email_relay.conf import app_settings
 from email_relay.models import Message
@@ -27,3 +29,18 @@ class Command(BaseCommand):
                 logger.debug(msg)
 
             send_all()
+            self.delete_old_messages()
+
+    def delete_old_messages(self):
+        if app_settings.MESSAGES_RETENTION_SECONDS is not None:
+            logger.debug("deleting old messages")
+            if app_settings.MESSAGES_RETENTION_SECONDS == 0:
+                deleted_messages = Message.objects.sent().delete()
+            else:
+                deleted_messages = Message.objects.sent_before(
+                    timezone.now()
+                    - datetime.timedelta(
+                        seconds=app_settings.MESSAGES_RETENTION_SECONDS
+                    )
+                ).delete()
+            logger.debug(f"deleted {deleted_messages[0]} messages")
