@@ -19,6 +19,7 @@ class AppSettings:
     EMPTY_QUEUE_SLEEP: int = 30
     EMAIL_THROTTLE: int = 0
     MESSAGES_BATCH_SIZE: int | None = None
+    MESSAGES_RETENTION_SECONDS: int | None = None
 
     def __getattribute__(self, __name: str) -> Any:
         user_settings = getattr(settings, EMAIL_RELAY_SETTINGS_NAME, {})
