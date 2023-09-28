@@ -24,6 +24,7 @@ class TestMessageQuerySet:
         low = baker.make("email_relay.Message", priority=Priority.LOW)
         medium = baker.make("email_relay.Message", priority=Priority.MEDIUM)
         high = baker.make("email_relay.Message", priority=Priority.HIGH)
+
         return low, medium, high
 
     @pytest.fixture
@@ -32,10 +33,12 @@ class TestMessageQuerySet:
         deferred = baker.make("email_relay.Message", status=Status.DEFERRED)
         failed = baker.make("email_relay.Message", status=Status.FAILED)
         sent = baker.make("email_relay.Message", status=Status.SENT)
+
         return queued, deferred, failed, sent
 
     def test_prioritized(self, messages_with_priority):
         queryset = Message.objects.prioritized()
+
         assert queryset.count() == 3
         assert queryset[0] == messages_with_priority[2]
         assert queryset[1] == messages_with_priority[1]
@@ -43,36 +46,43 @@ class TestMessageQuerySet:
 
     def test_high_priority(self, messages_with_priority):
         queryset = Message.objects.high_priority()
+
         assert queryset.count() == 1
         assert queryset[0] == messages_with_priority[2]
 
     def test_medium_priority(self, messages_with_priority):
         queryset = Message.objects.medium_priority()
+
         assert queryset.count() == 1
         assert queryset[0] == messages_with_priority[1]
 
     def test_low_priority(self, messages_with_priority):
         queryset = Message.objects.low_priority()
+
         assert queryset.count() == 1
         assert queryset[0] == messages_with_priority[0]
 
     def test_queued(self, messages_with_status):
         queryset = Message.objects.queued()
+
         assert queryset.count() == 1
         assert queryset[0] == messages_with_status[0]
 
     def test_deferred(self, messages_with_status):
         queryset = Message.objects.deferred()
+
         assert queryset.count() == 1
         assert queryset[0] == messages_with_status[1]
 
     def test_failed(self, messages_with_status):
         queryset = Message.objects.failed()
+
         assert queryset.count() == 1
         assert queryset[0] == messages_with_status[2]
 
     def test_sent(self, messages_with_status):
         queryset = Message.objects.sent()
+
         assert queryset.count() == 1
         assert queryset[0] == messages_with_status[3]
 
@@ -96,10 +106,6 @@ class TestMessageQuerySet:
         queryset = Message.objects.sent_before(
             timezone.now() - datetime.timedelta(days=1)
         )
-
-        print(one_week.sent_at)
-        print(now.sent_at)
-        print(not_sent.sent_at)
 
         assert queryset.count() == 1
         assert one_week in queryset
