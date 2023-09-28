@@ -29,20 +29,18 @@ class Command(BaseCommand):
                 logger.debug(msg)
 
             send_all()
-
-            if app_settings.MESSAGES_RETENTION_SECONDS:
-                self.delete_old_messages()
+            self.delete_old_messages()
 
     def delete_old_messages(self):
-        logger.debug("deleting old messages")
-        match app_settings.MESSAGES_RETENTION_SECONDS:
-            case 0:
+        if app_settings.MESSAGES_RETENTION_SECONDS is not None:
+            logger.debug("deleting old messages")
+            if app_settings.MESSAGES_RETENTION_SECONDS == 0:
                 deleted_messages = Message.objects.sent().delete()
-            case _:
+            else:
                 deleted_messages = Message.objects.sent_before(
                     timezone.now()
                     - datetime.timedelta(
                         seconds=app_settings.MESSAGES_RETENTION_SECONDS
                     )
                 ).delete()
-        logger.debug(f"deleted {deleted_messages[0]} messages")
+            logger.debug(f"deleted {deleted_messages[0]} messages")

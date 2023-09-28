@@ -24,13 +24,13 @@ def test_runrelay_help():
     assert exec_info.value.code == 0
 
 
-@override_settings(
-    DJANGO_EMAIL_RELAY={
-        "MESSAGES_RETENTION_SECONDS": 0,
-    }
-)
+@pytest.fixture
+def runrelay():
+    return Command()
+
+
 @pytest.mark.django_db(databases=["default", "email_relay_db"])
-def test_delete_sent_messages_based_on_retention_zero():
+def test_delete_sent_messages_based_on_retention_default(runrelay):
     baker.make(
         "email_relay.Message",
         status=Status.SENT,
@@ -38,8 +38,26 @@ def test_delete_sent_messages_based_on_retention_zero():
         _quantity=10,
     )
 
-    cmd = Command()
-    cmd.delete_old_messages()
+    runrelay.delete_old_messages()
+
+    assert Message.objects.count() == 10
+
+
+@override_settings(
+    DJANGO_EMAIL_RELAY={
+        "MESSAGES_RETENTION_SECONDS": 0,
+    }
+)
+@pytest.mark.django_db(databases=["default", "email_relay_db"])
+def test_delete_sent_messages_based_on_retention_zero(runrelay):
+    baker.make(
+        "email_relay.Message",
+        status=Status.SENT,
+        sent_at=timezone.now(),
+        _quantity=10,
+    )
+
+    runrelay.delete_old_messages()
 
     assert Message.objects.count() == 0
 
@@ -50,7 +68,7 @@ def test_delete_sent_messages_based_on_retention_zero():
     }
 )
 @pytest.mark.django_db(databases=["default", "email_relay_db"])
-def test_delete_sent_messages_based_on_retention_non_zero():
+def test_delete_sent_messages_based_on_retention_non_zero(runrelay):
     baker.make(
         "email_relay.Message",
         status=Status.SENT,
@@ -64,7 +82,6 @@ def test_delete_sent_messages_based_on_retention_non_zero():
         _quantity=5,
     )
 
-    cmd = Command()
-    cmd.delete_old_messages()
+    runrelay.delete_old_messages()
 
     assert Message.objects.count() == 5
