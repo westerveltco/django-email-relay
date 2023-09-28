@@ -24,7 +24,6 @@ class TestMessageQuerySet:
         low = baker.make("email_relay.Message", priority=Priority.LOW)
         medium = baker.make("email_relay.Message", priority=Priority.MEDIUM)
         high = baker.make("email_relay.Message", priority=Priority.HIGH)
-
         return low, medium, high
 
     @pytest.fixture
@@ -33,7 +32,6 @@ class TestMessageQuerySet:
         deferred = baker.make("email_relay.Message", status=Status.DEFERRED)
         failed = baker.make("email_relay.Message", status=Status.FAILED)
         sent = baker.make("email_relay.Message", status=Status.SENT)
-
         return queued, deferred, failed, sent
 
     def test_prioritized(self, messages_with_priority):
