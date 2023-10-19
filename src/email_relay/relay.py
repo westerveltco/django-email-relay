@@ -6,6 +6,7 @@ import time
 from itertools import chain
 from socket import error as socket_error
 
+from django.conf import settings
 from django.core.mail import get_connection
 from django.db import transaction
 
@@ -17,8 +18,6 @@ logger = logging.getLogger(__name__)
 
 def send_all():
     logger.info("sending emails")
-
-    connection = get_connection(backend=app_settings.EMAIL_BACKEND)
 
     counts = {
         "sent": 0,
@@ -40,6 +39,8 @@ def send_all():
         logger.debug(msg)
         message_batch = message_batch[: app_settings.EMAIL_MAX_BATCH]
 
+    connection = None
+
     for message in message_batch:
         with transaction.atomic():
             try:
@@ -52,7 +53,12 @@ def send_all():
                 continue
             try:
                 if connection is None:
-                    connection = get_connection(backend=app_settings.EMAIL_BACKEND)
+                    relay_email_backend = getattr(
+                        settings,
+                        "EMAIL_BACKEND",
+                        "django.core.mail.backends.smtp.EmailBackend",
+                    )
+                    connection = get_connection(backend=relay_email_backend)
                 email = message.email
                 if email is not None:
                     email.connection = connection
