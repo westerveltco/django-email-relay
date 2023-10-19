@@ -132,7 +132,6 @@ Configuration of the Django app is done through the `DJANGO_EMAIL_RELAY` diction
 ```python
 DJANGO_EMAIL_RELAY = {
     "DATABASE_ALIAS": email_relay.conf.EMAIL_RELAY_DATABASE_ALIAS,  # "email_relay_db"
-    "EMAIL_BACKEND": "django.core.mail.backends.smtp.EmailBackend",
     "EMAIL_MAX_BATCH": None,
     "EMAIL_MAX_DEFERRED": None,
     "EMAIL_MAX_RETRIES": None,
@@ -146,14 +145,9 @@ DJANGO_EMAIL_RELAY = {
 
 The database alias to use for the email relay database. This must match the database alias used in your `DATABASES` setting. A default is provided at `email_relay.conf.EMAIL_RELAY_DATABASE_ALIAS`. You should only need to set this if you are using a different database alias.
 
-#### `EMAIL_BACKEND`
-
-The email backend to use for sending emails. This must be a fully qualified Python path to a Django email backend. The default is Django's builtin SMTP backend, located at `django.core.mail.backends.smtp.EmailBackend`.
-
 #### `EMAIL_MAX_BATCH`
 
 The maximum number of emails to send in a single batch. The default is `None`, which means there is no limit.
-
 
 #### `EMAIL_MAX_DEFERRED`
 
