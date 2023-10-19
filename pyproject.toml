@@ -101,10 +101,10 @@ line-length = 88
 [tool.bumpver]
 commit = true
 commit_message = ":bookmark: bump version {old_version} -> {new_version}"
-current_version = "2023.0"
+current_version = "0.1.0rc1"
 push = false   # set to false for CI
 tag = true
-version_pattern = "YYYY.INC1"
+version_pattern = "MAJOR.MINOR.PATCH[PYTAGNUM]"
 
 [tool.bumpver.file_patterns]
 "src/email_relay/__init__.py" = [

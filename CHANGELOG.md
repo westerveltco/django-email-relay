@@ -7,6 +7,10 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ## [Unreleased]
 
+## [0.1.0]
+
+Initial release!
+
 ### Added
 
 - An email backend that stores emails in a database ala a Message model rather than sending them via SMTP or other means
@@ -18,3 +22,4 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 - Initial CI/CD (GitHub Actions)
 
 [unreleased]: https://github.com/westerveltco/django-email-relay/compare/HEAD...HEAD
+[0.1.0]: https://github.com/westerveltco/django-email-relay/releases/tag/v0.1.0rc1
