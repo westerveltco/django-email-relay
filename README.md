@@ -9,7 +9,7 @@
 
 `django-email-relay` enables Django projects without direct access to a preferred SMTP server to use that server for email dispatch.
 
-It consists of two parts: 
+It consists of two parts:
 
 1. A Django app with a custom email backend that stores emails in a central database queue. This is what you will use on all the distributed Django projects that you would like to give access to the preferred SMTP server.
 
