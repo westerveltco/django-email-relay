@@ -33,6 +33,8 @@ Okay, so why opt for this setup? A few reasons:
 
 ### Relay Service
 
+TODO
+
 ### Django App
 
 1. Install the package from PyPI:
@@ -107,7 +109,13 @@ DATABASE_ROUTERS = [
 ]
 ```
 
+## Updating
+
+TODO
+
 ## Usage
+
+TODO
 
 ## Configuration
 
@@ -169,6 +177,10 @@ The time in seconds to sleep between sending emails, to avoid potential rate lim
 #### `MESSAGES_BATCH_SIZE`
 
 The batch size to use when bulk creating `Messages` in the database. The default is `None`, which means Django's default batch size will be used.
+
+## Contributing
+
+TODO
 
 ## Inspiration
 
