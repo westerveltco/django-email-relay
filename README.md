@@ -33,7 +33,16 @@ Okay, so why opt for this setup? A few reasons:
 
 ### Relay Service
 
-TODO
+The relay service provided by `django-email-relay` should be run on infrastructure that has access to the SMTP server you would like to use. There currently two ways to run the service:
+
+1. A Docker image published to the GitHub Container Registry
+2. A `runrelay` management command to be run from within a Django application
+
+Installation of the service differs depending on whether you are using the provided Docker image or the management command within a Django project.
+
+#### Docker
+
+#### Django
 
 ### Django App
 
