@@ -38,7 +38,7 @@ The relay service provided by `django-email-relay` should be run on infrastructu
 1. A Docker image
 2. A `runrelay` management command to be run from within a Django project
 
-If you are using the Docker image, only PostgreSQL is supported. However, when using the management command directly you can use whatever database you are using with the Django project it is being run from within, provided your other externally hosted Django projects that you would like to relay emails for also has access to the same database. If you would like the Docker image to support other databases, please [open an issue](https://github.com/westerveltco/django-email-relay/issues/new) and it will be considered.
+If you are using the Docker image, only PostgreSQL is supported. However, when using the management command directly you can use whatever database you are using with the Django project it is being run from, provided your other externally hosted Django projects that you would like to relay emails for also has access to the same database. If you would like the Docker image to support other databases, please [open an issue](https://github.com/westerveltco/django-email-relay/issues/new) and it will be considered.
 
 Installation of the service differs depending on whether you are using the provided Docker image or the management command.
 
