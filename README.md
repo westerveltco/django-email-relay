@@ -35,16 +35,22 @@ Okay, so why opt for this setup? A few reasons:
 
 The relay service provided by `django-email-relay` should be run on infrastructure that has access to the SMTP server you would like to use. There currently two ways to run the service:
 
-1. A Docker image published to the GitHub Container Registry
+1. A Docker image
 2. A `runrelay` management command to be run from within a Django application
 
-If you are using the Docker image, only PostgreSQL is supported. However, using the management command directly you can use whatever database you are using with the Django application it is being run from within, provided your externally hosted Django projects that you would like to relay emails for also has access to the same database. If you would like the Docker image to support other databases, please [open an issue](https://github.com/westerveltco/django-email-relay/issues/new) and it will be considered.
+If you are using the Docker image, only PostgreSQL is supported. However, when using the management command directly you can use whatever database you are using with the Django application it is being run from within, provided your externally hosted Django projects that you would like to relay emails for also has access to the same database. If you would like the Docker image to support other databases, please [open an issue](https://github.com/westerveltco/django-email-relay/issues/new) and it will be considered.
 
-Installation of the service differs depending on whether you are using the provided Docker image or the management command within a Django project.
+Installation of the service differs depending on whether you are using the provided Docker image or the management command.
 
 #### Docker
 
-A prebuilt Docker image is provided via the GitHub Container Registry, located at `ghcr.io/westerveltco/django-email-relay`. It can be run anyway you would normally run a Docker container, for instance through the CLI:
+A prebuilt Docker image is provided via the GitHub Container Registry, located here:
+
+```
+ghcr.io/westerveltco/django-email-relay
+```
+
+It can be run anyway you would normally run a Docker container, for instance through the CLI:
 
 ```shell
 docker run -d \
