@@ -38,11 +38,53 @@ The relay service provided by `django-email-relay` should be run on infrastructu
 1. A Docker image published to the GitHub Container Registry
 2. A `runrelay` management command to be run from within a Django application
 
+If you are using the Docker image, only PostgreSQL is supported. However, using the management command directly you can use whatever database you are using with the Django application it is being run from within, provided your externally hosted Django projects that you would like to relay emails for also has access to the same database. If you would like the Docker image to support other databases, please [open an issue](https://github.com/westerveltco/django-email-relay/issues/new) and it will be considered.
+
 Installation of the service differs depending on whether you are using the provided Docker image or the management command within a Django project.
 
 #### Docker
 
+A prebuilt Docker image is provided via the GitHub Container Registry, located at `ghcr.io/westerveltco/django-email-relay`. It can be run anyway you would normally run a Docker container, for instance through the CLI:
+
+```shell
+docker run -d \
+  -e "EMAIL_HOST=smtp.example.com" \
+  -e "EMAIL_PORT=25" \
+  --restart unless-stopped \
+  ghcr.io/westerveltco/django-email-relay:latest
+```
+
+It is recommended to pin to a specific version, though if you prefer you can ride the lightning by always pulling the `latest` image.
+
+See the [documentation](#docker-1) for information about configuring the relay service as a Docker container.
+
 #### Django
+
+If you have a Django application already deployed that has access to the preferred SMTP server, you can skip using the Docker image and install the package and use the included `runrelay` management method instead.
+
+1. Install the package from PyPI:
+
+```shell
+pip install django-email-relay
+```
+
+2. Add `email_relay` to your `INSTALLED_APPS` setting:
+
+```python
+INSTALLED_APPS = [
+    # ...
+    "email_relay",
+    # ...
+]
+```
+
+3. Run the `runrelay` management command to start the relay service. This can be done many different ways, for instance via a task runner, such as Celery or Django-Q2, or using [supervisord](https://supervisord.org/) or systemd service unit file.
+
+```shell
+python manage.py runrelay
+```
+
+See the [documentation](#django-1) for information about configuring the relay service as a Django app.
 
 ### Django App
 
@@ -133,6 +175,8 @@ TODO
 ### Relay Service
 
 Configuration of the relay service differs depending on whether you are using the provided Docker image or the management command within a Django project.
+
+At a minimum, you should set `EMAIL_HOST` and `EMAIL_PORT` to configure how the relay service will connect to your SMTP server. However, the service can be configured using any setting available to Django by default, for example if you want to set a default from email (`DEFAULT_FROM_EMAIL`) or a common subject prefix (`EMAIL_SUBJECT_PREFIX`). See the [Django docs](https://docs.djangoproject.com/en/4.2/ref/settings/) for more information.
 
 #### Docker
 
