@@ -62,7 +62,7 @@ docker run -d \
 
 It is recommended to pin to a specific version, though if you prefer you can ride the lightning by always pulling the `latest` image.
 
-See the [documentation](#docker-1) for information about configuring the relay service as a Docker container.
+See the documentation [here](#relay-service-1) for general information about configuring the relay service and [here](#docker-1) for information specifically related to configuring the relay service as a Docker container.
 
 #### Django
 
@@ -90,7 +90,7 @@ INSTALLED_APPS = [
 python manage.py runrelay
 ```
 
-See the [documentation](#django-1) for information about configuring the relay service as a Django app.
+See the documentation [here](#relay-service-1) for general information about configuring the relay service and [here](#django-1) for information specifically related to configuring the relay service as a Django app.
 
 ### Django App
 
@@ -182,7 +182,14 @@ TODO
 
 Configuration of the relay service differs depending on whether you are using the provided Docker image or the management command within a Django project.
 
-At a minimum, you should set `EMAIL_HOST` and `EMAIL_PORT` to configure how the relay service will connect to your SMTP server. However, the service can be configured using any setting available to Django by default, for example if you want to set a default from email (`DEFAULT_FROM_EMAIL`) or a common subject prefix (`EMAIL_SUBJECT_PREFIX`). See the [Django docs](https://docs.djangoproject.com/en/4.2/ref/settings/) for more information.
+At a minimum, you should configure how the relay service will connect to your SMTP server, which depending on your SMTP server can include any or all the following Django settings:
+
+- `EMAIL_HOST`
+- `EMAIL_PORT`
+- `EMAIL_HOST_USER`
+- `EMAIL_HOST_PASSWORD`
+
+Additionally, the service can be configured using any setting available to Django by default, for example if you want to set a default from email (`DEFAULT_FROM_EMAIL`) or a common subject prefix (`EMAIL_SUBJECT_PREFIX`).
 
 #### Docker
 
