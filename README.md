@@ -180,8 +180,6 @@ TODO
 
 ### Relay Service
 
-Configuration of the relay service differs depending on whether you are using the provided Docker image or the management command within a Django project.
-
 At a minimum, you should configure how the relay service will connect to your SMTP server, which depending on your SMTP server can include any or all the following Django settings:
 
 - `EMAIL_HOST`
@@ -190,6 +188,8 @@ At a minimum, you should configure how the relay service will connect to your SM
 - `EMAIL_HOST_PASSWORD`
 
 Additionally, the service can be configured using any setting available to Django by default, for example if you want to set a default from email (`DEFAULT_FROM_EMAIL`) or a common subject prefix (`EMAIL_SUBJECT_PREFIX`).
+
+Configuration of the relay service differs depending on whether you are using the provided Docker image or the management command within a Django project.
 
 #### Docker
 
