@@ -182,7 +182,7 @@ TODO
 
 Configuration of `django-email-relay` is done through the `DJANGO_EMAIL_RELAY` dictionary in your Django settings.
 
-Depending on whether you are configuring the relay service or the Django app, different settings are available: some settings are available for both, while others are only available for one or the other. See the individual sections for each setting below for more information.
+Depending on whether you are configuring the relay service or the Django app, different settings are available: some settings are available for both, while others are only available for one or the other. If you configure a setting that does not apply, for instance if you configure something related to the relay service from one of the distributed Django apps, it will have no effect. See the individual sections for each setting below for more information.
 
 All settings are optional. Here is an example configuration, with the default values shown:
 
