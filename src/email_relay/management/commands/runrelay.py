@@ -14,7 +14,7 @@ from email_relay.relay import send_all
 try:
     import requests
 except ImportError:
-    requests = None
+    requests = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
