@@ -269,7 +269,7 @@ The batch size to use when bulk creating `Messages` in the database. The default
 | Relay Service | Yes ✅     |
 | Django App    | No 🚫      |
 
-The time in seconds to keep `Messages` in the database before deleting them. The default is `None`, which means messages will be kept indefinitely.
+The time in seconds to keep `Messages` in the database before deleting them. `None` means the messages will be kept indefinitely, `0` means no messages will be kept, and any other integer value will be the number of seconds to keep messages. The default is `None`.
 
 ### Relay Service
 
