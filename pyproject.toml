@@ -39,6 +39,7 @@ requires-python = ">=3.8"
 [project.optional-dependencies]
 dev = [
   "coverage[toml]",
+  "django-email-relay[hc]",
   "django-stubs",
   "django-stubs-ext",
   "hatch",
@@ -51,7 +52,9 @@ dev = [
   "pytest-randomly",
   "pytest-reverse",
   "pytest-xdist",
+  "responses",
 ]
+hc = ["requests"]
 lint = ["pre-commit"]
 psycopg = ["psycopg[binary]"]
 psycopg2 = ["psycopg2-binary"]

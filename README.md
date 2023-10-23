@@ -242,6 +242,10 @@ DJANGO_EMAIL_RELAY = {
     "EMAIL_THROTTLE": 0,
     "MESSAGES_BATCH_SIZE": None,
     "MESSAGES_RETENTION_SECONDS": None,
+    "RELAY_HEALTHCHECK_METHOD": "GET",
+    "RELAY_HEALTHCHECK_STATUS_CODE": 200,
+    "RELAY_HEALTHCHECK_TIMEOUT": 5.0,
+    "RELAY_HEALTHCHECK_URL": None,
 }
 ```
 
@@ -316,6 +320,42 @@ The batch size to use when bulk creating `Messages` in the database. The default
 | Django App    | No 🚫        |
 
 The time in seconds to keep `Messages` in the database before deleting them. `None` means the messages will be kept indefinitely, `0` means no messages will be kept, and any other integer value will be the number of seconds to keep messages. The default is `None`.
+
+#### `RELAY_HEALTHCHECK_METHOD`
+
+| Component     | Configurable |
+|---------------|--------------|
+| Relay Service | Yes ✅       |
+| Django App    | No 🚫        |
+
+The HTTP method to use for the healthcheck endpoint. [`RELAY_HEALTHCHECK_URL`](#relay_healthcheck_url) must also be set for this to have any effect. The default is `"GET"`.
+
+#### `RELAY_HEALTHCHECK_STATUS_CODE`
+
+| Component     | Configurable |
+|---------------|--------------|
+| Relay Service | Yes ✅       |
+| Django App    | No 🚫        |
+
+The expected HTTP status code for the healthcheck endpoint. [`RELAY_HEALTHCHECK_URL`](#relay_healthcheck_url) must also be set for this to have any effect. The default is `200`.
+
+#### `RELAY_HEALTHCHECK_TIMEOUT`
+
+| Component     | Configurable |
+|---------------|--------------|
+| Relay Service | Yes ✅       |
+| Django App    | No 🚫        |
+
+The timeout in seconds for the healthcheck endpoint. [`RELAY_HEALTHCHECK_URL`](#relay_healthcheck_url) must also be set for this to have any effect. The default is `5.0` seconds.
+
+#### `RELAY_HEALTHCHECK_URL`
+
+| Component     | Configurable |
+|---------------|--------------|
+| Relay Service | Yes ✅       |
+| Django App    | No 🚫        |
+
+The URL to ping after a loop of sending emails is complete. This can be used to integrate with a service like [Healthchecks.io](https://healthchecks.io/) or [UptimeRobot](https://uptimerobot.com/). The default is `None`, which means no healthcheck will be performed.
 
 ### Relay Service
 

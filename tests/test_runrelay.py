@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import datetime
+import logging
+from unittest import mock
 
 import pytest
+import responses
 from django.core.management import call_command
 from django.test.utils import override_settings
 from django.utils import timezone
@@ -85,3 +88,83 @@ def test_delete_sent_messages_based_on_retention_non_zero(runrelay):
     runrelay.delete_old_messages()
 
     assert Message.objects.count() == 5
+
+
+@override_settings(
+    DJANGO_EMAIL_RELAY={
+        "RELAY_HEALTHCHECK_URL": "http://example.com/healthcheck",
+    }
+)
+@responses.activate
+def test_relay_healthcheck_url(runrelay, caplog):
+    caplog.set_level(logging.DEBUG)
+    responses.add(responses.GET, "http://example.com/healthcheck", status=200)
+
+    runrelay.ping_healthcheck()
+
+    assert len(responses.calls) == 1
+    assert "healthcheck ping successful" in caplog.text
+
+
+@override_settings(
+    DJANGO_EMAIL_RELAY={
+        "RELAY_HEALTHCHECK_URL": "http://example.com/healthcheck",
+        "RELAY_HEALTHCHECK_STATUS_CODE": 201,
+    }
+)
+@responses.activate
+def test_relay_healthcheck_status_code(runrelay, caplog):
+    caplog.set_level(logging.DEBUG)
+    responses.add(responses.GET, "http://example.com/healthcheck", status=201)
+
+    runrelay.ping_healthcheck()
+
+    assert len(responses.calls) == 1
+    assert "healthcheck ping successful" in caplog.text
+
+
+@override_settings(
+    DJANGO_EMAIL_RELAY={
+        "RELAY_HEALTHCHECK_URL": "http://example.com/healthcheck",
+        "RELAY_HEALTHCHECK_METHOD": "POST",
+    }
+)
+@responses.activate
+def test_relay_healthcheck_method(runrelay, caplog):
+    caplog.set_level(logging.DEBUG)
+    responses.add(responses.POST, "http://example.com/healthcheck", status=200)
+
+    runrelay.ping_healthcheck()
+
+    assert len(responses.calls) == 1
+    assert "healthcheck ping successful" in caplog.text
+
+
+@override_settings(
+    DJANGO_EMAIL_RELAY={
+        "RELAY_HEALTHCHECK_URL": "http://example.com/healthcheck",
+    }
+)
+@responses.activate
+def test_relay_healthcheck_failure(runrelay, caplog):
+    caplog.set_level(logging.WARNING)
+    responses.add(responses.GET, "http://example.com/healthcheck", status=500)
+
+    runrelay.ping_healthcheck()
+
+    assert len(responses.calls) == 1
+    assert "healthcheck ping successful" not in caplog.text
+
+
+@override_settings(
+    DJANGO_EMAIL_RELAY={
+        "RELAY_HEALTHCHECK_URL": "http://example.com/healthcheck",
+    }
+)
+def test_relay_healthcheck_no_requests(runrelay, caplog):
+    caplog.set_level(logging.WARNING)
+
+    with mock.patch("email_relay.management.commands.runrelay.requests", None):
+        runrelay.ping_healthcheck()
+
+    assert "Healthcheck URL configured but requests is not installed." in caplog.text
