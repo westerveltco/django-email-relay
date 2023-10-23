@@ -97,6 +97,8 @@ See the documentation [here](#configuration) for general information about confi
 
 ### Django App
 
+For each distributed Django project that you would like to use the preferred SMTP server, you will need to install the `django-email-relay` package and do some basic configuration.
+
 1. Install the package from PyPI:
 
 ```shell
