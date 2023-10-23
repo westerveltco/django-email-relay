@@ -62,7 +62,7 @@ docker run -d \
 
 It is recommended to pin to a specific version, though if you prefer you can ride the lightning by always pulling the `latest` image.
 
-See the documentation [here](#relay-service-1) for general information about configuring the relay service and [here](#docker-1) for information specifically related to configuring the relay service as a Docker container.
+See the documentation [here](#configuration) for general information about configuring `django-email-relay`, [here](#relay-service-1) for general information about configuring the relay service, and [here](#docker-1) for information specifically related to configuring the relay service as a Docker container.
 
 #### Django
 
@@ -90,7 +90,7 @@ INSTALLED_APPS = [
 python manage.py runrelay
 ```
 
-See the documentation [here](#relay-service-1) for general information about configuring the relay service and [here](#django-1) for information specifically related to configuring the relay service as a Django app.
+See the documentation [here](#configuration) for general information about configuring `django-email-relay`, [here](#relay-service-1) for general information about configuring the relay service, and [here](#django-1) for information specifically related to configuring the relay service as a Django app.
 
 ### Django App
 
@@ -168,6 +168,8 @@ DATABASE_ROUTERS = [
 ]
 ```
 
+See the documentation [here](#configuration) for general information about configuring `django-email-relay`.
+
 ## Updating
 
 TODO
@@ -177,6 +179,97 @@ TODO
 TODO
 
 ## Configuration
+
+Configuration of `django-email-relay` is done through the `DJANGO_EMAIL_RELAY` dictionary in your Django settings.
+
+Depending on whether you are configuring the relay service or the Django app, different settings are available: some settings are available for both, while others are only available for one or the other. See the individual sections for each setting below for more information.
+
+All settings are optional. Here is an example configuration, with the default values shown:
+
+```python
+DJANGO_EMAIL_RELAY = {
+    "DATABASE_ALIAS": email_relay.conf.EMAIL_RELAY_DATABASE_ALIAS,  # "email_relay_db"
+    "EMAIL_MAX_BATCH": None,
+    "EMAIL_MAX_DEFERRED": None,
+    "EMAIL_MAX_RETRIES": None,
+    "EMPTY_QUEUE_SLEEP": 30,
+    "EMAIL_THROTTLE": 0,
+    "MESSAGES_BATCH_SIZE": None,
+    "MESSAGES_RETENTION_SECONDS": None,
+}
+```
+
+#### `DATABASE_ALIAS`
+
+| Component     | Applicable |
+|---------------|------------|
+| Relay Service | Yes ✅     |
+| Django App    | Yes ✅     |
+
+The database alias to use for the email relay database. This must match the database alias used in your `DATABASES` setting. A default is provided at `email_relay.conf.EMAIL_RELAY_DATABASE_ALIAS`. You should only need to set this if you are using a different database alias.
+
+#### `EMAIL_MAX_BATCH`
+
+| Component     | Applicable |
+|---------------|------------|
+| Relay Service | Yes ✅     |
+| Django App    | No 🚫      |
+
+The maximum number of emails to send in a single batch. The default is `None`, which means there is no limit.
+
+#### `EMAIL_MAX_DEFERRED`
+
+| Component     | Applicable |
+|---------------|------------|
+| Relay Service | Yes ✅     |
+| Django App    | No 🚫      |
+
+The maximum number of emails that can be deferred before the relay service stops sending emails. The default is `None`, which means there is no limit.
+
+#### `EMAIL_MAX_RETRIES`
+
+| Component     | Applicable |
+|---------------|------------|
+| Relay Service | Yes ✅     |
+| Django App    | No 🚫      |
+
+The maximum number of times an email can be deferred before being marked as failed. The default is `None`, which means there is no limit.
+
+#### `EMPTY_QUEUE_SLEEP`
+
+| Component     | Applicable |
+|---------------|------------|
+| Relay Service | Yes ✅     |
+| Django App    | No 🚫      |
+
+The time in seconds to wait before checking the queue for new emails to send. The default is `30` seconds.
+
+#### `EMAIL_THROTTLE`
+
+| Component     | Applicable |
+|---------------|------------|
+| Relay Service | Yes ✅     |
+| Django App    | No 🚫      |
+
+The time in seconds to sleep between sending emails, to avoid potential rate limits or overloading your SMTP server. The default is `0` seconds.
+
+#### `MESSAGES_BATCH_SIZE`
+
+| Component     | Applicable |
+|---------------|------------|
+| Relay Service | No  🚫     |
+| Django App    | Yes ✅     |
+
+The batch size to use when bulk creating `Messages` in the database. The default is `None`, which means Django's default batch size will be used.
+
+#### `MESSAGES_RETENTION_SECONDS`
+
+| Component     | Applicable |
+|---------------|------------|
+| Relay Service | Yes ✅     |
+| Django App    | No 🚫      |
+
+The time in seconds to keep `Messages` in the database before deleting them. The default is `None`, which means messages will be kept indefinitely.
 
 ### Relay Service
 
@@ -200,51 +293,6 @@ For settings that are dictionaries, a `__` is used to separate the keys, e.g. to
 #### Django
 
 When running the relay service from a Django project, config values are read from the Django settings for that project.
-
-### Django App
-
-Configuration of the Django app is done through the `DJANGO_EMAIL_RELAY` dictionary in your Django settings. All settings are optional. Here is an example configuration, with the default values shown:
-
-```python
-DJANGO_EMAIL_RELAY = {
-    "DATABASE_ALIAS": email_relay.conf.EMAIL_RELAY_DATABASE_ALIAS,  # "email_relay_db"
-    "EMAIL_MAX_BATCH": None,
-    "EMAIL_MAX_DEFERRED": None,
-    "EMAIL_MAX_RETRIES": None,
-    "EMPTY_QUEUE_SLEEP": 30,
-    "EMAIL_THROTTLE": 0,
-    "MESSAGES_BATCH_SIZE": None,
-}
-```
-
-#### `DATABASE_ALIAS`
-
-The database alias to use for the email relay database. This must match the database alias used in your `DATABASES` setting. A default is provided at `email_relay.conf.EMAIL_RELAY_DATABASE_ALIAS`. You should only need to set this if you are using a different database alias.
-
-#### `EMAIL_MAX_BATCH`
-
-The maximum number of emails to send in a single batch. The default is `None`, which means there is no limit.
-
-#### `EMAIL_MAX_DEFERRED`
-
-The maximum number of emails that can be deferred before the relay service stops sending emails. The default is `None`, which means there is no limit.
-
-
-#### `EMAIL_MAX_RETRIES`
-
-The maximum number of times an email can be deferred before being marked as failed. The default is `None`, which means there is no limit.
-
-#### `EMPTY_QUEUE_SLEEP`
-
-The time in seconds to wait before checking the queue for new emails to send. The default is `30` seconds.
-
-#### `EMAIL_THROTTLE`
-
-The time in seconds to sleep between sending emails, to avoid potential rate limits or overloading your SMTP server. The default is `0` seconds.
-
-#### `MESSAGES_BATCH_SIZE`
-
-The batch size to use when bulk creating `Messages` in the database. The default is `None`, which means Django's default batch size will be used.
 
 ## Contributing
 
