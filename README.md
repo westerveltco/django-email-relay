@@ -209,7 +209,9 @@ DJANGO_EMAIL_RELAY = {
 | Relay Service | Yes ✅       |
 | Django App    | Yes ✅       |
 
-The database alias to use for the email relay database. This must match the database alias used in your `DATABASES` setting. A default is provided at `email_relay.conf.EMAIL_RELAY_DATABASE_ALIAS`. You should only need to set this if you are using a different database alias.
+The database alias to use for the email relay database. This must match the database alias used in your `DATABASES` setting. A default is provided at `email_relay.conf.EMAIL_RELAY_DATABASE_ALIAS`.
+
+You should only need to set this if you are using a different database alias. If you do configure this setting, keep in mind the alias should be consistent across the relay service and all distributed Django apps that are using the same email relay database.
 
 #### `EMAIL_MAX_BATCH`
 
