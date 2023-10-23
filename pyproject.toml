@@ -53,6 +53,7 @@ dev = [
   "pytest-reverse",
   "pytest-xdist",
   "responses",
+  "types-requests",
 ]
 hc = ["requests"]
 lint = ["pre-commit"]
