@@ -394,6 +394,10 @@ To see a list of all available commands, ensure `just` is installed and run the 
 just
 ````
 
+## License
+
+`django-email-relay` is licensed under the MIT license. See the [`LICENSE`](LICENSE) file for more information.
+
 ## Inspiration
 
 This package is heavily inspired by the [`django-mailer`](https://github.com/pinax/django-mailer) package. `django-mailer` is licensed under the MIT license, which is also the license used for this package. The required copyright notice is included in the [`LICENSE`](LICENSE) file for this package.
