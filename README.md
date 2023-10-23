@@ -36,7 +36,7 @@ After discussing with our infrastructure and security team, we thought about wha
 
 ### Relay Service
 
-The relay service provided by `django-email-relay` should be run on infrastructure that has access to the SMTP server you would like to use. There currently two ways to run the service:
+The relay service provided by `django-email-relay` is responsible for reading a central database queue and sending emails from that queue through an SMTP server. As such, it should be run on infrastructure that has access to the SMTP server you would like to use. There currently two ways to run the service:
 
 1. A Docker image
 2. A `runrelay` management command to be run from within a Django project
