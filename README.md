@@ -17,11 +17,14 @@ It consists of two parts:
 
 ## Why?
 
-Okay, so why opt for this setup? A few reasons:
+At [The Westervelt Company](https://github.com/westerveltco), we primarily host our Django applications in the cloud. The majority of the emails we send are to internal Westervelt employees. Prior to developing and using `django-email-relay`, we were using an external Email Service Provider (ESP) to send these emails. This worked well enough, but we ran into a few issues:
 
-- The potential for emails sent through an external Email Service Provider (ESP) to be marked as spam or filtered, a common issue when routing transactional emails from internal applications to internal users via an ESP.
-- It eliminates the necessity to open firewall ports or the need to utilize services like Tailscale for SMTP server access.
-- It decouples the emailing process from the main web application, much in the same way as using a task queue like Celery or Django-Q2 would.
+- Emails sent by our applications had a tendency to sometimes be marked as spam or otherwise filtered by our company's email provider, which makes using an ESP essentially pointless.
+- As a way to combat phishing emails, we treat and process internal and external emails differently. This meant that in order for our applications' transactional emails to be treated as internal, adjustments and exceptions would need to be made which our security team was not comfortable with.
+
+We have an internal SMTP server that can be used for any application deployed on premises which bypasses most of these issues. However, it is not, and there are no plans to make it, publicly accessible -- either through opening firewall ports or by using a service like Tailscale. This meant that we needed to find another way to route emails from our cloud hosted Django applications to this internal SMTP server.
+
+After discussing with our infrastructure and security team, we thought about what would be the simplest and most straightforward to develop and deploy while also not compromising on security. Taking inspiration from another Django package, [`django-mailer`](https://github.com/pinax/django-mailer/), we decided that a solution utilizing a central database queue that our cloud hosted Django applications can use to store emails to be sent and a relay service that can be run on premises that reads from that queue would fulfill those requirements. This is what `django-email-relay` is.
 
 ## Requirements
 
