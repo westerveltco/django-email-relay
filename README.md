@@ -26,6 +26,15 @@ We have an internal SMTP server that can be used for any application deployed on
 
 After discussing with our infrastructure and security team, we thought about what would be the simplest and most straightforward to develop and deploy while also not compromising on security. Taking inspiration from another Django package, [`django-mailer`](https://github.com/pinax/django-mailer/), we decided that a solution utilizing a central database queue that our cloud hosted Django applications can use to store emails to be sent and a relay service that can be run on premises that reads from that queue would fulfill those requirements. This is what `django-email-relay` is.
 
+## Limitations
+
+As `django-email-relay` is based on `django-mailer`, it shares a lot of the same limitations, detailed [here](https://github.com/pinax/django-mailer/blob/863a99752e6928f9825bae275f69bf8696b836cb/README.rst#limitations). Namely:
+
+- Since file attachments are stored in a database, large attachments can potentially cause space and query issues.
+- From the Django applications sending emails it is not possible to know whether an email has actually been sent or not, only whether it has been successfully queued for sending.
+- Emails are not sent immediately, but instead saved in a database queue to be used by the relay service. This means that emails will not be sent unless the relay service is started and running.
+- Due to the distributed nature of the package and the fact that there are database models, and thus potentially migrations to apply, care should be taken when upgrading to ensure that all Django projects using `django-email-relay` are upgraded at roughly the same time. See the [Updating](#updating) section of the documentation for more information.
+
 ## Requirements
 
 - Python 3.8, 3.9, 3.10, 3.11, or 3.12
