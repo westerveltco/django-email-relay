@@ -106,6 +106,15 @@ def test_relay_healthcheck_url(runrelay, caplog):
     assert "healthcheck ping successful" in caplog.text
 
 
+@responses.activate
+def test_relay_healthcheck_url_not_configured(runrelay):
+    responses.add(responses.GET, "http://example.com/healthcheck", status=200)
+
+    runrelay.ping_healthcheck()
+
+    assert len(responses.calls) == 0
+
+
 @override_settings(
     DJANGO_EMAIL_RELAY={
         "RELAY_HEALTHCHECK_URL": "http://example.com/healthcheck",
