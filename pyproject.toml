@@ -27,9 +27,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: Implementation :: CPython",
 ]
-dependencies = [
-  "django>=3.2",
-]
+dependencies = ["django>=3.2"]
 description = "A Django app for relaying email to an external service via a database."
 dynamic = ["version"]
 keywords = []
