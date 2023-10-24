@@ -11,8 +11,7 @@ FROM base as py
 COPY src /app/src
 COPY pyproject.toml README.md /app
 RUN python -m pip install --upgrade pip \
-  && python -m pip install '.[psycopg]' \
-  && python -m pip install '.[relay]'
+  && python -m pip install '.[psycopg,relay]'
 
 
 FROM base as app
