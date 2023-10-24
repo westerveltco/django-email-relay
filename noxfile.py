@@ -45,7 +45,7 @@ def tests(session, django):
     if skip[0]:
         session.skip(skip[1])
 
-    session.install(".[dev]")
+    session.install(".[dev,relay]")
 
     if django == DJMAIN:
         session.install("https://github.com/django/django/archive/refs/heads/main.zip")
@@ -57,7 +57,7 @@ def tests(session, django):
 
 @nox.session
 def coverage(session):
-    session.install(".[dev]")
+    session.install(".[dev,relay]")
     session.run("python", "-m", "pytest", "--cov=email_relay")
 
     try:
@@ -92,5 +92,5 @@ def lint(session):
 
 @nox.session
 def mypy(session):
-    session.install(".[dev]")
+    session.install(".[dev,relay]")
     session.run("python", "-m", "mypy", ".")
