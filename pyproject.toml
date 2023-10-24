@@ -31,7 +31,7 @@ dependencies = [
   "django>=3.2",
   "dj-database-url",
 ]
-description = "A Django app for relaying email to an external service via a database."
+description = "Centralize and relay email from multiple distributed Django projects to an internal SMTP server via a database queue."
 dynamic = ["version"]
 keywords = []
 license = "MIT"
