@@ -136,7 +136,7 @@ pythonpath = ". src"
 addopts = "--create-db -n auto --dist loadfile --doctest-modules"
 norecursedirs = ".* bin build dist *.egg htmlcov logs node_modules templates venv"
 python_files = "tests.py test_*.py *_tests.py"
-testpaths = ["tests"]
+testpaths = ["docker", "tests"]
 
 [tool.ruff]
 ignore = ["E501", "E741"] # temporary
