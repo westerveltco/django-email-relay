@@ -80,24 +80,6 @@ packages = ["src/email_relay"]
 [tool.hatch.version]
 path = "src/email_relay/__init__.py"
 
-[tool.black]
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-  | venv
-)/
-'''
-include = '\.pyi?$'
-line-length = 88
-
 [tool.bumpver]
 commit = true
 commit_message = ":bookmark: bump version {old_version} -> {new_version}"
@@ -165,6 +147,7 @@ select = [
   "E", # Pycodestyle
   "F", # Pyflakes
   "I", # isort
+  "UP", # pyupgrade
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
@@ -179,12 +162,14 @@ exclude = [
   ".git",
   ".github",
   ".hg",
+  ".mypy_cache",
   ".ruff_cache",
   ".svn",
   ".tox",
   ".venv",
   "__pypackages__",
   "_build",
+  "buck-out",
   "build",
   "dist",
   "migrations",
@@ -192,19 +177,38 @@ exclude = [
   "static",
   "venv",
 ]
+extend-include = ["*.pyi?"]
 
 per-file-ignores = {}
 
 # Same as Black.
 line-length = 88
+indent-width = 4
 
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-# Assume Python 3.11.
-target-version = "py311"
+# Assume Python >3.8.
+target-version = "py38"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+# magic-trailing-comma = "respect"
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
 
 [tool.ruff.isort]
 force-single-line = true
 known-first-party = ["email_relay"]
 required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.pyupgrade]
+# Preserve types, even if a file imports `from __future__ import annotations`.
+keep-runtime-typing = true

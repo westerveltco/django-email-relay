@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 from django.core.mail import EmailMessage
 from django.core.mail.backends.base import BaseEmailBackend
