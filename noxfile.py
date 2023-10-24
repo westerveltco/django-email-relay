@@ -52,7 +52,7 @@ def tests(session, django):
     else:
         session.install(f"django=={django}")
 
-    session.run("python", "-m", "pytest", "-n", "auto", "--dist", "loadfile")
+    session.run("python", "-m", "pytest")
 
 
 @nox.session
