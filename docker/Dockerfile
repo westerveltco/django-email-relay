@@ -15,7 +15,7 @@ RUN python -m pip install --upgrade pip \
 
 
 FROM base as app
-COPY service.py /app
+COPY docker/service.py /app
 
 
 FROM base as final
