@@ -71,16 +71,14 @@ def send_all():
                     message.fail(log=msg)
                     logger.warning(msg)
             except Exception as err:
-                if isinstance(
-                    err,
-                    (
-                        smtplib.SMTPAuthenticationError,
-                        smtplib.SMTPDataError,
-                        smtplib.SMTPRecipientsRefused,
-                        smtplib.SMTPSenderRefused,
-                        socket_error,
-                    ),
-                ):
+                handled_exceptions = (
+                    smtplib.SMTPAuthenticationError,
+                    smtplib.SMTPDataError,
+                    smtplib.SMTPRecipientsRefused,
+                    smtplib.SMTPSenderRefused,
+                    socket_error,
+                )
+                if isinstance(err, handled_exceptions):
                     logger.debug(f"deferring message {message.id} due to {err}")
                     message.defer(log=str(err))
                     if message.retry_count >= app_settings.EMAIL_MAX_RETRIES:

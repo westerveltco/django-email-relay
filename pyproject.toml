@@ -147,6 +147,7 @@ select = [
   "E", # Pycodestyle
   "F", # Pyflakes
   "I", # isort
+  "UP", # pyupgrade
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
@@ -187,8 +188,8 @@ indent-width = 4
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-# Assume Python 3.11.
-target-version = "py311"
+# Assume Python >3.8.
+target-version = "py38"
 
 [tool.ruff.format]
 # Like Black, use double quotes for strings.
@@ -207,3 +208,7 @@ line-ending = "auto"
 force-single-line = true
 known-first-party = ["email_relay"]
 required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.pyupgrade]
+# Preserve types, even if a file imports `from __future__ import annotations`.
+keep-runtime-typing = true
