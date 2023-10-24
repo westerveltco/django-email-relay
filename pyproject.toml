@@ -29,7 +29,6 @@ classifiers = [
 ]
 dependencies = [
   "django>=3.2",
-  "dj-database-url",
 ]
 description = "A Django app for relaying email to an external service via a database."
 dynamic = ["version"]
@@ -58,6 +57,7 @@ dev = [
 lint = ["pre-commit"]
 psycopg = ["psycopg[binary]"]
 psycopg2 = ["psycopg2-binary"]
+relay = ["dj-database-url"]
 
 [project.urls]
 Documentation = "https://github.com/westerveltco/django-email-relay#readme"
