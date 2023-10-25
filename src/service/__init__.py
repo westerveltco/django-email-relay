@@ -4,11 +4,11 @@ import copy
 import os
 from typing import Any
 
-import dj_database_url
 import django
 from django.conf import global_settings
 from django.conf import settings
 from django.core.management import call_command
+from environs import Env
 
 from email_relay.conf import EMAIL_RELAY_SETTINGS_NAME
 
@@ -133,9 +133,11 @@ def merge_with_defaults(
     return return_dict
 
 
+env = Env()
+
 default_settings = {
     "DATABASES": {
-        "default": dj_database_url.parse(os.getenv("DATABASE_URL", "sqlite://:memory:"))
+        "default": env.dj_db_url("DATABASE_URL", default="sqlite://:memory:")
     },
     "LOGGING": {
         "version": 1,
@@ -147,7 +149,7 @@ default_settings = {
         },
         "root": {
             "handlers": ["console"],
-            "level": os.getenv("LOG_LEVEL", "INFO"),
+            "level": env("LOG_LEVEL", "INFO"),
         },
     },
     "INSTALLED_APPS": [
