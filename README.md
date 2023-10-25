@@ -26,7 +26,15 @@ We have an internal SMTP server that can be used for any application deployed on
 
 After discussing with our infrastructure and security team, we thought about what would be the simplest and most straightforward to develop and deploy while also not compromising on security. Taking inspiration from another Django package, [`django-mailer`](https://github.com/pinax/django-mailer/), we decided that a solution utilizing a central database queue that our cloud-hosted Django applications can use to store emails to be sent and a relay service that can be run on-premises that reads from that queue would fulfill those requirements. This is what `django-email-relay` is.
 
-## Limitations
+### Benefits
+
+- By utilizing an internal SMTP server for email dispatch, `django-email-relay` reduces the security risks associated with using external ESPs, aligning with stringent corporate security policies.
+- The relay service is available as either a standalone Docker image or a Django management command, giving you the flexibility to choose the deployment method that suits your infrastructure.
+- Emails are stored in the database as part of a transaction. If a transaction fails, the associated email records can be rolled back, ensuring data consistency and integrity.
+- By using an internal SMTP server, you are less likely to have your emails marked as spam or filtered by company-specific policies, ensuring more reliable delivery, especially if your primary audience is internal employees.
+- By utilizing an existing internal SMTP server, you can potentially reduce costs associated with third-party ESPs.
+
+### Limitations
 
 As `django-email-relay` is based on `django-mailer`, it shares a lot of the same limitations, detailed [here](https://github.com/pinax/django-mailer/blob/863a99752e6928f9825bae275f69bf8696b836cb/README.rst#limitations). Namely:
 
