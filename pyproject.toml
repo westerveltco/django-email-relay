@@ -64,12 +64,13 @@ Source = "https://github.com/westerveltco/django-email-relay"
 
 [tool.hatch.build]
 exclude = [
+  ".github/*",
+  ".dockerfiles/*",
   ".dockerignore",
   ".editorconfig",
   ".pre-commit-config.yaml",
-  "Dockerfile",
   "Justfile",
-  "service.py",
+  "src/service/*",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -99,12 +100,10 @@ fail_under = 50
 
 [tool.coverage.run]
 omit = [
-  "manage.py",
-  "service.py",
   "src/email_relay/migrations/*",
   "tests/*",
 ]
-source = ["email_relay"]
+source = ["email_relay", "service"]
 
 [tool.django-stubs]
 django_settings_module = "tests.settings"
@@ -132,11 +131,11 @@ ignore_missing_model_attributes = true
 
 [tool.pytest.ini_options]
 django_find_project = false
-pythonpath = ". src"
+pythonpath = "src"
 addopts = "--create-db -n auto --dist loadfile --doctest-modules"
 norecursedirs = ".* bin build dist *.egg htmlcov logs node_modules templates venv"
 python_files = "tests.py test_*.py *_tests.py"
-testpaths = ["tests"]
+testpaths = ["src/service", "tests"]
 
 [tool.ruff]
 ignore = ["E501", "E741"] # temporary
@@ -204,7 +203,7 @@ line-ending = "auto"
 
 [tool.ruff.isort]
 force-single-line = true
-known-first-party = ["email_relay"]
+known-first-party = ["email_relay", "service"]
 required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.pyupgrade]

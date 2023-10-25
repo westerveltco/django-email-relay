@@ -114,7 +114,7 @@ enter CONTAINER="relay[-_]devcontainer[-_]app" SHELL="zsh" WORKDIR="/workspace" 
     fi
 
 testbuild:
-    docker build -t relay:latest .
+    docker build -t relay:latest -f .dockerfiles/Dockerfile .
 
 testrun *ARGS:
     docker run -it --rm -p 8000:8000 {{ ARGS }} relay:latest

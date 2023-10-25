@@ -15,7 +15,7 @@ RUN python -m pip install --upgrade pip \
 
 
 FROM base as app
-COPY service.py /app
+COPY src/service /app
 
 
 FROM base as final
