@@ -400,7 +400,7 @@ The URL to ping after a loop of sending emails is complete. This can be used to 
 
 ### Relay Service
 
-At a minimum, you should configure the relay service's connection to the database -- via a `DATABASE_URL` -- and how it will connect to your SMTP server, which, depending on your SMTP server, can include any or all the following Django settings:
+At a minimum, you should configure the relay service's connection to the database and how it will connect to your SMTP server, which, depending on your SMTP server, can include any or all the following Django settings:
 
 - `EMAIL_HOST`
 - `EMAIL_PORT`
