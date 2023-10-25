@@ -206,7 +206,7 @@ A major release does not necessarily mean that there are breaking changes or one
 
 ## Usage
 
-Once your Django project is configured to use `email_relay.backend.RelayDatabaseEmailBackend` and its `EMAIL_BACKEND`, sending email is as simple as using Django's built-in ways of sending email, such as the `send_mail` method:
+Once your Django project is configured to use `email_relay.backend.RelayDatabaseEmailBackend` as its `EMAIL_BACKEND`, sending email is as simple as using Django's built-in ways of sending email, such as the `send_mail` method:
 
 ```python
 from django.core.mail import send_mail
