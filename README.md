@@ -43,6 +43,8 @@ As `django-email-relay` is based on `django-mailer`, it shares a lot of the same
 
 ## Installation
 
+You should install and setup the relay service provided by `django-email-relay` first before installing and configuring the Django app on your distributed Django projects. In the setup for the relay service, the database will be created and migrations will be run, which will need to be done before the distributed Django apps can use the relay service to send emails.
+
 ### Relay Service
 
 The relay service provided by `django-email-relay` is responsible for reading a central database queue and sending emails from that queue through an SMTP server. As such, it should be run on infrastructure that has access to the SMTP server you would like to use. There are currently two ways to run the service:
@@ -66,6 +68,7 @@ It can be run any way you would normally run a Docker container, for instance, t
 
 ```shell
 docker run -d \
+  -e "DATABASE_URL=postgres://email_relay_user:email_relay_password@localhost:5432/email_relay_db" \
   -e "EMAIL_HOST=smtp.example.com" \
   -e "EMAIL_PORT=25" \
   --restart unless-stopped \
@@ -73,6 +76,8 @@ docker run -d \
 ```
 
 It is recommended to pin to a specific version, though if you prefer, you can ride the lightning by always pulling the `latest` image.
+
+The `migrate` step is baked into the image, so there is no need to run it yourself.
 
 See the documentation [here](#configuration) for general information about configuring `django-email-relay`, [here](#relay-service-1) for information about configuring the relay service, and [here](#docker-1) for information specifically related to configuring the relay service as a Docker container.
 
@@ -96,7 +101,13 @@ INSTALLED_APPS = [
 ]
 ```
 
-3. Run the `runrelay` management command to start the relay service. This can be done in many different ways, for instance, via a task runner, such as Celery or Django-Q2, or using [supervisord](https://supervisord.org/) or systemd service unit file.
+3. Run the `migrate` management command to create the email relay database:
+
+```shell
+python manage.py migrate
+```
+
+4. Run the `runrelay` management command to start the relay service. This can be done in many different ways, for instance, via a task runner, such as Celery or Django-Q2, or using [supervisord](https://supervisord.org/) or systemd service unit file.
 
 ```shell
 python manage.py runrelay
