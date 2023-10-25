@@ -123,6 +123,9 @@ django_settings_module = "tests.settings"
 strict_settings = false
 
 [tool.mypy]
+exclude = [
+  'docs/.*',
+]
 mypy_path = "src/"
 namespace_packages = false
 check_untyped_defs = true
