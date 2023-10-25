@@ -67,4 +67,3 @@ python manage.py runrelay
 ```
 
 See the documentation [here](../configuration/index.md) for general information about configuring `django-email-relay`, [here](../configuration/relay-service.md) for information about configuring the relay service, and [here](../configuration/relay-service.md#django) for information specifically related to configuring the relay service as a Django app.
-
