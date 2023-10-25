@@ -225,6 +225,24 @@ createdb CONTAINER_NAME="relay_postgres" VERSION="15.3":
     raise SystemExit(main())
 
 ##################
+#     DOCS       #
+##################
+
+@docs-install:
+    python -m pip install '.[docs]'
+
+@docs-serve:
+    #!/usr/bin/env sh
+    if [ -f "/.dockerenv" ]; then
+        sphinx-autobuild docs docs/_build/html --host "0.0.0.0"
+    else
+        sphinx-autobuild docs docs/_build/html --host "localhost"
+    fi
+
+@docs-build LOCATION="docs/_build/html":
+    sphinx-build docs {{ LOCATION }}
+
+##################
 #    ENV SYNC    #
 ##################
 

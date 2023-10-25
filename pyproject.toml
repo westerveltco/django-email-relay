@@ -55,6 +55,15 @@ dev = [
   "responses",
   "types-requests",
 ]
+docs = [
+  "cogapp",
+  "furo",
+  "myst-parser",
+  "sphinx",
+  "sphinx-autobuild",
+  "sphinx-copybutton",
+  "sphinx-inline-tabs",
+]
 hc = ["requests"]
 lint = ["pre-commit"]
 psycopg = ["psycopg[binary]"]
