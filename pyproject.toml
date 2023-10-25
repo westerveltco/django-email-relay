@@ -59,7 +59,7 @@ hc = ["requests"]
 lint = ["pre-commit"]
 psycopg = ["psycopg[binary]"]
 psycopg2 = ["psycopg2-binary"]
-relay = ["dj-database-url"]
+relay = ["environs[django]"]
 
 [project.urls]
 Documentation = "https://github.com/westerveltco/django-email-relay#readme"

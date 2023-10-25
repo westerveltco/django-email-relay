@@ -7,6 +7,9 @@ set dotenv-load := true
 #  DEPENDENCIES  #
 ##################
 
+@bootstrap:
+    python -m pip install --editable '.[dev,hc,relay]'
+
 install:
     python -m pip install --editable '.[dev]'
 
