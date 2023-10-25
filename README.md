@@ -74,7 +74,7 @@ docker run -d \
 
 It is recommended to pin to a specific version, though if you prefer, you can ride the lightning by always pulling the `latest` image.
 
-See the documentation [here](#configuration) for general information about configuring `django-email-relay`, [here](#relay-service-1) for available information about configuring the relay service, and [here](#docker-1) for information specifically related to configuring the relay service as a Docker container.
+See the documentation [here](#configuration) for general information about configuring `django-email-relay`, [here](#relay-service-1) for information about configuring the relay service, and [here](#docker-1) for information specifically related to configuring the relay service as a Docker container.
 
 #### Django
 
