@@ -55,6 +55,15 @@ dev = [
   "responses",
   "types-requests",
 ]
+docs = [
+  "cogapp",
+  "furo",
+  "myst-parser",
+  "sphinx",
+  "sphinx-autobuild",
+  "sphinx-copybutton",
+  "sphinx-inline-tabs",
+]
 hc = ["requests"]
 lint = ["pre-commit"]
 psycopg = ["psycopg[binary]"]
@@ -114,6 +123,7 @@ django_settings_module = "tests.settings"
 strict_settings = false
 
 [tool.mypy]
+exclude = "docs/.*\\.py$"
 mypy_path = "src/"
 namespace_packages = false
 check_untyped_defs = true
