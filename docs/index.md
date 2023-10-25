@@ -6,5 +6,6 @@
 :hidden:
 :maxdepth: 3
 
-contributing.md
+updating
+contributing
 ```
