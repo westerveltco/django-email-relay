@@ -19,4 +19,3 @@ DJANGO_EMAIL_RELAY = {
 It should be set to the URL provided by your health check service. If available, you should set the schedule of the health check within the service to what you have configured for the relay service's [`EMPTY_QUEUE_SLEEP`](../configuration/index.md#empty_queue_sleep) setting, which is `30` seconds by default.
 
 There are also a few other settings that can be configured, such as the HTTP method to use, the expected HTTP status code, and the timeout. See the [configuration](../configuration/index.md) section for more information.
-
