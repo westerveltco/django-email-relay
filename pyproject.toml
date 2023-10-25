@@ -39,7 +39,7 @@ requires-python = ">=3.8"
 [project.optional-dependencies]
 dev = [
   "coverage[toml]",
-  "django-email-relay[hc]",
+  "django-email-relay[hc,relay]",
   "django-stubs",
   "django-stubs-ext",
   "hatch",
