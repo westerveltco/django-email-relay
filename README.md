@@ -102,7 +102,7 @@ INSTALLED_APPS = [
 python manage.py runrelay
 ```
 
-See the documentation [here](#configuration) for general information about configuring `django-email-relay`, [here](#relay-service-1) for general information about configuring the relay service, and [here](#django-1) for information specifically related to configuring the relay service as a Django app.
+See the documentation [here](#configuration) for general information about configuring `django-email-relay`, [here](#relay-service-1) for information about configuring the relay service, and [here](#django-1) for information specifically related to configuring the relay service as a Django app.
 
 ### Django App
 
