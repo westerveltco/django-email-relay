@@ -19,6 +19,10 @@ class AppSettings:
     EMAIL_THROTTLE: int = 0
     MESSAGES_BATCH_SIZE: int | None = None
     MESSAGES_RETENTION_SECONDS: int | None = None
+    RELAY_HEALTHCHECK_METHOD: str = "GET"
+    RELAY_HEALTHCHECK_STATUS_CODE: int = 200
+    RELAY_HEALTHCHECK_TIMEOUT: float | tuple[float, float] | tuple[float, None] = 5.0
+    RELAY_HEALTHCHECK_URL: str | None = None
 
     def __getattribute__(self, __name: str) -> Any:
         user_settings = getattr(settings, EMAIL_RELAY_SETTINGS_NAME, {})
