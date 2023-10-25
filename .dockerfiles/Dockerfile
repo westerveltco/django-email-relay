@@ -15,11 +15,7 @@ RUN python -m pip install --upgrade pip \
 
 
 FROM base as app
-<<<<<<<< HEAD:.dockerfiles/Dockerfile
 COPY src/service /app
-========
-COPY docker/service.py /app
->>>>>>>> 3946173 (move relay service docker files within dedicated folder):docker/Dockerfile
 
 
 FROM base as final

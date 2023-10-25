@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import os
 
-from docker.service import coerce_dict_values
-from docker.service import env_vars_to_nested_dict
-from docker.service import filter_valid_django_settings
-from docker.service import get_user_settings_from_env
-from docker.service import merge_with_defaults
+from service import coerce_dict_values
+from service import env_vars_to_nested_dict
+from service import filter_valid_django_settings
+from service import get_user_settings_from_env
+from service import merge_with_defaults
 
 
 def test_env_vars_to_nested_dict():
