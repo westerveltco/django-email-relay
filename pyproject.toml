@@ -64,10 +64,13 @@ Source = "https://github.com/westerveltco/django-email-relay"
 
 [tool.hatch.build]
 exclude = [
+  ".github/*",
+  ".dockerfiles/*",
   ".dockerignore",
   ".editorconfig",
   ".pre-commit-config.yaml",
   "Justfile",
+  "src/service/*",
 ]
 
 [tool.hatch.build.targets.wheel]
