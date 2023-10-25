@@ -20,19 +20,19 @@ It consists of two parts:
 At [The Westervelt Company](https://github.com/westerveltco), we primarily host our Django applications in the cloud. The majority of the emails we send are to internal Westervelt employees. Prior to developing and using `django-email-relay`, we were using an external Email Service Provider (ESP) to send these emails. This worked well enough, but we ran into a few issues:
 
 - Emails sent by our applications had a tendency to sometimes be marked as spam or otherwise filtered by our company's email provider, which makes using an ESP essentially pointless.
-- As a way to combat phishing emails, we treat and process internal and external emails differently. This meant that in order for our applications' transactional emails to be treated as internal, adjustments and exceptions would need to be made which our security team was not comfortable with.
+- As a way to combat phishing emails, we treat and process internal and external emails differently. This meant that in order for our applications' transactional emails to be treated as internal, adjustments and exceptions would need to be made, which our security team was not comfortable with.
 
-We have an internal SMTP server that can be used for any application deployed on premises which bypasses most of these issues. However, it is not, and there are no plans to make it, publicly accessible -- either through opening firewall ports or by using a service like Tailscale. This meant that we needed to find another way to route emails from our cloud hosted Django applications to this internal SMTP server.
+We have an internal SMTP server that can be used for any application deployed on-premises, which bypasses most of these issues. However, it is not, and there are no plans to make it publicly accessible -- either through opening firewall ports or by using a service like Tailscale. This meant that we needed to find another way to route emails from our cloud-hosted Django applications to this internal SMTP server.
 
-After discussing with our infrastructure and security team, we thought about what would be the simplest and most straightforward to develop and deploy while also not compromising on security. Taking inspiration from another Django package, [`django-mailer`](https://github.com/pinax/django-mailer/), we decided that a solution utilizing a central database queue that our cloud hosted Django applications can use to store emails to be sent and a relay service that can be run on premises that reads from that queue would fulfill those requirements. This is what `django-email-relay` is.
+After discussing with our infrastructure and security team, we thought about what would be the simplest and most straightforward to develop and deploy while also not compromising on security. Taking inspiration from another Django package, [`django-mailer`](https://github.com/pinax/django-mailer/), we decided that a solution utilizing a central database queue that our cloud-hosted Django applications can use to store emails to be sent and a relay service that can be run on-premises that reads from that queue would fulfill those requirements. This is what `django-email-relay` is.
 
 ## Limitations
 
 As `django-email-relay` is based on `django-mailer`, it shares a lot of the same limitations, detailed [here](https://github.com/pinax/django-mailer/blob/863a99752e6928f9825bae275f69bf8696b836cb/README.rst#limitations). Namely:
 
 - Since file attachments are stored in a database, large attachments can potentially cause space and query issues.
-- From the Django applications sending emails it is not possible to know whether an email has actually been sent or not, only whether it has been successfully queued for sending.
-- Emails are not sent immediately, but instead saved in a database queue to be used by the relay service. This means that emails will not be sent unless the relay service is started and running.
+- From the Django applications sending emails, it is not possible to know whether an email has been sent or not, only whether it has been successfully queued for sending.
+- Emails are not sent immediately but instead saved in a database queue to be used by the relay service. This means that emails will not be sent unless the relay service is started and running.
 - Due to the distributed nature of the package and the fact that there are database models, and thus potentially migrations to apply, care should be taken when upgrading to ensure that all Django projects using `django-email-relay` are upgraded at roughly the same time. See the [Updating](#updating) section of the documentation for more information.
 
 ## Requirements
@@ -45,12 +45,12 @@ As `django-email-relay` is based on `django-mailer`, it shares a lot of the same
 
 ### Relay Service
 
-The relay service provided by `django-email-relay` is responsible for reading a central database queue and sending emails from that queue through an SMTP server. As such, it should be run on infrastructure that has access to the SMTP server you would like to use. There currently two ways to run the service:
+The relay service provided by `django-email-relay` is responsible for reading a central database queue and sending emails from that queue through an SMTP server. As such, it should be run on infrastructure that has access to the SMTP server you would like to use. There are currently two ways to run the service:
 
 1. A Docker image
 2. A `runrelay` management command to be run from within a Django project
 
-If you are using the Docker image, only PostgreSQL is supported. However, when using the management command directly you can use whatever database you are using with the Django project it is being run from, provided your other externally hosted Django projects that you would like to relay emails for also have access to the same database. If you would like the Docker image to support other databases, please [open an issue](https://github.com/westerveltco/django-email-relay/issues/new) and it will be considered.
+If you are using the Docker image, only PostgreSQL is supported. However, when using the management command directly, you can use whatever database you are using with the Django project it is being run from, provided your other externally hosted Django projects that you would like to relay emails for also have access to the same database. If you would like the Docker image to support other databases, please [open an issue](https://github.com/westerveltco/django-email-relay/issues/new) and it will be considered.
 
 Installation of the relay service differs depending on whether you are using the provided Docker image or the management command.
 
@@ -62,7 +62,7 @@ A prebuilt Docker image is provided via the GitHub Container Registry, located h
 ghcr.io/westerveltco/django-email-relay
 ```
 
-It can be run anyway you would normally run a Docker container, for instance through the CLI:
+It can be run any way you would normally run a Docker container, for instance, through the CLI:
 
 ```shell
 docker run -d \
@@ -72,9 +72,9 @@ docker run -d \
   ghcr.io/westerveltco/django-email-relay:latest
 ```
 
-It is recommended to pin to a specific version, though if you prefer you can ride the lightning by always pulling the `latest` image.
+It is recommended to pin to a specific version, though if you prefer, you can ride the lightning by always pulling the `latest` image.
 
-See the documentation [here](#configuration) for general information about configuring `django-email-relay`, [here](#relay-service-1) for general information about configuring the relay service, and [here](#docker-1) for information specifically related to configuring the relay service as a Docker container.
+See the documentation [here](#configuration) for general information about configuring `django-email-relay`, [here](#relay-service-1) for information about configuring the relay service, and [here](#docker-1) for information specifically related to configuring the relay service as a Docker container.
 
 #### Django
 
@@ -96,13 +96,13 @@ INSTALLED_APPS = [
 ]
 ```
 
-3. Run the `runrelay` management command to start the relay service. This can be done many different ways, for instance via a task runner, such as Celery or Django-Q2, or using [supervisord](https://supervisord.org/) or systemd service unit file.
+3. Run the `runrelay` management command to start the relay service. This can be done in many different ways, for instance, via a task runner, such as Celery or Django-Q2, or using [supervisord](https://supervisord.org/) or systemd service unit file.
 
 ```shell
 python manage.py runrelay
 ```
 
-See the documentation [here](#configuration) for general information about configuring `django-email-relay`, [here](#relay-service-1) for general information about configuring the relay service, and [here](#django-1) for information specifically related to configuring the relay service as a Django app.
+See the documentation [here](#configuration) for general information about configuring `django-email-relay`, [here](#relay-service-1) for information about configuring the relay service, and [here](#django-1) for information specifically related to configuring the relay service as a Django app.
 
 ### Django App
 
@@ -186,7 +186,7 @@ See the documentation [here](#configuration) for general information about confi
 
 ## Updating
 
-As `django-email-relay` involves database models and the potential for migrations, care should be taken when updating to ensure that all Django projects using `django-email-relay` are upgraded at roughly the same time. See the [deprecation policy](#deprecation-policy) for more information regarding backwards incompatible changes.
+As `django-email-relay` involves database models and the potential for migrations, care should be taken when updating to ensure that all Django projects using `django-email-relay` are upgraded at roughly the same time. See the [deprecation policy](#deprecation-policy) for more information regarding backward incompatible changes.
 
 When updating to a new version, it is recommended to follow the following steps:
 
@@ -195,10 +195,10 @@ When updating to a new version, it is recommended to follow the following steps:
 
 ### Deprecation Policy
 
-Any changes that involve models and/or migrations, or anything else that is potentially backwards incompatible, will be split across two or more releases:
+Any changes that involve models and/or migrations, or anything else that is potentially backward incompatible, will be split across two or more releases:
 
-1. A release that adds the changes in a backwards compatible way, with a deprecation warning. This release will be tagged with a minor version bump, e.g. `0.1.0` to `0.2.0`.
-2. A release that removes the backwards compatible changes and removes the deprecation warning. This release will be tagged with a major version bump, e.g. `0.2.0` to `1.0.0`.
+1. A release that adds the changes in a backward compatible way, with a deprecation warning. This release will be tagged with a minor version bump, e.g., `0.1.0` to `0.2.0`.
+2. A release that removes the backward compatible changes and removes the deprecation warning. This release will be tagged with a major version bump, e.g., `0.2.0` to `1.0.0`.
 
 This is unlikely to happen often, but it is important to keep in mind when updating.
 
@@ -206,7 +206,7 @@ A major release does not necessarily mean that there are breaking changes or one
 
 ## Usage
 
-Once your Django project is configured to use `email_relay.backend.RelayDatabaseEmailBackend` as it's `EMAIL_BACKEND`, sending email is as simple as using Django's built-in ways of sending email, such as the `send_mail` method:
+Once your Django project is configured to use `email_relay.backend.RelayDatabaseEmailBackend` as its `EMAIL_BACKEND`, sending email is as simple as using Django's built-in ways of sending email, such as the `send_mail` method:
 
 ```python
 from django.core.mail import send_mail
@@ -228,9 +228,9 @@ See the Django documentation on [sending email](https://docs.djangoproject.com/e
 
 Configuration of `django-email-relay` is done through the `DJANGO_EMAIL_RELAY` dictionary in your Django settings.
 
-Depending on whether you are configuring the relay service or the Django app, different settings are available: some settings are available for both, while others are only available for one or the other. If you configure a setting that does not apply, for instance if you configure something related to the relay service from one of the distributed Django apps, it will have no effect. See the individual sections for each setting below for more information.
+Depending on whether you are configuring the relay service or the Django app, different settings are available. Some settings are available for both, while others are only available for one or the other. If you configure a setting that does not apply, for instance, if you configure something related to the relay service from one of the distributed Django apps, it will have no effect. See the individual sections for each setting below for more information.
 
-All settings are optional. Here is an example configuration, with the default values shown:
+All settings are optional. Here is an example configuration with the default values shown:
 
 ```python
 DJANGO_EMAIL_RELAY = {
@@ -297,7 +297,7 @@ The time in seconds to wait before checking the queue for new emails to send. Th
 | Relay Service | Yes ✅       |
 | Django App    | No 🚫        |
 
-The time in seconds to sleep between sending emails, to avoid potential rate limits or overloading your SMTP server. The default is `0` seconds.
+The time in seconds to sleep between sending emails to avoid potential rate limits or overloading your SMTP server. The default is `0` seconds.
 
 #### `MESSAGES_BATCH_SIZE`
 
@@ -319,22 +319,22 @@ The time in seconds to keep `Messages` in the database before deleting them. `No
 
 ### Relay Service
 
-At a minimum, you should configure how the relay service will connect to your SMTP server, which depending on your SMTP server can include any or all the following Django settings:
+At a minimum, you should configure how the relay service will connect to your SMTP server, which, depending on your SMTP server, can include any or all the following Django settings:
 
 - `EMAIL_HOST`
 - `EMAIL_PORT`
 - `EMAIL_HOST_USER`
 - `EMAIL_HOST_PASSWORD`
 
-Additionally, the service can be configured using any setting available to Django by default, for example if you want to set a default from email (`DEFAULT_FROM_EMAIL`) or a common subject prefix (`EMAIL_SUBJECT_PREFIX`).
+Additionally, the service can be configured using any setting available to Django by default, for example, if you want to set a default from email (`DEFAULT_FROM_EMAIL`) or a common subject prefix (`EMAIL_SUBJECT_PREFIX`).
 
 Configuration of the relay service differs depending on whether you are using the provided Docker image or the management command within a Django project.
 
 #### Docker
 
-When running the relay service using Docker, config values are set via environment variables. The names of the environment variables are the same as the Django settings, e.g. to set `DEBUG` to `True`, you would set `-e "DEBUG=True"` when running the container.
+When running the relay service using Docker, config values are set via environment variables. The names of the environment variables are the same as the Django settings, e.g., to set `DEBUG` to `True`, you would set `-e "DEBUG=True"` when running the container.
 
-For settings that are dictionaries, a `__` is used to separate the keys, e.g. to set `DATABASES["default"]["CONN_MAX_AGE"]` to `600` or 10 minutes, you would set `-e "DATABASES__default__CONN_MAX_AGE=600"`.
+For settings that are dictionaries, a `__` is used to separate the keys, e.g., to set `DATABASES["default"]["CONN_MAX_AGE"]` to `600` or 10 minutes, you would set `-e "DATABASES__default__CONN_MAX_AGE=600"`.
 
 #### Django
 
@@ -346,7 +346,7 @@ All contributions are welcome! Besides code contributions, this includes things 
 
 You should first check if there is a [GitHub issue](https://github.com/westerveltco/django-email-relay/issues) already open or related to what you would like to contribute. If there is, please comment on that issue to let others know you are working on it. If there is not, please open a new issue to discuss your contribution.
 
-Not all contributions need to start with an issue, such as typo fixes in documentation or version bumps to Python or Django that require no internal code changes, but generally it is a good idea to open an issue first.
+Not all contributions need to start with an issue, such as typo fixes in documentation or version bumps to Python or Django that require no internal code changes, but generally, it is a good idea to open an issue first.
 
 We adhere to Django's Code of Conduct in all interactions and expect all contributors to do the same. Please read the [Code of Conduct](https://www.djangoproject.com/conduct/) before contributing.
 
@@ -386,7 +386,7 @@ python -m nox
 
 ### `just`
 
-[`just`](https://github.com/casey/just) is a command runner that is used to run common commands, similar to `make` or `invoke`. A `Justfile` is provided at the base of the repository which contains commands for common development tasks, such as running the test suite or linting.
+[`just`](https://github.com/casey/just) is a command runner that is used to run common commands, similar to `make` or `invoke`. A `Justfile` is provided at the base of the repository, which contains commands for common development tasks, such as running the test suite or linting.
 
 To see a list of all available commands, ensure `just` is installed and run the following command at the base of the repository:
 
