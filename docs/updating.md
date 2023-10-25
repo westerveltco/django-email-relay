@@ -17,4 +17,3 @@ Any changes that involve models and/or migrations, or anything else that is pote
 This is unlikely to happen often, but it is important to keep in mind when updating.
 
 A major release does not necessarily mean that there are breaking changes or ones involving models and migrations. You should always check the [changelog](CHANGELOG.md) and a version's release notes for more information.
-
