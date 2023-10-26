@@ -15,7 +15,14 @@ class EmailDatabaseRouter:
         return "default"
 
     def allow_relation(self, obj1, obj2, **hints):
-        return True
+        if (
+            obj1._meta.app_label == "email_relay"
+            or obj2._meta.app_label == "email_relay"
+        ):
+            return True
+        return None
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
-        return True
+        if app_label == "email_relay":
+            return db == app_settings.DATABASE_ALIAS
+        return None
