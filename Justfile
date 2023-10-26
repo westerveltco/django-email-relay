@@ -75,7 +75,7 @@ manage *COMMAND:
         ) from exc
 
     settings.configure(INSTALLED_APPS=["email_relay"])
-    execute_from_command_line(sys.argv + ["{{ COMMAND }}"])
+    execute_from_command_line(sys.argv + "{{ COMMAND }}".split(" "))
 
 alias mm := makemigrations
 
