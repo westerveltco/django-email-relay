@@ -234,3 +234,58 @@ class TestMessageModel:
         assert email_from_db.attachments[0][0] == "test.zip"
         assert email_from_db.attachments[0][1] == attachment_content
         assert email_from_db.attachments[0][2] == "application/zip"
+
+    def test_email_send(self, data, mailoutbox):
+        message = Message.objects.create(data=data)
+        email = EmailMultiAlternatives(
+            subject="Test 2",
+            body="Test 2",
+            from_email="from2@example.com",
+            to=["to2@example.com"],
+        )
+        message.email = email
+        message.save()
+
+        message.email.send()
+
+        assert len(mailoutbox) == 1
+
+    def test_email_send_with_plain_text_attachment(self, mailoutbox):
+        email = EmailMultiAlternatives(
+            subject="Test",
+            body="Test",
+            from_email="from@example.com",
+            to=["to@example.com"],
+        )
+        email.attach(
+            filename="test.txt",
+            content=b"Hello World!",
+            mimetype="text/plain",
+        )
+        message = Message()
+        message.email = email
+        message.save()
+
+        message.email.send()
+
+        assert len(mailoutbox) == 1
+
+    def test_email_send_with_binary_attachment(self, faker, mailoutbox):
+        email = EmailMultiAlternatives(
+            subject="Test",
+            body="Test",
+            from_email="from@example.com",
+            to=["to@example.com"],
+        )
+        email.attach(
+            filename="test.zip",
+            content=faker.binary(length=10),
+            mimetype="application/zip",
+        )
+        message = Message()
+        message.email = email
+        message.save()
+
+        message.email.send()
+
+        assert len(mailoutbox) == 1
