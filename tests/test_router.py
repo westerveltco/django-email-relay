@@ -34,8 +34,8 @@ def test_db_for_write(router):
 
 
 def test_allow_relation(router):
-    assert router.allow_relation(None, None)
+    assert router.allow_relation(MockModel, MockModel)
 
 
 def test_allow_migrate(router):
-    assert router.allow_migrate("some_db", "some_app_label")
+    assert router.allow_migrate(app_settings.DATABASE_ALIAS, "email_relay")
