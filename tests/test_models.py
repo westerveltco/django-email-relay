@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import datetime
+import base64
 
 import pytest
 from django.utils import timezone
+from django.core.mail import EmailMessage, EmailMultiAlternatives
 from model_bakery import baker
 
 from email_relay.models import Message
@@ -118,3 +120,151 @@ class TestMessageQuerySet:
         assert one_week in queryset
         assert now not in queryset
         assert not_sent not in queryset
+
+
+@pytest.mark.django_db(databases=["default", "email_relay_db"])
+class TestMessageModel:
+    @pytest.fixture
+    def data(self):
+        return {
+            "subject": "Test",
+            "message": "Test",
+            "from_email": "from@example.com",
+            "recipient_list": ["to@example.com"],
+        }
+
+    @pytest.fixture
+    def email(self):
+        return EmailMultiAlternatives(
+            subject="Test",
+            body="Test",
+            from_email="from@example.com",
+            to=["to@example.com"],
+        )
+
+    def test_create_message(self, data):
+        message = Message.objects.create(data=data)
+
+        assert message.data == data
+        assert message.priority == Priority.LOW
+        assert message.status == Status.QUEUED
+        assert message.retry_count == 0
+        assert message.log == ""
+        assert message.sent_at is None
+
+    def test_email_property(self, data):
+        message = Message.objects.create(data=data)
+
+        email = message.email
+
+        assert isinstance(email, EmailMessage)
+        assert email.subject == data["subject"]
+        assert email.body == data["message"]
+        assert email.from_email == data["from_email"]
+        assert email.to == data["recipient_list"]
+
+    def test_email_setter(self, data):
+        message = Message.objects.create(data=data)
+        email = EmailMultiAlternatives(
+            subject="Test 2",
+            body="Test 2",
+            from_email="from2@example.com",
+            to=["to2@example.com"],
+        )
+
+        message.email = email
+        message.save()
+
+        assert message.data["subject"] == email.subject
+        assert message.data["message"] == email.body
+        assert message.data["from_email"] == email.from_email
+        assert message.data["recipient_list"] == email.to
+
+    def test_email_with_plain_text_attachment(self, email):
+        attachment_content = b"Hello World!"
+        email.attach(
+            filename="test.txt",
+            content=attachment_content,
+            mimetype="text/plain",
+        )
+
+        message = Message()
+        message.email = email
+        message.save()
+
+        assert Message.objects.count() == 1
+
+        saved_message = Message.objects.first()
+        assert saved_message.data["attachments"][0]["filename"] == "test.txt"
+        assert saved_message.data["attachments"][0][
+            "content"
+        ] == attachment_content.decode("utf-8")
+        assert saved_message.data["attachments"][0]["mimetype"] == "text/plain"
+
+        email_from_db = saved_message.email
+        assert email_from_db.attachments[0][0] == "test.txt"
+        assert email_from_db.attachments[0][1] == attachment_content.decode("utf-8")
+        assert email_from_db.attachments[0][2] == "text/plain"
+
+    def test_email_with_binary_attachment(self, email, faker):
+        attachment_content = faker.binary(length=10)
+        email.attach(
+            filename="test.zip",
+            content=attachment_content,
+            mimetype="application/zip",
+        )
+
+        message = Message()
+        message.email = email
+        message.save()
+
+        assert Message.objects.count() == 1
+
+        saved_message = Message.objects.first()
+        assert saved_message.data["attachments"][0]["filename"] == "test.zip"
+        assert saved_message.data["attachments"][0]["content"] == base64.b64encode(
+            attachment_content
+        ).decode("utf-8")
+        assert saved_message.data["attachments"][0]["mimetype"] == "application/zip"
+
+        email_from_db = saved_message.email
+        assert email_from_db.attachments[0][0] == "test.zip"
+        assert email_from_db.attachments[0][1] == attachment_content
+        assert email_from_db.attachments[0][2] == "application/zip"
+
+    def test_email_send(self, email, mailoutbox):
+        message = Message()
+        message.email = email
+        message.save()
+
+        message.email.send()
+
+        assert len(mailoutbox) == 1
+
+    def test_email_send_with_plain_text_attachment(self, email, mailoutbox):
+        email.attach(
+            filename="test.txt",
+            content=b"Hello World!",
+            mimetype="text/plain",
+        )
+        message = Message()
+        message.email = email
+        message.save()
+
+        message.email.send()
+
+        assert len(mailoutbox) == 1
+
+    def test_email_send_with_binary_attachment(self, email, faker, mailoutbox):
+        email.attach(
+            filename="test.zip",
+            content=faker.binary(length=10),
+            mimetype="application/zip",
+        )
+        message = Message()
+        message.email = email
+        message.save()
+
+        message.email.send()
+
+        assert len(mailoutbox) == 1

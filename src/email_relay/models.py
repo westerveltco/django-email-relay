@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import binascii
 import datetime
 from email.mime.base import MIMEBase
 
@@ -124,7 +126,22 @@ class Message(models.Model):
 
         for attachment in data.get("attachments", []):
             if isinstance(attachment, dict):
-                email.attach(**attachment)
+                content = attachment.get("content")
+                if isinstance(content, str):
+                    try:
+                        # Attempt to decode the base64 string into bytes
+                        decoded_content = base64.b64decode(content)
+                    except binascii.Error:
+                        # Fallback to assuming it's plain text, encoded as bytes
+                        decoded_content = content.encode("utf-8")
+
+                    email.attach(
+                        filename=attachment.get("filename", ""),
+                        content=decoded_content,
+                        mimetype=attachment.get("mimetype", ""),
+                    )
+                else:
+                    email.attach(**attachment)
             else:
                 email.attach(*attachment)
 
@@ -148,7 +165,9 @@ class Message(models.Model):
             "attachments": [
                 {
                     "filename": attachment[0],
-                    "content": attachment[1],
+                    "content": base64.b64encode(attachment[1]).decode("utf-8")
+                    if isinstance(attachment[1], bytes)
+                    else attachment[1],
                     "mimetype": attachment[2],
                 }
                 if not isinstance(attachment, MIMEBase)

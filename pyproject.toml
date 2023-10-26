@@ -42,6 +42,7 @@ dev = [
   "django-email-relay[hc,relay]",
   "django-stubs",
   "django-stubs-ext",
+  "faker",
   "hatch",
   "model_bakery",
   "mypy",
