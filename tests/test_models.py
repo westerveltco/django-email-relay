@@ -133,6 +133,15 @@ class TestMessageModel:
             "recipient_list": ["to@example.com"],
         }
 
+    @pytest.fixture
+    def email(self):
+        return EmailMultiAlternatives(
+            subject="Test",
+            body="Test",
+            from_email="from@example.com",
+            to=["to@example.com"],
+        )
+
     def test_create_message(self, data):
         message = Message.objects.create(data=data)
 
@@ -171,13 +180,7 @@ class TestMessageModel:
         assert message.data["from_email"] == email.from_email
         assert message.data["recipient_list"] == email.to
 
-    def test_email_with_plain_text_attachment(self):
-        email = EmailMultiAlternatives(
-            subject="Test",
-            body="Test",
-            from_email="from@example.com",
-            to=["to@example.com"],
-        )
+    def test_email_with_plain_text_attachment(self, email):
         attachment_content = b"Hello World!"
         email.attach(
             filename="test.txt",
@@ -203,13 +206,7 @@ class TestMessageModel:
         assert email_from_db.attachments[0][1] == attachment_content.decode("utf-8")
         assert email_from_db.attachments[0][2] == "text/plain"
 
-    def test_email_with_binary_attachment(self, faker):
-        email = EmailMultiAlternatives(
-            subject="Test",
-            body="Test",
-            from_email="from@example.com",
-            to=["to@example.com"],
-        )
+    def test_email_with_binary_attachment(self, email, faker):
         attachment_content = faker.binary(length=10)
         email.attach(
             filename="test.zip",
@@ -235,13 +232,7 @@ class TestMessageModel:
         assert email_from_db.attachments[0][1] == attachment_content
         assert email_from_db.attachments[0][2] == "application/zip"
 
-    def test_email_send(self, mailoutbox):
-        email = EmailMultiAlternatives(
-            subject="Test",
-            body="Test",
-            from_email="from@example.com",
-            to=["to@example.com"],
-        )
+    def test_email_send(self, email, mailoutbox):
         message = Message()
         message.email = email
         message.save()
@@ -250,13 +241,7 @@ class TestMessageModel:
 
         assert len(mailoutbox) == 1
 
-    def test_email_send_with_plain_text_attachment(self, mailoutbox):
-        email = EmailMultiAlternatives(
-            subject="Test",
-            body="Test",
-            from_email="from@example.com",
-            to=["to@example.com"],
-        )
+    def test_email_send_with_plain_text_attachment(self, email, mailoutbox):
         email.attach(
             filename="test.txt",
             content=b"Hello World!",
@@ -270,13 +255,7 @@ class TestMessageModel:
 
         assert len(mailoutbox) == 1
 
-    def test_email_send_with_binary_attachment(self, faker, mailoutbox):
-        email = EmailMultiAlternatives(
-            subject="Test",
-            body="Test",
-            from_email="from@example.com",
-            to=["to@example.com"],
-        )
+    def test_email_send_with_binary_attachment(self, email, faker, mailoutbox):
         email.attach(
             filename="test.zip",
             content=faker.binary(length=10),
