@@ -110,7 +110,7 @@ version_pattern = "MAJOR.MINOR.PATCH[PYTAGNUM]"
 source = ["src"]
 
 [tool.coverage.report]
-fail_under = 50
+fail_under = 85
 
 [tool.coverage.run]
 omit = [
