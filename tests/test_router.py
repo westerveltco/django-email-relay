@@ -37,5 +37,9 @@ def test_allow_relation(router):
     assert router.allow_relation(MockModel, MockModel)
 
 
+def test_allow_relation_other(router):
+    assert router.allow_relation(MockModel, MockModelOther) is None
+
+
 def test_allow_migrate(router):
     assert router.allow_migrate(app_settings.DATABASE_ALIAS, "email_relay")
