@@ -17,7 +17,7 @@ It consists of two parts:
 2. A relay service that reads from this queue to orchestrate email sending. It is available as either a standalone Docker image or a management command to be used within a Django project that does have access to the preferred SMTP server.
 <!-- intro-end -->
 
-## Documentation
+## Getting Started
 
 Visit the [documentation](https://django-email-relay.westervelt.dev/) for more information. There you will find:
 
