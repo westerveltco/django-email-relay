@@ -7,18 +7,15 @@ set dotenv-load := true
 #  DEPENDENCIES  #
 ##################
 
-@bootstrap:
+bootstrap:
     python -m pip install --editable '.[dev,hc,relay]'
-
-install:
-    python -m pip install --editable '.[dev]'
 
 pup:
     python -m pip install --upgrade pip
 
 update:
     @just pup
-    @just install
+    @just bootstrap
 
 venv PY_VERSION="3.11.5":
     #!/usr/bin/env python
@@ -94,27 +91,6 @@ createsuperuser USERNAME="admin" EMAIL="" PASSWORD="admin":
 ##################
 #     DOCKER     #
 ##################
-
-enter CONTAINER="relay[-_]devcontainer[-_]app" SHELL="zsh" WORKDIR="/workspace" USER="vscode":
-    #!/usr/bin/env sh
-    if [ -f "/.dockerenv" ]; then
-        echo "command cannot be run from within a Docker container"
-    else
-        case {{ SHELL }} in
-            "zsh" )
-                shell_path="/usr/bin/zsh" ;;
-            "bash" )
-                shell_path="/bin/bash" ;;
-            "sh" )
-                shell_path="/bin/sh" ;;
-            * )
-                shell_path="/usr/bin/zsh" ;;
-        esac
-
-        container=$(docker ps --filter "name={{ CONTAINER }}" --format "{{{{.Names}}")
-
-        docker exec -it -u {{ USER }} -w {{ WORKDIR }} $container $shell_path
-    fi
 
 testbuild:
     docker build -t relay:latest -f .dockerfiles/Dockerfile .
@@ -241,27 +217,6 @@ createdb CONTAINER_NAME="relay_postgres" VERSION="15.3":
 
 @docs-build LOCATION="docs/_build/html":
     sphinx-build docs {{ LOCATION }}
-
-##################
-#    ENV SYNC    #
-##################
-
-envsync:
-    #!/usr/bin/env python
-    from pathlib import Path
-
-    envfile = Path('.env')
-    envfile_example = Path('.env.example')
-
-    if not envfile.exists():
-        envfile.write_text(envfile_example.read_text())
-
-    with envfile.open() as f:
-        lines = [line for line in f.readlines() if not line.endswith('# envsync: ignore\n')]
-        lines = [line.split('=')[0] + '=\n' if line.endswith('# envsync: no-value\n') else line for line in lines]
-
-        lines.sort()
-        envfile_example.write_text(''.join(lines))
 
 ##################
 #     UTILS      #
