@@ -13,7 +13,7 @@ from email_relay.relay import send_all
 
 try:
     import requests
-except ImportError:
+except ImportError:  # pragma: no cover
     requests = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
