@@ -17,7 +17,7 @@ class EmailDatabaseRouter:
     def allow_relation(self, obj1, obj2, **hints):
         if (
             obj1._meta.app_label == "email_relay"
-            or obj2._meta.app_label == "email_relay"
+            and obj2._meta.app_label == "email_relay"
         ):
             return True
         return None
