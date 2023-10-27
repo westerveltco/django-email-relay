@@ -58,7 +58,7 @@ When it comes time to cut a new release, follow these steps:
 
 6. Draft a [new release](https://github.com/westerveltco/django-email-relay/releases/new) on GitHub.
 
-   Use the version with a leading `v` as the tag name (e.g. `v1.0.0`).
+   Use the version number with a leading `v` as the tag name (e.g. `v1.0.0`).
 
    Allow GitHub to generate the release title and release notes, using the 'Generate release notes' button above the text box. If this is a final release coming from a tagged release (or multiple tagged releases), make sure to copy the release notes from the previous tagged release(s) to the new release notes (after the release notes already generated for this final release).
 
