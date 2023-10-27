@@ -1,3 +1,3 @@
-```{include} ../RELEASING.md
+```{include} ../../RELEASING.md
 
 ```
