@@ -20,8 +20,13 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    def handle(self, *args, **options) -> None:
+    def handle(self, *args, _loop_count: int | None = None, **options) -> None:
+        # _loop_count is used to make testing a bit easier
+        # it is not intended to be used in production
+        loop_count = 0 if _loop_count is not None else None
+
         logger.info("starting relay")
+
         while True:
             if Message.objects.queued().exists() or Message.objects.deferred().exists():
                 send_all()
@@ -33,6 +38,12 @@ class Command(BaseCommand):
             if app_settings.EMPTY_QUEUE_SLEEP > 0:
                 msg += f", sleeping for {app_settings.EMPTY_QUEUE_SLEEP} seconds before next loop"
             logger.debug(msg)
+
+            if _loop_count is not None and loop_count is not None:
+                loop_count += 1
+                if loop_count >= _loop_count:
+                    break
+
             time.sleep(app_settings.EMPTY_QUEUE_SLEEP)
 
     def delete_old_messages(self) -> None:

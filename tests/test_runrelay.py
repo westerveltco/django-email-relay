@@ -33,6 +33,43 @@ def runrelay():
 
 
 @pytest.mark.django_db(databases=["default", "email_relay_db"])
+def test_command_with_empty_queue(runrelay, mailoutbox):
+    runrelay.handle(_loop_count=1)
+
+    assert len(mailoutbox) == 0
+
+
+@pytest.mark.parametrize(
+    "status,quantity,expected_sent",
+    [
+        (Status.QUEUED, 10, 10),
+        (Status.DEFERRED, 10, 10),
+        (Status.FAILED, 10, 0),
+        (Status.SENT, 10, 0),
+    ],
+)
+@pytest.mark.django_db(databases=["default", "email_relay_db"])
+def test_command_with_messages_in_queue(
+    status, quantity, expected_sent, runrelay, mailoutbox
+):
+    baker.make(
+        "email_relay.Message",
+        data={
+            "subject": "Test",
+            "message": "Test",
+            "from_email": "from@example.com",
+            "recipient_list": ["to@example.com"],
+        },
+        status=status,
+        _quantity=quantity,
+    )
+
+    runrelay.handle(_loop_count=1)
+
+    assert len(mailoutbox) == expected_sent
+
+
+@pytest.mark.django_db(databases=["default", "email_relay_db"])
 def test_delete_sent_messages_based_on_retention_default(runrelay):
     baker.make(
         "email_relay.Message",
