@@ -37,9 +37,9 @@ When it comes time to cut a new release, follow these steps:
    To release a tagged version, such as a beta or release candidate, you can run:
 
    ```shell
-   bumpver update --tag=rc
-   # or
    bumpver update --tag=beta
+   # or
+   bumpver update --tag=rc
    ```
 
    Running these commands on a tagged version will increment the tag appropriately, but will not increment the version number.
