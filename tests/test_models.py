@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import datetime
+from email.mime.base import MIMEBase
 
 import pytest
 from django.core.mail import EmailMessage
@@ -308,6 +309,34 @@ class TestMessageModel:
         assert email_from_db.attachments[0][1] == attachment_content
         assert email_from_db.attachments[0][2] == "application/zip"
 
+    def test_email_with_mimebase_attachment(self, email):
+        attachment_content = b"Hello World!"
+        attachment = MIMEBase("application", "octet-stream")
+        attachment["Content-Disposition"] = 'attachment; filename="test.txt"'
+        attachment.set_payload(attachment_content)
+        email.attach(attachment)
+
+        message = Message()
+        message.email = email
+        message.save()
+
+        assert Message.objects.count() == 1
+
+        saved_message = Message.objects.first()
+        assert saved_message.data["attachments"][0]["filename"] == "test.txt"
+        assert saved_message.data["attachments"][0]["content"] == base64.b64encode(
+            attachment_content
+        ).decode("utf-8")
+        assert (
+            saved_message.data["attachments"][0]["mimetype"]
+            == "application/octet-stream"
+        )
+
+        email_from_db = saved_message.email
+        assert email_from_db.attachments[0][0] == "test.txt"
+        assert email_from_db.attachments[0][1] == attachment_content
+        assert email_from_db.attachments[0][2] == "application/octet-stream"
+
     def test_email_send(self, email, mailoutbox):
         message = Message()
         message.email = email
@@ -337,6 +366,20 @@ class TestMessageModel:
             content=faker.binary(length=10),
             mimetype="application/zip",
         )
+        message = Message()
+        message.email = email
+        message.save()
+
+        message.email.send()
+
+        assert len(mailoutbox) == 1
+
+    def test_email_send_with_mimebase_attachment(self, email, mailoutbox):
+        attachment = MIMEBase("application", "octet-stream")
+        attachment["Content-Disposition"] = 'attachment; filename="test.txt"'
+        attachment.set_payload(b"Hello World!")
+        email.attach(attachment)
+
         message = Message()
         message.email = email
         message.save()

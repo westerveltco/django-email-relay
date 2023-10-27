@@ -157,25 +157,20 @@ class Message(models.Model):
             email.attach_alternative(html_message, "text/html")
 
         for attachment in data.get("attachments", []):
-            if isinstance(attachment, dict):
-                content = attachment.get("content")
-                if isinstance(content, str):
-                    try:
-                        # Attempt to decode the base64 string into bytes
-                        decoded_content = base64.b64decode(content)
-                    except binascii.Error:
-                        # Fallback to assuming it's plain text, encoded as bytes
-                        decoded_content = content.encode("utf-8")
+            content = attachment.get("content")
+            if isinstance(content, str):
+                try:
+                    # Attempt to decode the base64 string into bytes
+                    decoded_content = base64.b64decode(content)
+                except binascii.Error:
+                    # Fallback to assuming it's plain text, encoded as bytes
+                    decoded_content = content.encode("utf-8")
 
-                    email.attach(
-                        filename=attachment.get("filename", ""),
-                        content=decoded_content,
-                        mimetype=attachment.get("mimetype", ""),
-                    )
-                else:
-                    email.attach(**attachment)
-            else:
-                email.attach(*attachment)
+                email.attach(
+                    filename=attachment.get("filename", ""),
+                    content=decoded_content,
+                    mimetype=attachment.get("mimetype", ""),
+                )
 
         return email
 
@@ -203,7 +198,13 @@ class Message(models.Model):
                     "mimetype": attachment[2],
                 }
                 if not isinstance(attachment, MIMEBase)
-                else attachment
+                else {
+                    "filename": attachment.get_filename(),
+                    "content": base64.b64encode(
+                        attachment.get_payload(decode=True)
+                    ).decode(),
+                    "mimetype": attachment.get_content_type(),
+                }
                 for attachment in email_message.attachments
             ],
         }
