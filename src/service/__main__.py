@@ -8,7 +8,6 @@ from environs import Env
 from .utils import get_user_settings_from_env
 from .utils import merge_with_defaults
 
-
 env = Env()
 
 default_settings = {

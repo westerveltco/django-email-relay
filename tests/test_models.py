@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-import datetime
-import threading
 import base64
+import datetime
 
 import pytest
-from django.utils import timezone
-from django.db import transaction
-from django.core.mail import EmailMessage, EmailMultiAlternatives
+from django.core.mail import EmailMessage
+from django.core.mail import EmailMultiAlternatives
 from django.test import override_settings
+from django.utils import timezone
 from model_bakery import baker
 
-from email_relay.models import Message, MessageManager
+from email_relay.models import Message
 from email_relay.models import Priority
 from email_relay.models import Status
 
