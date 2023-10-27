@@ -24,7 +24,7 @@ When it comes time to cut a new release, follow these steps:
 
    Then, run `bumpver` to update the version number, with the appropriate command line arguments. See the [`bumpver` documentation](https://github.com/mbarkhau/bumpver) for more details.
 
-   **Note**: for any of the following commands, you can add the command line flag `--dry` to preview the changes without actually making the changes.
+   **Note**: For any of the following commands, you can add the command line flag `--dry` to preview the changes without actually making the changes.
 
    Here are the most common commands you will need to run:
 
