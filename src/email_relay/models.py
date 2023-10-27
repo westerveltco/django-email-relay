@@ -77,7 +77,7 @@ class Message(models.Model):
 
     def __str__(self):
         try:
-            return f'{self.created_at} "{self.data["subject"]}" to {", ".join(self.data["to"])}'
+            return f'{self.created_at} "{self.data["subject"]}" to {", ".join(self.data["recipient_list"])}'
         except Exception:
             return f"{self.created_at} <invalid message>"
 
