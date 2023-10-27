@@ -17,9 +17,9 @@ def get_user_settings_from_env() -> dict[str, Any]:
 
     Example:
         >>> import os
-        >>> os.environ['DEBUG'] = 'True'
+        >>> os.environ['DEBUG'] = 'False'
         >>> get_user_settings_from_env()
-        {'DEBUG': True}
+        {'DEBUG': False}
     """
     all_env_vars = {k: v for k, v in os.environ.items()}
     env_vars_dict = env_vars_to_nested_dict(all_env_vars)

@@ -69,6 +69,29 @@ def test_command_with_messages_in_queue(
     assert len(mailoutbox) == expected_sent
 
 
+@override_settings(
+    DJANGO_EMAIL_RELAY={
+        "EMPTY_QUEUE_SLEEP": 0.1,
+    },
+)
+@pytest.mark.django_db(databases=["default", "email_relay_db"])
+def test_command_with_sleep(runrelay, mailoutbox):
+    baker.make(
+        "email_relay.Message",
+        data={
+            "subject": "Test",
+            "message": "Test",
+            "from_email": "from@example.com",
+            "recipient_list": ["to@example.com"],
+        },
+        status=Status.QUEUED,
+    )
+
+    runrelay.handle(_loop_count=2)
+
+    assert len(mailoutbox) == 1
+
+
 @pytest.mark.django_db(databases=["default", "email_relay_db"])
 def test_delete_sent_messages_based_on_retention_default(runrelay):
     baker.make(
