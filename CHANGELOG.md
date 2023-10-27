@@ -35,7 +35,7 @@ Initial release!
 
 ### Thanks
 
-Big thank you to the original authors of [`django-mailer`](https://github.com/pinax/django-mailer) for the inspiration and for doing the hard work of figuring out how to make queueing emails in a database in the first place.
+Big thank you to the original authors of [`django-mailer`](https://github.com/pinax/django-mailer) for the inspiration and for doing the hard work of figuring out a good way of queueing emails in a database in the first place.
 
 [unreleased]: https://github.com/westerveltco/django-email-relay/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/westerveltco/django-email-relay/releases/tag/v0.1.0
