@@ -44,7 +44,7 @@ When it comes time to cut a new release, follow these steps:
 
    Running these commands on a tagged version will increment the tag appropriately, but will not increment the version number.
 
-   To go from a tagged release, such as a release candidate or beta release, to a full release, you can run:
+   To go from a tagged release to a full release, you can run:
 
    ```shell
    bumpver update --tag=final
