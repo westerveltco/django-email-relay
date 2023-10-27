@@ -129,6 +129,7 @@ class TestMessageModel:
         return {
             "subject": "Test",
             "message": "Test",
+            "html_message": "<p>Test</p>",
             "from_email": "from@example.com",
             "recipient_list": ["to@example.com"],
         }
@@ -142,8 +143,12 @@ class TestMessageModel:
             to=["to@example.com"],
         )
 
-    def test_create_message(self, data):
-        message = Message.objects.create(data=data)
+    @pytest.fixture
+    def queued_message(self, data):
+        return baker.make("email_relay.Message", data=data, status=Status.QUEUED)
+
+    def test_create(self, data):
+        message = baker.make("email_relay.Message", data=data)
 
         assert message.data == data
         assert message.priority == Priority.LOW
@@ -151,6 +156,46 @@ class TestMessageModel:
         assert message.retry_count == 0
         assert message.log == ""
         assert message.sent_at is None
+
+    def test_str(self, data):
+        message = baker.make("email_relay.Message", data=data)
+
+        assert data["subject"] in str(message)
+
+    def test_str_invalid_data(self):
+        message = baker.make("email_relay.Message", data={})
+
+        assert "invalid message" in str(message)
+
+    def test_update_with_update_fields(self, data):
+        message = baker.make("email_relay.Message", data=data)
+        updated_at_original = message.updated_at
+
+        message.retry_count = 1
+        message.save(update_fields=["retry_count"])
+
+        assert message.updated_at != updated_at_original
+
+    def test_mark_sent(self, queued_message):
+        queued_message.mark_sent()
+
+        assert queued_message.status == Status.SENT
+
+    def test_defer(self, queued_message):
+        queued_message.defer()
+
+        assert queued_message.status == Status.DEFERRED
+
+    def test_fail(self, queued_message):
+        queued_message.fail()
+
+        assert queued_message.status == Status.FAILED
+
+    def test_no_data(self):
+        message = baker.make("email_relay.Message", data={})
+
+        assert message.data == {}
+        assert message.email is None
 
     def test_email_property(self, data):
         message = Message.objects.create(data=data)
