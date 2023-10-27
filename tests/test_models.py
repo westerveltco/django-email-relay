@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import datetime
+import threading
 import base64
 
 import pytest
 from django.utils import timezone
+from django.db import transaction
 from django.core.mail import EmailMessage, EmailMultiAlternatives
+from django.test import override_settings
 from model_bakery import baker
 
-from email_relay.models import Message
+from email_relay.models import Message, MessageManager
 from email_relay.models import Priority
 from email_relay.models import Status
 
@@ -17,6 +20,35 @@ from email_relay.models import Status
 def test_message():
     baker.make("email_relay.Message")
     assert Message.objects.all().count() == 1
+
+
+@pytest.mark.django_db(databases=["default", "email_relay_db"])
+class TestMessageManager:
+    def test_get_message_batch(self):
+        baker.make("email_relay.Message", status=Status.QUEUED, _quantity=10)
+
+        message_batch = Message.objects.get_message_batch()
+
+        assert len(message_batch) == 10
+
+    @override_settings(
+        DJANGO_EMAIL_RELAY={
+            "EMAIL_MAX_BATCH": 5,
+        }
+    )
+    def test_get_message_batch_with_max_batch_size(self):
+        baker.make("email_relay.Message", status=Status.QUEUED, _quantity=10)
+
+        message_batch = Message.objects.get_message_batch()
+
+        assert len(message_batch) == 5
+
+    def test_get_message_for_sending(self):
+        message = baker.make("email_relay.Message", status=Status.QUEUED)
+
+        message_for_sending = Message.objects.get_message_for_sending(message.id)
+
+        assert message_for_sending == message
 
 
 @pytest.mark.django_db(databases=["default", "email_relay_db"])
