@@ -80,7 +80,7 @@ class MessageQuerySet(models.QuerySet["Message"]):
         return self.sent().filter(sent_at__lte=dt)
 
 
-# This is a workaround for what I consider a bug in `django-stubs`
+# This is a workaround to make `mypy` happy
 _MessageManager = MessageManager.from_queryset(MessageQuerySet)
 
 
