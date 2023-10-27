@@ -30,7 +30,7 @@ class Status(models.IntegerChoices):
     SENT = 4, "Sent"
 
 
-class MessageManager(models.Manager):
+class MessageManager(models.Manager["Message"]):
     def get_message_batch(self) -> list[Message]:
         message_batch = list(
             chain(
@@ -51,7 +51,7 @@ class MessageManager(models.Manager):
         return Message.objects.filter(id=id).select_for_update(skip_locked=True).get()
 
 
-class MessageQuerySet(models.QuerySet):
+class MessageQuerySet(models.QuerySet["Message"]):
     def prioritized(self):
         return self.order_by("-priority", "created_at")
 
@@ -80,7 +80,12 @@ class MessageQuerySet(models.QuerySet):
         return self.sent().filter(sent_at__lte=dt)
 
 
+# This is a workaround for what I consider a bug in `django-stubs`
+_MessageManager = MessageManager.from_queryset(MessageQuerySet)
+
+
 class Message(models.Model):
+    id: int
     data = models.JSONField()
     priority = models.PositiveSmallIntegerField(
         choices=Priority.choices, default=Priority.LOW
@@ -97,7 +102,7 @@ class Message(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     sent_at = models.DateTimeField(null=True, blank=True)
 
-    objects = MessageManager.from_queryset(MessageQuerySet)()
+    objects = _MessageManager()
 
     class Meta:
         ordering = ["created_at"]

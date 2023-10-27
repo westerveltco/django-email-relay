@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import smtplib
 import time
-from itertools import chain
 from socket import error as socket_error
 
 from django.conf import settings
@@ -64,7 +63,10 @@ def send_all():
                 if isinstance(err, handled_exceptions):
                     logger.debug(f"deferring message {message.id} due to {err}")
                     message.defer(log=str(err))
-                    if message.retry_count >= app_settings.EMAIL_MAX_RETRIES:
+                    if (
+                        app_settings.EMAIL_MAX_RETRIES is not None
+                        and message.retry_count >= app_settings.EMAIL_MAX_RETRIES
+                    ):
                         logger.warning(
                             f"max retries reached, marking message {message.id} as failed"
                         )
