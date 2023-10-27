@@ -13,5 +13,5 @@ installation/index
 usage/index
 configuration/index
 updating
-contributing
+contributing/index
 ```
