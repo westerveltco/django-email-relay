@@ -1,4 +1,4 @@
-```{include} ../CONTRIBUTING.md
+```{include} ../RELEASING.md
 
 ```
 
