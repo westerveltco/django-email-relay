@@ -33,7 +33,7 @@ Initial release!
 - Josh Thomas <josh@joshthomas.dev> (maintainer)
 - Jeff Triplett <@jefftriplett>
 
-### Thanks
+### Thanks ❤️
 
 Big thank you to the original authors of [`django-mailer`](https://github.com/pinax/django-mailer) for the inspiration and for doing the hard work of figuring out a good way of queueing emails in a database in the first place.
 
