@@ -25,7 +25,7 @@ Visit the [documentation](https://django-email-relay.westervelt.dev/) for more i
 - How to [install](https://django-email-relay.westervelt.dev/en/latest/installation/) and [configure](https://django-email-relay.westervelt.dev/en/latest/configuration/) the relay service and Django app.
 - How to [use](https://django-email-relay.westervelt.dev/en/latest/usage/) the Django app to send emails.
 - Things to be aware of when it comes time to [update](https://django-email-relay.westervelt.dev/en/latest/updating.html) the package.
-- How you can [contribute](https://django-email-relay.westervelt.dev/en/latest/contributing.html) to the package.
+- How you can [contribute](https://django-email-relay.westervelt.dev/en/latest/contributing/) to the package.
 
 ## License
 
