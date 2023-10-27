@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import smtplib
 import time
-from itertools import chain
 from socket import error as socket_error
 
 from django.conf import settings
@@ -24,31 +23,14 @@ def send_all():
         "deferred": 0,
     }
 
-    message_batch = list(
-        chain(
-            Message.objects.queued().prioritized(),
-            Message.objects.deferred().prioritized(),
-        )
-    )
-    logger.debug(f"found {len(message_batch)} messages to send")
-
-    if app_settings.EMAIL_MAX_BATCH is not None:
-        msg = f"max batch size is {app_settings.EMAIL_MAX_BATCH}"
-        if len(message_batch) > app_settings.EMAIL_MAX_BATCH:
-            msg += ", truncating"
-        logger.debug(msg)
-        message_batch = message_batch[: app_settings.EMAIL_MAX_BATCH]
+    message_batch = Message.objects.get_message_batch()
 
     connection = None
 
     for message in message_batch:
         with transaction.atomic():
             try:
-                message = (
-                    Message.objects.filter(id=message.id)
-                    .select_for_update(skip_locked=True)
-                    .get()
-                )
+                message = Message.objects.get_message_for_sending(message.id)
             except Message.DoesNotExist:
                 continue
             try:
@@ -81,7 +63,10 @@ def send_all():
                 if isinstance(err, handled_exceptions):
                     logger.debug(f"deferring message {message.id} due to {err}")
                     message.defer(log=str(err))
-                    if message.retry_count >= app_settings.EMAIL_MAX_RETRIES:
+                    if (
+                        app_settings.EMAIL_MAX_RETRIES is not None
+                        and message.retry_count >= app_settings.EMAIL_MAX_RETRIES
+                    ):
                         logger.warning(
                             f"max retries reached, marking message {message.id} as failed"
                         )

@@ -3,12 +3,18 @@ from __future__ import annotations
 import base64
 import binascii
 import datetime
+import logging
 from email.mime.base import MIMEBase
+from itertools import chain
 
 from django.core.mail import EmailMessage
 from django.core.mail import EmailMultiAlternatives
 from django.db import models
 from django.utils import timezone
+
+from email_relay.conf import app_settings
+
+logger = logging.getLogger(__name__)
 
 
 class Priority(models.IntegerChoices):
@@ -24,7 +30,28 @@ class Status(models.IntegerChoices):
     SENT = 4, "Sent"
 
 
-class MessageQuerySet(models.QuerySet):
+class MessageManager(models.Manager["Message"]):
+    def get_message_batch(self) -> list[Message]:
+        message_batch = list(
+            chain(
+                Message.objects.queued().prioritized(),
+                Message.objects.deferred().prioritized(),
+            )
+        )
+        logger.debug(f"found {len(message_batch)} messages to send")
+        if app_settings.EMAIL_MAX_BATCH is not None:
+            msg = f"max batch size is {app_settings.EMAIL_MAX_BATCH}"
+            if len(message_batch) > app_settings.EMAIL_MAX_BATCH:
+                msg += ", truncating"
+            logger.debug(msg)
+            message_batch = message_batch[: app_settings.EMAIL_MAX_BATCH]
+        return message_batch
+
+    def get_message_for_sending(self, id: int) -> Message:
+        return Message.objects.filter(id=id).select_for_update(skip_locked=True).get()
+
+
+class MessageQuerySet(models.QuerySet["Message"]):
     def prioritized(self):
         return self.order_by("-priority", "created_at")
 
@@ -53,7 +80,12 @@ class MessageQuerySet(models.QuerySet):
         return self.sent().filter(sent_at__lte=dt)
 
 
+# This is a workaround to make `mypy` happy
+_MessageManager = MessageManager.from_queryset(MessageQuerySet)
+
+
 class Message(models.Model):
+    id: int
     data = models.JSONField()
     priority = models.PositiveSmallIntegerField(
         choices=Priority.choices, default=Priority.LOW
@@ -70,7 +102,7 @@ class Message(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     sent_at = models.DateTimeField(null=True, blank=True)
 
-    objects = MessageQuerySet.as_manager()
+    objects = _MessageManager()
 
     class Meta:
         ordering = ["created_at"]
