@@ -67,7 +67,6 @@ docs = [
 hc = ["requests"]
 lint = ["pre-commit"]
 psycopg = ["psycopg[binary]"]
-psycopg2 = ["psycopg2-binary"]
 relay = ["environs[django]"]
 
 [project.urls]
