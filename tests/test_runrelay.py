@@ -237,3 +237,22 @@ def test_relay_healthcheck_no_requests(runrelay, caplog):
         runrelay.ping_healthcheck()
 
     assert "Healthcheck URL configured but requests is not installed." in caplog.text
+
+
+@override_settings(
+    DJANGO_EMAIL_RELAY={
+        "RELAY_HEALTHCHECK_URL": "http://example.com/healthcheck",
+    }
+)
+def test_relay_healthcheck_requests_exception(runrelay, caplog):
+    caplog.set_level(logging.WARNING)
+
+    with mock.patch(
+        "email_relay.management.commands.runrelay.requests"
+    ) as mock_requests:
+        mock_requests.exceptions.RequestException = Exception
+        mock_requests.request.side_effect = Exception("test")
+
+        runrelay.ping_healthcheck()
+
+    assert "healthcheck failed, got exception" in caplog.text
