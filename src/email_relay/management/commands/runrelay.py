@@ -70,11 +70,15 @@ class Command(BaseCommand):
                 return
 
             logger.debug("pinging healthcheck")
-            response = requests.request(
-                method=app_settings.RELAY_HEALTHCHECK_METHOD,
-                url=app_settings.RELAY_HEALTHCHECK_URL,
-                timeout=app_settings.RELAY_HEALTHCHECK_TIMEOUT,
-            )
+            try:
+                response = requests.request(
+                    method=app_settings.RELAY_HEALTHCHECK_METHOD,
+                    url=app_settings.RELAY_HEALTHCHECK_URL,
+                    timeout=app_settings.RELAY_HEALTHCHECK_TIMEOUT,
+                )
+            except requests.exceptions.RequestException as e:
+                logger.warning(f"healthcheck failed, got exception: {e}")
+                return
 
             if response.status_code == app_settings.RELAY_HEALTHCHECK_STATUS_CODE:
                 logger.debug("healthcheck ping successful")

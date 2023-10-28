@@ -7,6 +7,10 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ## [Unreleased]
 
+### Fixed
+
+- The relay service would crash if requests raised an `Exception` during the healthcheck ping. Now it will log the exception and continue processing the queue.
+
 ## [0.1.0]
 
 Initial release!
