@@ -25,7 +25,8 @@ def test_message():
 @pytest.mark.django_db(databases=["default", "email_relay_db"])
 class TestMessageManager:
     def test_get_message_batch(self):
-        baker.make("email_relay.Message", status=Status.QUEUED, _quantity=10)
+        baker.make("email_relay.Message", status=Status.QUEUED, _quantity=5)
+        baker.make("email_relay.Message", status=Status.DEFERRED, _quantity=5)
 
         message_batch = Message.objects.get_message_batch()
 
@@ -33,15 +34,16 @@ class TestMessageManager:
 
     @override_settings(
         DJANGO_EMAIL_RELAY={
-            "EMAIL_MAX_BATCH": 5,
+            "EMAIL_MAX_BATCH": 1,
         }
     )
     def test_get_message_batch_with_max_batch_size(self):
-        baker.make("email_relay.Message", status=Status.QUEUED, _quantity=10)
+        baker.make("email_relay.Message", status=Status.QUEUED, _quantity=5)
+        baker.make("email_relay.Message", status=Status.DEFERRED, _quantity=5)
 
         message_batch = Message.objects.get_message_batch()
 
-        assert len(message_batch) == 5
+        assert len(message_batch) == 1
 
     def test_get_message_for_sending(self):
         message = baker.make("email_relay.Message", status=Status.QUEUED)
