@@ -9,6 +9,12 @@ When updating to a new version, it is recommended to follow the following steps:
 
 ## Deprecation Policy
 
+```{admonition} Road to v1.0.0
+:class: warning
+
+Before `django-email-relay` reaches version 1.0.0, the deprecation policy is a little more relaxed. See the [changelog](https://github.com/westerveltco/django-email-relay/blob/main/CHANGELOG.md) for more information regarding backward incompatible changes.
+```
+
 Any changes that involve models and/or migrations, or anything else that is potentially backward incompatible, will be split across two or more releases:
 
 1. A release that adds the changes in a backward compatible way, with a deprecation warning. This release will be tagged with a minor version bump, e.g., `0.1.0` to `0.2.0`.
