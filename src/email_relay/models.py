@@ -50,6 +50,9 @@ class MessageManager(models.Manager["Message"]):
     def get_message_for_sending(self, id: int) -> Message:
         return self.filter(id=id).select_for_update(skip_locked=True).get()
 
+    def messages_available_to_send(self) -> bool:
+        return self.queued().exists() or self.deferred().exists()  # type: ignore[attr-defined]
+
 
 class MessageQuerySet(models.QuerySet["Message"]):
     def prioritized(self):

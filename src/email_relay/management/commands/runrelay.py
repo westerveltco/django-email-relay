@@ -28,7 +28,7 @@ class Command(BaseCommand):
         logger.info("starting relay")
 
         while True:
-            if Message.objects.queued().exists() or Message.objects.deferred().exists():
+            if Message.objects.messages_available_to_send():
                 send_all()
 
             self.delete_old_messages()
