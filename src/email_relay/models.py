@@ -34,8 +34,8 @@ class MessageManager(models.Manager["Message"]):
     def get_message_batch(self) -> list[Message]:
         message_batch = list(
             chain(
-                self.queued().prioritized(),
-                self.deferred().prioritized(),
+                self.queued().prioritized(),  # type: ignore[attr-defined]
+                self.deferred().prioritized(),  # type: ignore[attr-defined]
             )
         )
         logger.debug(f"found {len(message_batch)} messages to send")
