@@ -9,7 +9,7 @@ EMAIL_RELAY_SETTINGS_NAME = "DJANGO_EMAIL_RELAY"
 EMAIL_RELAY_DATABASE_ALIAS = "email_relay_db"
 
 
-@dataclass
+@dataclass(frozen=True)
 class AppSettings:
     DATABASE_ALIAS: str = EMAIL_RELAY_DATABASE_ALIAS
     EMAIL_MAX_BATCH: int | None = None
