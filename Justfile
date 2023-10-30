@@ -51,7 +51,7 @@ coverage:
     python -m nox --reuse-existing-virtualenvs --session "coverage"
 
 types:
-    python -m mypy .
+    python -m nox --reuse-existing-virtualenvs --session "mypy"
 
 ##################
 #     DJANGO     #
