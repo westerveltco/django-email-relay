@@ -156,4 +156,4 @@ class Message(models.Model):
 
     @email.setter
     def email(self, email_message: EmailMessage | EmailMultiAlternatives) -> None:
-        self.data = RelayEmailData.from_email_message(email_message).to_json()
+        self.data = RelayEmailData.from_email_message(email_message).to_dict()

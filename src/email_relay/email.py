@@ -24,7 +24,7 @@ class RelayEmailData:
     alternatives: list[tuple[str, str]] = field(default_factory=list)
     attachments: list[dict[str, str]] = field(default_factory=list)
 
-    def to_json(self) -> dict[str, str]:
+    def to_dict(self) -> dict[str, str]:
         return asdict(self)
 
     def to_email_message(self) -> EmailMultiAlternatives:
