@@ -7,6 +7,12 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ## [Unreleased]
 
+## [0.1.1]
+
+### Added
+
+- Moved a handful of common `Message` queries and actions from the `runrelay` management command to methods on the `MessageManager` class.
+
 ### Fixed
 
 - The relay service would crash if requests raised an `Exception` during the healthcheck ping. Now it will log the exception and continue processing the queue.
@@ -41,5 +47,6 @@ Initial release!
 
 Big thank you to the original authors of [`django-mailer`](https://github.com/pinax/django-mailer) for the inspiration and for doing the hard work of figuring out a good way of queueing emails in a database in the first place.
 
-[unreleased]: https://github.com/westerveltco/django-email-relay/compare/v0.1.0...HEAD
+[unreleased]: https://github.com/westerveltco/django-email-relay/compare/v0.1.1...HEAD
 [0.1.0]: https://github.com/westerveltco/django-email-relay/releases/tag/v0.1.0
+[0.1.1]: https://github.com/westerveltco/django-email-relay/releases/tag/v0.1.1
