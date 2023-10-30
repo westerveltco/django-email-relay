@@ -34,8 +34,8 @@ class MessageManager(models.Manager["Message"]):
     def get_message_batch(self) -> list[Message]:
         message_batch = list(
             chain(
-                Message.objects.queued().prioritized(),
-                Message.objects.deferred().prioritized(),
+                self.queued().prioritized(),  # type: ignore[attr-defined]
+                self.deferred().prioritized(),  # type: ignore[attr-defined]
             )
         )
         logger.debug(f"found {len(message_batch)} messages to send")
@@ -48,7 +48,7 @@ class MessageManager(models.Manager["Message"]):
         return message_batch
 
     def get_message_for_sending(self, id: int) -> Message:
-        return Message.objects.filter(id=id).select_for_update(skip_locked=True).get()
+        return self.filter(id=id).select_for_update(skip_locked=True).get()
 
 
 class MessageQuerySet(models.QuerySet["Message"]):
