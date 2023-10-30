@@ -98,7 +98,6 @@ def test_mail_managers(mailoutbox):
     assert email.to == ["manager@example.com"]
 
 
-@pytest.mark.xfail
 def test_emailmessage(mailoutbox):
     email_message = EmailMessage(
         "Subject here",
@@ -124,10 +123,9 @@ def test_emailmessage(mailoutbox):
     assert email.cc == ["cc@example.com"]
     assert email.bcc == ["bcc@example.com"]
     assert email.reply_to == ["reply_to@example.com"]
-    assert email.headers == {"Test-Header": "Test Value"}
+    assert email.extra_headers == {"Test-Header": "Test Value"}
 
 
-@pytest.mark.xfail
 def test_emailmessage_attach(mailoutbox):
     email_message = EmailMessage(
         "Subject here",
@@ -154,13 +152,12 @@ def test_emailmessage_attach(mailoutbox):
     assert email.cc == ["cc@example.com"]
     assert email.bcc == ["bcc@example.com"]
     assert email.reply_to == ["reply_to@example.com"]
-    assert email.headers == {"Test-Header": "Test Value"}
+    assert email.extra_headers == {"Test-Header": "Test Value"}
     assert email.attachments == [
         ("attachment.txt", "Here is the attachment.", "text/plain"),
     ]
 
 
-@pytest.mark.xfail
 def test_emailmessage_attach_file(tmp_path, mailoutbox):
     email_message = EmailMessage(
         "Subject here",
@@ -189,13 +186,12 @@ def test_emailmessage_attach_file(tmp_path, mailoutbox):
     assert email.cc == ["cc@example.com"]
     assert email.bcc == ["bcc@example.com"]
     assert email.reply_to == ["reply_to@example.com"]
-    assert email.headers == {"Test-Header": "Test Value"}
+    assert email.extra_headers == {"Test-Header": "Test Value"}
     assert email.attachments == [
         ("attachment.txt", "Here is the attachment.", "text/plain"),
     ]
 
 
-@pytest.mark.xfail
 def test_emailmessagealternatives(mailoutbox):
     email_multi_alternatives = EmailMultiAlternatives(
         "Subject here",
@@ -224,7 +220,7 @@ def test_emailmessagealternatives(mailoutbox):
     assert email.cc == ["cc@example.com"]
     assert email.bcc == ["bcc@example.com"]
     assert email.reply_to == ["reply_to@example.com"]
-    assert email.headers == {"Test-Header": "Test Value"}
+    assert email.extra_headers == {"Test-Header": "Test Value"}
     assert email.alternatives == [
         ("<p>Here is the message.</p>", "text/html"),
     ]

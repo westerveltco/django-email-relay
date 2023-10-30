@@ -216,10 +216,10 @@ class TestMessageModel:
     def data(self):
         return {
             "subject": "Test",
-            "message": "Test",
+            "body": "Test",
             "html_message": "<p>Test</p>",
             "from_email": "from@example.com",
-            "recipient_list": ["to@example.com"],
+            "to": ["to@example.com"],
         }
 
     @pytest.fixture
@@ -292,9 +292,9 @@ class TestMessageModel:
 
         assert isinstance(email, EmailMessage)
         assert email.subject == data["subject"]
-        assert email.body == data["message"]
+        assert email.body == data["body"]
         assert email.from_email == data["from_email"]
-        assert email.to == data["recipient_list"]
+        assert email.to == data["to"]
 
     def test_email_setter(self, data):
         message = Message.objects.create(data=data)
@@ -309,9 +309,9 @@ class TestMessageModel:
         message.save()
 
         assert message.data["subject"] == email.subject
-        assert message.data["message"] == email.body
+        assert message.data["body"] == email.body
         assert message.data["from_email"] == email.from_email
-        assert message.data["recipient_list"] == email.to
+        assert message.data["to"] == email.to
 
     def test_email_with_plain_text_attachment(self, email):
         attachment_content = b"Hello World!"

@@ -118,7 +118,7 @@ class Message(models.Model):
 
     def __str__(self):
         try:
-            return f'{self.created_at} "{self.data["subject"]}" to {", ".join(self.data["recipient_list"])}'
+            return f'{self.created_at} "{self.data["subject"]}" to {", ".join(self.data["to"])}'
         except Exception:
             return f"{self.created_at} <invalid message>"
 
@@ -156,14 +156,17 @@ class Message(models.Model):
 
         email = EmailMultiAlternatives(
             subject=data.get("subject", ""),
-            body=data.get("message"),
+            body=data.get("body"),
             from_email=data.get("from_email"),
-            to=data.get("recipient_list"),
+            to=data.get("to"),
+            cc=data.get("cc"),
+            bcc=data.get("bcc"),
+            reply_to=data.get("reply_to"),
+            headers=data.get("extra_headers"),
         )
 
-        html_message = data.get("html_message", None)
-        if html_message:
-            email.attach_alternative(html_message, "text/html")
+        for alternative in data.get("alternatives", []):
+            email.attach_alternative(alternative[0], alternative[1])
 
         for attachment in data.get("attachments", []):
             content = attachment.get("content")
@@ -183,20 +186,19 @@ class Message(models.Model):
         return email
 
     @email.setter
-    def email(self, email_message: EmailMessage) -> None:
+    def email(self, email_message: EmailMessage | EmailMultiAlternatives) -> None:
         self.data = {
             "subject": email_message.subject,
-            "message": email_message.body,
+            "body": email_message.body,
             "from_email": email_message.from_email,
-            "recipient_list": email_message.to,
-            "html_message": next(
-                (
-                    alternative[0]
-                    for alternative in getattr(email_message, "alternatives", [])
-                    if alternative[1] == "text/html"
-                ),
-                None,
-            ),
+            "to": email_message.to,
+            "cc": email_message.cc,
+            "bcc": email_message.bcc,
+            "reply_to": email_message.reply_to,
+            "extra_headers": email_message.extra_headers,
+            "alternatives": email_message.alternatives
+            if hasattr(email_message, "alternatives")
+            else [],
             "attachments": [
                 {
                     "filename": attachment[0],
