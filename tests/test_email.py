@@ -1,5 +1,9 @@
+from __future__ import annotations
+
+from django.core.mail import EmailMessage
+from django.core.mail import EmailMultiAlternatives
+
 from email_relay.email import RelayEmailData
-from django.core.mail import EmailMultiAlternatives, EmailMessage
 
 
 def test_from_email_message():
