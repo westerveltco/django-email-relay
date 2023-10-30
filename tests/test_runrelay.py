@@ -58,7 +58,7 @@ def test_command_with_messages_in_queue(
             "subject": "Test",
             "message": "Test",
             "from_email": "from@example.com",
-            "recipient_list": ["to@example.com"],
+            "to": ["to@example.com"],
         },
         status=status,
         _quantity=quantity,
@@ -82,7 +82,7 @@ def test_command_with_sleep(runrelay, mailoutbox):
             "subject": "Test",
             "message": "Test",
             "from_email": "from@example.com",
-            "recipient_list": ["to@example.com"],
+            "to": ["to@example.com"],
         },
         status=Status.QUEUED,
     )
