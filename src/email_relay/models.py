@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import base64
-import binascii
 import datetime
 import logging
-from email.mime.base import MIMEBase
 from itertools import chain
 
 from django.core.mail import EmailMessage
@@ -13,6 +10,7 @@ from django.db import models
 from django.utils import timezone
 
 from email_relay.conf import app_settings
+from email_relay.email import RelayEmailData
 
 logger = logging.getLogger(__name__)
 
@@ -149,72 +147,13 @@ class Message(models.Model):
         self.save()
 
     @property
-    def email(self) -> EmailMessage | None:
+    def email(self) -> EmailMultiAlternatives | None:
         data = self.data
         if not data:
             return None
 
-        email = EmailMultiAlternatives(
-            subject=data.get("subject", ""),
-            body=data.get("body"),
-            from_email=data.get("from_email"),
-            to=data.get("to"),
-            cc=data.get("cc"),
-            bcc=data.get("bcc"),
-            reply_to=data.get("reply_to"),
-            headers=data.get("extra_headers"),
-        )
-
-        for alternative in data.get("alternatives", []):
-            email.attach_alternative(alternative[0], alternative[1])
-
-        for attachment in data.get("attachments", []):
-            content = attachment.get("content")
-            try:
-                # Attempt to decode the base64 string into bytes
-                decoded_content = base64.b64decode(content)
-            except binascii.Error:
-                # Fallback to assuming it's plain text, encoded as bytes
-                decoded_content = content.encode("utf-8")
-
-            email.attach(
-                filename=attachment.get("filename", ""),
-                content=decoded_content,
-                mimetype=attachment.get("mimetype", ""),
-            )
-
-        return email
+        return RelayEmailData(**data).to_email_message()
 
     @email.setter
     def email(self, email_message: EmailMessage | EmailMultiAlternatives) -> None:
-        self.data = {
-            "subject": email_message.subject,
-            "body": email_message.body,
-            "from_email": email_message.from_email,
-            "to": email_message.to,
-            "cc": email_message.cc,
-            "bcc": email_message.bcc,
-            "reply_to": email_message.reply_to,
-            "extra_headers": email_message.extra_headers,
-            "alternatives": email_message.alternatives
-            if hasattr(email_message, "alternatives")
-            else [],
-            "attachments": [
-                {
-                    "filename": attachment[0],
-                    "content": base64.b64encode(attachment[1]).decode("utf-8")
-                    if isinstance(attachment[1], bytes)
-                    else attachment[1],
-                    "mimetype": attachment[2],
-                }
-                if not isinstance(attachment, MIMEBase)
-                else {
-                    "filename": attachment.get_filename(),
-                    "content": base64.b64encode(
-                        attachment.get_payload(decode=True)
-                    ).decode(),
-                    "mimetype": attachment.get_content_type(),
-                }
-                for attachment in email_message.attachments
-            ],
-        }
+        self.data = RelayEmailData.from_email_message(email_message).to_dict()

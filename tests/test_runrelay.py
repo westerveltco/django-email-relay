@@ -56,7 +56,7 @@ def test_command_with_messages_in_queue(
         "email_relay.Message",
         data={
             "subject": "Test",
-            "message": "Test",
+            "body": "Test",
             "from_email": "from@example.com",
             "to": ["to@example.com"],
         },
@@ -80,7 +80,7 @@ def test_command_with_sleep(runrelay, mailoutbox):
         "email_relay.Message",
         data={
             "subject": "Test",
-            "message": "Test",
+            "body": "Test",
             "from_email": "from@example.com",
             "to": ["to@example.com"],
         },

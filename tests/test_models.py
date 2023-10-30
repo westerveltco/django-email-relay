@@ -217,7 +217,6 @@ class TestMessageModel:
         return {
             "subject": "Test",
             "body": "Test",
-            "html_message": "<p>Test</p>",
             "from_email": "from@example.com",
             "to": ["to@example.com"],
         }
