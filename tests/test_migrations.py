@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import importlib
+
 import pytest
-from model_bakery import baker
 from django.apps import apps
 from django.db import connections
-from email_relay.models import Message
+from model_bakery import baker
+
 from email_relay.conf import EMAIL_RELAY_DATABASE_ALIAS
+from email_relay.models import Message
 
 
 @pytest.fixture
