@@ -7,6 +7,21 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ## [Unreleased]
 
+## [0.2.0]
+
+**This release involves migrations.** Please read below for more information.
+
+### Added
+
+- A `RelayEmailData` dataclass for representing the `Message.data` field.
+- Documentation in the package's deprecation policy about the road to 1.0.0.
+- Complete test coverage for all of the public ways of sending emails that Django provides.
+
+### Changed
+
+- **Breaking**: The internal JSON schema for the `Message.data` field has been updated to bring it more in line with all of the possible fields provided by Django's `EmailMessage` and `EmailMultiAlternatives`. This change involves a migration to update the `Message.data` field to the new schema. This is a one-way update and cannot be rolled back. Please take care when updating to this version and ensure that all projects using `django-email-relay` are updated at the same time. See the [updating](https://django-email-relay.westervelt.dev/en/latest/updating.html) documentation for more information.
+- The internal `AppSettings` dataclass is now a `frozen=True` dataclass.
+
 ## [0.1.1]
 
 ### Added
@@ -47,6 +62,7 @@ Initial release!
 
 Big thank you to the original authors of [`django-mailer`](https://github.com/pinax/django-mailer) for the inspiration and for doing the hard work of figuring out a good way of queueing emails in a database in the first place.
 
-[unreleased]: https://github.com/westerveltco/django-email-relay/compare/v0.1.1...HEAD
+[unreleased]: https://github.com/westerveltco/django-email-relay/compare/v0.2.0...HEAD
 [0.1.0]: https://github.com/westerveltco/django-email-relay/releases/tag/v0.1.0
 [0.1.1]: https://github.com/westerveltco/django-email-relay/releases/tag/v0.1.1
+[0.2.0]: https://github.com/westerveltco/django-email-relay/releases/tag/v0.2.0
