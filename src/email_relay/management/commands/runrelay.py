@@ -50,15 +50,15 @@ class Command(BaseCommand):
         if app_settings.MESSAGES_RETENTION_SECONDS is not None:
             logger.debug("deleting old messages")
             if app_settings.MESSAGES_RETENTION_SECONDS == 0:
-                deleted_messages = Message.objects.sent().delete()
+                deleted_messages = Message.objects.delete_all_sent_messages()
             else:
-                deleted_messages = Message.objects.sent_before(
+                deleted_messages = Message.objects.delete_messages_sent_before(
                     timezone.now()
                     - datetime.timedelta(
                         seconds=app_settings.MESSAGES_RETENTION_SECONDS
                     )
-                ).delete()
-            logger.debug(f"deleted {deleted_messages[0]} messages")
+                )
+            logger.debug(f"deleted {deleted_messages} messages")
 
     def ping_healthcheck(self) -> None:
         if app_settings.RELAY_HEALTHCHECK_URL is not None:

@@ -63,10 +63,48 @@ class TestMessageManager:
     )
     def test_messages_available_to_send(self, status, expected):
         baker.make("email_relay.Message", status=status)
+
         assert Message.objects.messages_available_to_send() == expected
 
     def test_messages_available_to_send_with_no_messages(self):
         assert not Message.objects.messages_available_to_send()
+
+    def test_delete_all_sent_messages(self):
+        baker.make("email_relay.Message", status=Status.SENT, _quantity=5)
+
+        deleted_messages = Message.objects.delete_all_sent_messages()
+
+        assert deleted_messages == 5
+        assert Message.objects.count() == 0
+
+    def test_delete_messages_sent_before(self):
+        one_week = baker.make(
+            "email_relay.Message",
+            status=Status.SENT,
+            sent_at=timezone.now() - datetime.timedelta(days=7),
+        )
+        now = baker.make(
+            "email_relay.Message",
+            status=Status.SENT,
+            sent_at=timezone.now(),
+        )
+        not_sent = baker.make(
+            "email_relay.Message",
+            status=Status.QUEUED,
+            sent_at=None,
+        )
+
+        deleted_messages = Message.objects.delete_messages_sent_before(
+            timezone.now() - datetime.timedelta(days=1)
+        )
+
+        assert deleted_messages == 1
+        assert Message.objects.count() == 2
+
+        messages = Message.objects.all()
+        assert one_week not in messages
+        assert now in messages
+        assert not_sent in messages
 
 
 @pytest.mark.django_db(databases=["default", "email_relay_db"])

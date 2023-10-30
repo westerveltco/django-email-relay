@@ -53,6 +53,12 @@ class MessageManager(models.Manager["Message"]):
     def messages_available_to_send(self) -> bool:
         return self.queued().exists() or self.deferred().exists()  # type: ignore[attr-defined]
 
+    def delete_all_sent_messages(self) -> int:
+        return self.sent().delete()[0]  # type: ignore[attr-defined]
+
+    def delete_messages_sent_before(self, dt: datetime.datetime) -> int:
+        return self.sent_before(dt).delete()[0]  # type: ignore[attr-defined]
+
 
 class MessageQuerySet(models.QuerySet["Message"]):
     def prioritized(self):
