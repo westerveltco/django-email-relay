@@ -156,7 +156,7 @@ class Message(models.Model):
 
         email = EmailMultiAlternatives(
             subject=data.get("subject", ""),
-            body=data.get("message"),
+            body=data.get("body"),
             from_email=data.get("from_email"),
             to=data.get("to"),
             cc=data.get("cc"),
@@ -189,7 +189,7 @@ class Message(models.Model):
     def email(self, email_message: EmailMessage | EmailMultiAlternatives) -> None:
         self.data = {
             "subject": email_message.subject,
-            "message": email_message.body,
+            "body": email_message.body,
             "from_email": email_message.from_email,
             "to": email_message.to,
             "cc": email_message.cc,

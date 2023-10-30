@@ -9,6 +9,7 @@ def migrate_message_data_to_new_schema(apps, schema_editor):
     """Migrate the JSON data from the old schema to the new schema.
 
     Changes:
+        - "message" is now "body"
         - "recipient_list" is now "to"
         - "html_message" is now a part of "alternatives", a list of tuples of (content, mimetype)
 
@@ -28,6 +29,7 @@ def migrate_message_data_to_new_schema(apps, schema_editor):
         data = message.data
         if not data:
             continue
+        data["body"] = data.pop("message", "")
         data["to"] = data.pop("recipient_list", [])
         data["cc"] = []
         data["bcc"] = []

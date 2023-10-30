@@ -26,6 +26,7 @@ def test_migrate_message_data_to_new_schema(migrate_message_data_to_new_schema):
     baker.make(
         "email_relay.Message",
         data={
+            "message": "Here is the message.",
             "recipient_list": ["to@example.com"],
             "html_message": "<p>HTML</p>",
         },
@@ -33,6 +34,7 @@ def test_migrate_message_data_to_new_schema(migrate_message_data_to_new_schema):
     )
 
     for message in Message.objects.all():
+        assert message.data["message"] == "Here is the message."
         assert message.data["recipient_list"] == ["to@example.com"]
         assert message.data["html_message"] == "<p>HTML</p>"
         assert not message.data.get("to")
@@ -47,8 +49,10 @@ def test_migrate_message_data_to_new_schema(migrate_message_data_to_new_schema):
     assert Message.objects.count() == 3
 
     for message in Message.objects.all():
+        assert not message.data.get("message")
         assert not message.data.get("recipient_list")
         assert not message.data.get("html_message")
+        assert message.data["body"] == "Here is the message."
         assert message.data["to"] == ["to@example.com"]
         assert message.data["cc"] == []
         assert message.data["bcc"] == []
@@ -69,6 +73,7 @@ def test_migrate_message_data_to_new_schema_default_not_applied(
     baker.make(
         "email_relay.Message",
         data={
+            "message": "Here is the message.",
             "recipient_list": ["to@example.com"],
             "html_message": "<p>HTML</p>",
         },
@@ -76,6 +81,7 @@ def test_migrate_message_data_to_new_schema_default_not_applied(
     )
 
     for message in Message.objects.all():
+        assert message.data["message"] == "Here is the message."
         assert message.data["recipient_list"] == ["to@example.com"]
         assert message.data["html_message"] == "<p>HTML</p>"
         assert not message.data.get("to")
@@ -90,6 +96,7 @@ def test_migrate_message_data_to_new_schema_default_not_applied(
     assert Message.objects.count() == 3
 
     for message in Message.objects.all():
+        assert message.data["message"] == "Here is the message."
         assert message.data["recipient_list"] == ["to@example.com"]
         assert message.data["html_message"] == "<p>HTML</p>"
         assert not message.data.get("to")

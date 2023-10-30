@@ -216,7 +216,7 @@ class TestMessageModel:
     def data(self):
         return {
             "subject": "Test",
-            "message": "Test",
+            "body": "Test",
             "html_message": "<p>Test</p>",
             "from_email": "from@example.com",
             "to": ["to@example.com"],
@@ -292,7 +292,7 @@ class TestMessageModel:
 
         assert isinstance(email, EmailMessage)
         assert email.subject == data["subject"]
-        assert email.body == data["message"]
+        assert email.body == data["body"]
         assert email.from_email == data["from_email"]
         assert email.to == data["to"]
 
@@ -309,7 +309,7 @@ class TestMessageModel:
         message.save()
 
         assert message.data["subject"] == email.subject
-        assert message.data["message"] == email.body
+        assert message.data["body"] == email.body
         assert message.data["from_email"] == email.from_email
         assert message.data["to"] == email.to
 
