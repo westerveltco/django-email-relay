@@ -52,6 +52,22 @@ class TestMessageManager:
 
         assert message_for_sending == message
 
+    @pytest.mark.parametrize(
+        "status, expected",
+        [
+            (Status.QUEUED, True),
+            (Status.DEFERRED, True),
+            (Status.FAILED, False),
+            (Status.SENT, False),
+        ],
+    )
+    def test_messages_available_to_send(self, status, expected):
+        baker.make("email_relay.Message", status=status)
+        assert Message.objects.messages_available_to_send() == expected
+
+    def test_messages_available_to_send_with_no_messages(self):
+        assert not Message.objects.messages_available_to_send()
+
 
 @pytest.mark.django_db(databases=["default", "email_relay_db"])
 class TestMessageQuerySet:
