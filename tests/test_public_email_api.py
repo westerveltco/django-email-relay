@@ -30,6 +30,7 @@ def test_send_mail(mailoutbox):
         "Here is the message.",
         "from@example.com",
         ["to@example.com"],
+        html_message="<p>Here is the message.</p>",
     )
 
     assert Message.objects.count() == 1
@@ -40,6 +41,7 @@ def test_send_mail(mailoutbox):
     assert email.body == "Here is the message."
     assert email.from_email == "from@example.com"
     assert email.to == ["to@example.com"]
+    assert email.alternatives == [("<p>Here is the message.</p>", "text/html")]
 
 
 def test_send_mass_mail(mailoutbox):
