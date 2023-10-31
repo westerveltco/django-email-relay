@@ -2,8 +2,6 @@
 
 from django.db import migrations
 
-from email_relay.conf import EMAIL_RELAY_DATABASE_ALIAS
-
 
 def migrate_message_data_to_new_schema(apps, schema_editor):
     """Migrate the JSON data from the old schema to the new schema.
@@ -20,9 +18,6 @@ def migrate_message_data_to_new_schema(apps, schema_editor):
         - "extra_headers"
         - "alternatives"
     """
-    if schema_editor.connection.alias != EMAIL_RELAY_DATABASE_ALIAS:
-        return
-
     Message = apps.get_model("email_relay", "Message")
 
     for message in Message.objects.all():
