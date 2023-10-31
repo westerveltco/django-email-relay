@@ -7,6 +7,10 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ## [Unreleased]
 
+### Fixed
+
+- Migration 0002 was not being applied to the `default` database, which is the norm when running the relay in Docker.
+
 ## [0.2.0]
 
 **This release involves migrations.** Please read below for more information.
