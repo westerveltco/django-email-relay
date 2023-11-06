@@ -17,6 +17,7 @@ class AppSettings:
     EMAIL_MAX_RETRIES: int | None = None
     EMPTY_QUEUE_SLEEP: int = 30
     EMAIL_THROTTLE: int = 0
+    ENABLE_AUTO_SETUP: bool = False
     MESSAGES_BATCH_SIZE: int | None = None
     MESSAGES_RETENTION_SECONDS: int | None = None
     RELAY_HEALTHCHECK_METHOD: str = "GET"
