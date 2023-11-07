@@ -17,30 +17,66 @@ on:
         type: boolean
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check most recent test run on `main`
+        id: latest-test-result
+        run: |
+          echo "result=$(gh run list \
+                          --branch=main \
+                          --workflow=test.yml \
+                          --json headBranch,workflowName,conclusion \
+                          --jq '.[] | select(.headBranch=="main" and .conclusion=="success") | .conclusion' \
+                          | head -n 1)" >> $GITHUB_OUTPUT
+
+      - name: OK
+        if: ${{ (contains(steps.latest-test-result.outputs.result, 'success')) }}
+        run: |
+          exit 0
+
+      - name: Fail
+        if: ${{ !contains(steps.latest-test-result.outputs.result, 'success') }}
+        run: |
+          exit 1
+
   pypi:
     if: ${{ github.event_name == 'release' || inputs.pypi }}
     runs-on: ubuntu-latest
+    needs: check
     environment: release
     permissions:
       contents: read
       id-token: write
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install hatch
+
       - name: Build package
         run: |
           hatch build
+
       - if: ${{ github.event_name == 'workflow_dispatch' }}
         name: Publish to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
+
       - if: ${{ github.event_name != 'workflow_dispatch' }}
         name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
@@ -48,11 +84,13 @@ jobs:
   docker:
     if: ${{ github.event_name == 'release' || inputs.docker }}
     runs-on: ubuntu-latest
+    needs: check
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v4
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -68,16 +106,20 @@ jobs:
             type=pep440,pattern={{major}}
             type=sha,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and publish Docker image
         uses: docker/build-push-action@v5
         with:
