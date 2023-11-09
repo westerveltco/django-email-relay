@@ -45,7 +45,7 @@ venv PY_VERSION="3.11.5":
 ##################
 
 test:
-    python -m nox --reuse-existing-virtualenvs
+    python -m nox --reuse-existing-virtualenvs --session "test"
 
 coverage:
     python -m nox --reuse-existing-virtualenvs --session "coverage"
