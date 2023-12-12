@@ -7,6 +7,14 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ## [Unreleased]
 
+### Added
+
+- Support for Django 5.0.
+
+### Removed
+
+- Support for Django 4.1.
+
 ## [0.2.1]
 
 ### Fixed
