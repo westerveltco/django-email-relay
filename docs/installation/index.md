@@ -11,5 +11,5 @@ django-app
 ## Requirements
 
 - Python 3.8, 3.9, 3.10, 3.11, or 3.12
-- Django 4.2 or 5.0
+- Django 3.2, 4.2, or 5.0
 - PostgreSQL (for provided Docker image)

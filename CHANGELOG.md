@@ -13,7 +13,7 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ### Removed
 
-- Support for Django 3.2, 4.0, and 4.1.
+- Support for Django 4.0 and 4.1.
 
 ## [0.2.1]
 

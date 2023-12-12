@@ -13,12 +13,13 @@ PY312 = "3.12"
 PY_VERSIONS = [PY38, PY39, PY310, PY311, PY312]
 PY_DEFAULT = PY38
 
+DJ32 = "3.2"
 DJ42 = "4.2"
-DJ50 = "5.0b1"
+DJ50 = "5.0"
 DJMAIN = "main"
 DJMAIN_MIN_PY = PY310
-DJ_VERSIONS = [DJ42, DJ50, DJMAIN]
-DJ_DEFAULT = DJ42
+DJ_VERSIONS = [DJ32, DJ42, DJ50, DJMAIN]
+DJ_DEFAULT = DJ32
 
 
 def version(ver: str) -> tuple[int, ...]:
@@ -30,6 +31,9 @@ def should_skip(python: str, django: str) -> tuple[bool, str | None]:
     """Return True if the test should be skipped"""
     if django == DJMAIN and version(python) < version(DJMAIN_MIN_PY):
         return True, f"Django {DJMAIN} requires Python {DJMAIN_MIN_PY}+"
+
+    if django == DJ32 and version(python) >= version(PY312):
+        return True, f"Django {DJ32} requires Python < {PY312}"
 
     if django == DJ50 and version(python) < version(PY310):
         return True, f"Django {DJ50} requires Python {PY310}+"
