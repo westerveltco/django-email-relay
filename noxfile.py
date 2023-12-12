@@ -11,7 +11,8 @@ PY310 = "3.10"
 PY311 = "3.11"
 PY312 = "3.12"
 PY_VERSIONS = [PY38, PY39, PY310, PY311, PY312]
-PY_DEFAULT = PY38
+PY_DEFAULT = PY_VERSIONS[0]
+PY_LATEST = PY_VERSIONS[-1]
 
 DJ32 = "3.2"
 DJ42 = "4.2"
@@ -19,7 +20,9 @@ DJ50 = "5.0"
 DJMAIN = "main"
 DJMAIN_MIN_PY = PY310
 DJ_VERSIONS = [DJ32, DJ42, DJ50, DJMAIN]
-DJ_DEFAULT = DJ32
+DJ_LTS = [DJ32, DJ42]
+DJ_DEFAULT = DJ_LTS[-1]
+DJ_LATEST = DJ_VERSIONS[-2]
 
 
 def version(ver: str) -> tuple[int, ...]:
@@ -41,13 +44,22 @@ def should_skip(python: str, django: str) -> tuple[bool, str | None]:
     return False, None
 
 
-@nox.session(python=PY_VERSIONS)
-@nox.parametrize("django", DJ_VERSIONS)
-def tests(session, django):
-    skip = should_skip(session.python, django)
-    if skip[0]:
-        session.skip(skip[1])
+@nox.session
+def test(session):
+    session.notify(f"tests(python='{PY_DEFAULT}', django='{DJ_DEFAULT}')")
 
+
+@nox.session
+@nox.parametrize(
+    "python,django",
+    [
+        (python, django)
+        for python in PY_VERSIONS
+        for django in DJ_VERSIONS
+        if not should_skip(python, django)[0]
+    ],
+)
+def tests(session, django):
     session.install(".[dev,relay]")
 
     if django == DJMAIN:
