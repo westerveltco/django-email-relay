@@ -46,6 +46,7 @@ jobs:
           else
             echo "Session does not exist, skipping tests"
             echo "RUN_TESTS=false" >> $GITHUB_ENV
+          fi
 
       - name: Run tests
         if: env.RUN_TESTS == 'true'
