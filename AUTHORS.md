@@ -1,7 +1,7 @@
 # Authors
 
-Josh Thomas <josh@joshthomas.dev>
-Jeff Triplett <@jefftriplett>
+- Josh Thomas <josh@joshthomas.dev>
+- Jeff Triplett <@jefftriplett>
 
 ## Original Authors
 
