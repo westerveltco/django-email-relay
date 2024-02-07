@@ -10,6 +10,8 @@ from email.mime.base import MIMEBase
 from django.core.mail import EmailMessage
 from django.core.mail import EmailMultiAlternatives
 
+from email_relay import __version__
+
 
 @dataclass(frozen=True)
 class RelayEmailData:
@@ -23,6 +25,7 @@ class RelayEmailData:
     extra_headers: dict[str, str] = field(default_factory=dict)
     alternatives: list[tuple[str, str]] = field(default_factory=list)
     attachments: list[dict[str, str]] = field(default_factory=list)
+    _email_relay_version: str = __version__
 
     def to_dict(self) -> dict[str, str]:
         return asdict(self)

@@ -39,6 +39,7 @@ requires-python = ">=3.8"
 dev = [
   "bumpver",
   "coverage[toml]",
+  "dirty-equals",
   "django-stubs",
   "django-stubs-ext",
   "faker",

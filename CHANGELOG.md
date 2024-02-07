@@ -7,6 +7,10 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ## [Unreleased]
 
+### Added
+
+- A `_email_relay_version` field to `RelayEmailData` to track the version of the schema used to serialize the data. This should allow for future changes to the schema to be handled more gracefully.
+
 ## [0.3.0]
 
 ### Added
