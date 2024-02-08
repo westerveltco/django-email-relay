@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from dirty_equals import IsPartialDict
 from django.core.mail import EmailMessage
 from django.core.mail import EmailMultiAlternatives
 
 from email_relay.email import RelayEmailData
+from email_relay.email import __version__
 
 
 def test_from_email_message():
@@ -75,18 +77,20 @@ def test_to_dict():
 
     email_dict = RelayEmailData.from_email_message(email_message).to_dict()
 
-    assert email_dict == {
-        "subject": email_message.subject,
-        "body": email_message.body,
-        "from_email": email_message.from_email,
-        "to": email_message.to,
-        "cc": email_message.cc,
-        "bcc": email_message.bcc,
-        "reply_to": email_message.reply_to,
-        "extra_headers": email_message.extra_headers,
-        "alternatives": [],
-        "attachments": [],
-    }
+    assert email_dict == IsPartialDict(
+        **{
+            "subject": email_message.subject,
+            "body": email_message.body,
+            "from_email": email_message.from_email,
+            "to": email_message.to,
+            "cc": email_message.cc,
+            "bcc": email_message.bcc,
+            "reply_to": email_message.reply_to,
+            "extra_headers": email_message.extra_headers,
+            "alternatives": [],
+            "attachments": [],
+        }
+    )
 
 
 def test_to_dict_multi_alternatives():
@@ -106,18 +110,20 @@ def test_to_dict_multi_alternatives():
 
     email_dict = RelayEmailData.from_email_message(email_multi_alternatives).to_dict()
 
-    assert email_dict == {
-        "subject": email_multi_alternatives.subject,
-        "body": email_multi_alternatives.body,
-        "from_email": email_multi_alternatives.from_email,
-        "to": email_multi_alternatives.to,
-        "cc": email_multi_alternatives.cc,
-        "bcc": email_multi_alternatives.bcc,
-        "reply_to": email_multi_alternatives.reply_to,
-        "extra_headers": email_multi_alternatives.extra_headers,
-        "alternatives": email_multi_alternatives.alternatives,
-        "attachments": [],
-    }
+    assert email_dict == IsPartialDict(
+        **{
+            "subject": email_multi_alternatives.subject,
+            "body": email_multi_alternatives.body,
+            "from_email": email_multi_alternatives.from_email,
+            "to": email_multi_alternatives.to,
+            "cc": email_multi_alternatives.cc,
+            "bcc": email_multi_alternatives.bcc,
+            "reply_to": email_multi_alternatives.reply_to,
+            "extra_headers": email_multi_alternatives.extra_headers,
+            "alternatives": email_multi_alternatives.alternatives,
+            "attachments": [],
+        }
+    )
 
 
 def test_to_dict_with_attachment():
@@ -140,21 +146,40 @@ def test_to_dict_with_attachment():
 
     email_dict = RelayEmailData.from_email_message(email).to_dict()
 
-    assert email_dict == {
-        "subject": email.subject,
-        "body": email.body,
-        "from_email": email.from_email,
-        "to": email.to,
-        "cc": email.cc,
-        "bcc": email.bcc,
-        "reply_to": email.reply_to,
-        "extra_headers": email.extra_headers,
-        "alternatives": [],
-        "attachments": [
-            {
-                "filename": "test.txt",
-                "content": attachment_content.decode(),
-                "mimetype": "text/plain",
-            }
-        ],
-    }
+    assert email_dict == IsPartialDict(
+        **{
+            "subject": email.subject,
+            "body": email.body,
+            "from_email": email.from_email,
+            "to": email.to,
+            "cc": email.cc,
+            "bcc": email.bcc,
+            "reply_to": email.reply_to,
+            "extra_headers": email.extra_headers,
+            "alternatives": [],
+            "attachments": [
+                {
+                    "filename": "test.txt",
+                    "content": attachment_content.decode(),
+                    "mimetype": "text/plain",
+                }
+            ],
+        }
+    )
+
+
+def test_email_message_version():
+    email_message = EmailMessage(
+        "Subject here",
+        "Here is the message.",
+        "from@example.com",
+        ["to@example.com"],
+        cc=["cc@example.com"],
+        bcc=["bcc@example.com"],
+        reply_to=["reply_to@example.com"],
+        headers={"Test-Header": "Test Value"},
+    )
+
+    relay_email_data = RelayEmailData.from_email_message(email_message)
+
+    assert relay_email_data._email_relay_version == __version__
