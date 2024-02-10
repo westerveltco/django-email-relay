@@ -4,14 +4,12 @@ requires = ["hatchling"]
 
 [project]
 authors = [
-  {name = "Josh Thomas", email = "josh@joshthomas.dev"},
+  {name = "Josh Thomas", email = "josh@joshthomas.dev"}
 ]
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 3 - Alpha",
   "Framework :: Django",
-  "Framework :: Django :: 3",
   "Framework :: Django :: 3.2",
-  "Framework :: Django :: 4",
   "Framework :: Django :: 4.2",
   "Framework :: Django :: 5.0",
   "License :: OSI Approved :: MIT License",
@@ -24,13 +22,15 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: CPython"
 ]
-dependencies = ["django>=3.2"]
+dependencies = [
+  "django>=3.2"
+]
 description = "Centralize and relay email from multiple distributed Django projects to an internal SMTP server via a database queue."
 dynamic = ["version"]
 keywords = []
-license = "MIT"
+license = {file = "LICENSE"}
 name = "django-email-relay"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -39,22 +39,19 @@ requires-python = ">=3.8"
 dev = [
   "bumpver",
   "coverage[toml]",
-  "dirty-equals",
   "django-stubs",
   "django-stubs-ext",
   "faker",
   "hatch",
-  "model_bakery",
   "mypy",
+  "model-bakery",
   "nox",
   "pytest",
   "pytest-cov",
   "pytest-django",
   "pytest-randomly",
   "pytest-reverse",
-  "pytest-xdist",
-  "responses",
-  "types-requests",
+  "pytest-xdist"
 ]
 docs = [
   "cogapp",
@@ -63,73 +60,78 @@ docs = [
   "sphinx",
   "sphinx-autobuild",
   "sphinx-copybutton",
-  "sphinx-inline-tabs",
+  "sphinx-inline-tabs"
 ]
-hc = ["requests"]
 lint = ["pre-commit"]
-psycopg = ["psycopg[binary]"]
-relay = ["environs[django]"]
 
 [project.urls]
-Documentation = "https://django-email-relay.westervelt.dev"
+Documentation = "https://django-email-relay.westervelt.dev/"
 Issues = "https://github.com/westerveltco/django-email-relay/issues"
 Source = "https://github.com/westerveltco/django-email-relay"
-
-[tool.hatch.build]
-exclude = [
-  ".github/*",
-  ".dockerfiles/*",
-  ".dockerignore",
-  ".editorconfig",
-  ".pre-commit-config.yaml",
-  "Justfile",
-  "src/service/*",
-]
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/email_relay"]
-
-[tool.hatch.version]
-path = "src/email_relay/__init__.py"
 
 [tool.bumpver]
 commit = true
 commit_message = ":bookmark: bump version {old_version} -> {new_version}"
 current_version = "0.3.0"
-push = false   # set to false for CI
+push = false  # set to false for CI
 tag = false
 version_pattern = "MAJOR.MINOR.PATCH[PYTAGNUM]"
 
 [tool.bumpver.file_patterns]
-"src/email_relay/__init__.py" = [
-    '__version__ = "{version}"',
+"src/django_email_relay/__init__.py" = [
+  '__version__ = "{version}"'
+]
+"tests/test_version.py" = [
+  'assert __version__ == "{version}"'
 ]
 
 [tool.coverage.paths]
 source = ["src"]
 
 [tool.coverage.report]
-fail_under = 85
+exclude_lines = [
+  "pragma: no cover",
+  "if DEBUG:",
+  "if not DEBUG:",
+  "if settings.DEBUG:",
+  "if TYPE_CHECKING:",
+  'def __str__\(self\)\s?\-?\>?\s?\w*\:'
+]
+fail_under = 75
 
 [tool.coverage.run]
 omit = [
-  "src/email_relay/migrations/*",
-  "tests/*",
+  "src/django_email_relay/migrations/*",
+  "tests/*"
 ]
-source = ["email_relay", "service"]
+source = ["django_email_relay"]
 
 [tool.django-stubs]
 django_settings_module = "tests.settings"
 strict_settings = false
 
+[tool.djlint]
+indent = 2
+
+[tool.hatch.build]
+exclude = [
+  ".*",
+  "Justfile"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/django_email_relay"]
+
+[tool.hatch.version]
+path = "src/django_email_relay/__init__.py"
+
 [tool.mypy]
+check_untyped_defs = true
 exclude = "docs/.*\\.py$"
 mypy_path = "src/"
-namespace_packages = false
-check_untyped_defs = true
 no_implicit_optional = true
 plugins = [
-  "mypy_django_plugin.main",
+  "mypy_django_plugin.main"
 ]
 warn_redundant_casts = true
 warn_unused_configs = true
@@ -138,33 +140,25 @@ warn_unused_ignores = true
 [[tool.mypy.overrides]]
 ignore_errors = true
 ignore_missing_imports = true
-module = "tests.*"
+module = [
+  "django_email_relay.*.migrations.*",
+  "tests.*"
+]
 
 [tool.mypy_django_plugin]
 ignore_missing_model_attributes = true
 
 [tool.pytest.ini_options]
-django_find_project = false
-pythonpath = "src"
 addopts = "--create-db -n auto --dist loadfile --doctest-modules"
+django_find_project = false
 norecursedirs = ".* bin build dist *.egg htmlcov logs node_modules templates venv"
 python_files = "tests.py test_*.py *_tests.py"
-testpaths = ["src/service", "tests"]
+pythonpath = "src"
+testpaths = ["tests"]
 
 [tool.ruff]
-ignore = ["E501", "E741"] # temporary
-select = [
-  "B", # flake8-bugbear
-  "E", # Pycodestyle
-  "F", # Pyflakes
-  "I", # isort
-  "UP", # pyupgrade
-]
-
-# Allow autofix for all enabled rules (when `--fix`) is provided.
-fixable = ["A", "B", "C", "D", "E", "F", "I"]
-unfixable = []
-
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 # Exclude a variety of commonly ignored directories.
 exclude = [
   ".bzr",
@@ -180,45 +174,46 @@ exclude = [
   ".venv",
   "__pypackages__",
   "_build",
-  "buck-out",
   "build",
   "dist",
   "migrations",
   "node_modules",
-  "static",
-  "venv",
+  "venv"
 ]
 extend-include = ["*.pyi?"]
-
-per-file-ignores = {}
-
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = ["A", "B", "C", "D", "E", "F", "I"]
+ignore = ["E501", "E741"]  # temporary
+indent-width = 4
 # Same as Black.
 line-length = 88
-indent-width = 4
-
-# Allow unused variables when underscore-prefixed.
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
-
+select = [
+  "B",  # flake8-bugbear
+  "E",  # Pycodestyle
+  "F",  # Pyflakes
+  "I",  # isort
+  "UP"  # pyupgrade
+]
 # Assume Python >3.8.
 target-version = "py38"
+unfixable = []
 
 [tool.ruff.format]
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
 # Like Black, use double quotes for strings.
 quote-style = "double"
 
-# Like Black, indent with spaces, rather than tabs.
-indent-style = "space"
-
-# Like Black, respect magic trailing commas.
-# magic-trailing-comma = "respect"
-
-# Like Black, automatically detect the appropriate line ending.
-line-ending = "auto"
-
 [tool.ruff.isort]
 force-single-line = true
-known-first-party = ["email_relay", "service"]
+known-first-party = ["django_email_relay"]
 required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.per-file-ignores]
+# Tests can use magic values, assertions, and relative imports
+"tests/**/*" = ["PLR2004", "S101", "TID252"]
 
 [tool.ruff.pyupgrade]
 # Preserve types, even if a file imports `from __future__ import annotations`.

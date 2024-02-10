@@ -21,7 +21,7 @@ DJMAIN = "main"
 DJMAIN_MIN_PY = PY310
 DJ_VERSIONS = [DJ32, DJ42, DJ50, DJMAIN]
 DJ_LTS = [DJ32, DJ42]
-DJ_DEFAULT = DJ_LTS[-1]
+DJ_DEFAULT = DJ_LTS[0]
 DJ_LATEST = DJ_VERSIONS[-2]
 
 
@@ -32,6 +32,7 @@ def version(ver: str) -> tuple[int, ...]:
 
 def should_skip(python: str, django: str) -> bool:
     """Return True if the test should be skipped"""
+
     if django == DJMAIN and version(python) < version(DJMAIN_MIN_PY):
         # Django main requires Python 3.10+
         return True
@@ -63,7 +64,7 @@ def test(session):
     ],
 )
 def tests(session, django):
-    session.install(".[dev,relay]")
+    session.install(".[dev]")
 
     if django == DJMAIN:
         session.install("https://github.com/django/django/archive/refs/heads/main.zip")
@@ -75,8 +76,8 @@ def tests(session, django):
 
 @nox.session
 def coverage(session):
-    session.install(".[dev,relay]")
-    session.run("python", "-m", "pytest", "--cov=email_relay", "--cov=service")
+    session.install(".[dev]")
+    session.run("python", "-m", "pytest", "--cov=django_email_relay")
 
     try:
         summary = os.environ["GITHUB_STEP_SUMMARY"]
@@ -110,5 +111,5 @@ def lint(session):
 
 @nox.session
 def mypy(session):
-    session.install(".[dev,relay]")
+    session.install(".[dev]")
     session.run("python", "-m", "mypy", ".")
