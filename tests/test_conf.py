@@ -3,7 +3,6 @@ from __future__ import annotations
 import pytest
 from django.conf import settings
 from django.test import override_settings
-
 from email_relay.conf import app_settings
 
 

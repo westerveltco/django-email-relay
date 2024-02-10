@@ -9,11 +9,10 @@ from django.core.mail import EmailMessage
 from django.core.mail import EmailMultiAlternatives
 from django.test import override_settings
 from django.utils import timezone
-from model_bakery import baker
-
 from email_relay.models import Message
 from email_relay.models import Priority
 from email_relay.models import Status
+from model_bakery import baker
 
 
 @pytest.mark.django_db(databases=["default", "email_relay_db"])

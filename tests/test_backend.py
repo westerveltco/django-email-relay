@@ -5,7 +5,6 @@ from django.conf import settings
 from django.core.mail import EmailMessage
 from django.core.mail import send_mail
 from django.test.utils import override_settings
-
 from email_relay.models import Message
 
 

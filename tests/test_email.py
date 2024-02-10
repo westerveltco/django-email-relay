@@ -3,7 +3,6 @@ from __future__ import annotations
 from dirty_equals import IsPartialDict
 from django.core.mail import EmailMessage
 from django.core.mail import EmailMultiAlternatives
-
 from email_relay.email import RelayEmailData
 from email_relay.email import __version__
 

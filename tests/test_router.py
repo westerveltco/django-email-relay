@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from email_relay.conf import app_settings
 from email_relay.db import EmailDatabaseRouter
 
