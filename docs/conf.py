@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Django setup -----------------------------------------------------------
 # This is required to import Django code in Sphinx using autodoc.
 
-# os.environ["DJANGO_SETTINGS_MODULE"] = "lease.settings"
+# os.environ["DJANGO_SETTINGS_MODULE"] = "tests.settings"
 # django.setup()
 
 
@@ -75,10 +75,6 @@ html_theme = "furo"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
-html_css_files = [
-    "css/custom.css",
-]
-
 html_title = project
 
 html_theme_options = {
@@ -99,7 +95,6 @@ html_theme_options = {
 html_sidebars = {
     "**": [
         "sidebar/brand.html",
-        # "sidebar/repo.html",
         "sidebar/search.html",
         "sidebar/scroll-start.html",
         "sidebar/navigation.html",
