@@ -107,7 +107,7 @@ omit = [
   "src/email_relay/migrations/*",
   "tests/*"
 ]
-source = ["email_relay"]
+source = ["email_relay", "service"]
 
 [tool.django-stubs]
 django_settings_module = "tests.settings"
@@ -157,7 +157,7 @@ django_find_project = false
 norecursedirs = ".* bin build dist *.egg htmlcov logs node_modules templates venv"
 python_files = "tests.py test_*.py *_tests.py"
 pythonpath = "src"
-testpaths = ["tests"]
+testpaths = ["src/service", "tests"]
 
 [tool.ruff]
 # Allow unused variables when underscore-prefixed.
