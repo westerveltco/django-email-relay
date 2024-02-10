@@ -5,6 +5,7 @@ import os
 from typing import Any
 
 from django.conf import global_settings
+
 from email_relay.conf import EMAIL_RELAY_SETTINGS_NAME
 
 

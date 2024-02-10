@@ -9,10 +9,11 @@ import responses
 from django.core.management import call_command
 from django.test.utils import override_settings
 from django.utils import timezone
+from model_bakery import baker
+
 from email_relay.management.commands.runrelay import Command
 from email_relay.models import Message
 from email_relay.models import Status
-from model_bakery import baker
 
 
 def test_runrelay_help():

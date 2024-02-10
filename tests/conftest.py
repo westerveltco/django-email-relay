@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 
 from django.conf import settings
+
 from email_relay.conf import EMAIL_RELAY_DATABASE_ALIAS
 
 pytest_plugins = []  # type: ignore

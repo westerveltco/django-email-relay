@@ -39,6 +39,7 @@ requires-python = ">=3.8"
 dev = [
   "bumpver",
   "coverage[toml]",
+  "dirty-equals",
   "django-stubs",
   "django-stubs-ext",
   "faker",
@@ -51,7 +52,9 @@ dev = [
   "pytest-django",
   "pytest-randomly",
   "pytest-reverse",
-  "pytest-xdist"
+  "pytest-xdist",
+  "responses",
+  "types-requests"
 ]
 docs = [
   "cogapp",
@@ -78,7 +81,7 @@ tag = false
 version_pattern = "MAJOR.MINOR.PATCH[PYTAGNUM]"
 
 [tool.bumpver.file_patterns]
-"src/django_email_relay/__init__.py" = [
+"src/email_relay/__init__.py" = [
   '__version__ = "{version}"'
 ]
 "tests/test_version.py" = [
@@ -101,10 +104,10 @@ fail_under = 75
 
 [tool.coverage.run]
 omit = [
-  "src/django_email_relay/migrations/*",
+  "src/email_relay/migrations/*",
   "tests/*"
 ]
-source = ["django_email_relay"]
+source = ["email_relay"]
 
 [tool.django-stubs]
 django_settings_module = "tests.settings"
@@ -120,10 +123,10 @@ exclude = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/django_email_relay"]
+packages = ["src/email_relay"]
 
 [tool.hatch.version]
-path = "src/django_email_relay/__init__.py"
+path = "src/email_relay/__init__.py"
 
 [tool.mypy]
 check_untyped_defs = true
@@ -141,7 +144,7 @@ warn_unused_ignores = true
 ignore_errors = true
 ignore_missing_imports = true
 module = [
-  "django_email_relay.*.migrations.*",
+  "email_relay.*.migrations.*",
   "tests.*"
 ]
 
@@ -208,7 +211,7 @@ quote-style = "double"
 
 [tool.ruff.isort]
 force-single-line = true
-known-first-party = ["django_email_relay"]
+known-first-party = ["email_relay"]
 required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.per-file-ignores]

@@ -9,6 +9,7 @@ from django.core.mail import mail_managers
 from django.core.mail import send_mail
 from django.core.mail import send_mass_mail
 from django.test import override_settings
+
 from email_relay.conf import EMAIL_RELAY_DATABASE_ALIAS
 from email_relay.models import Message
 
