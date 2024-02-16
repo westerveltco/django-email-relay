@@ -51,7 +51,7 @@ manage *COMMAND:
             "forget to activate a virtual environment?"
         ) from exc
 
-    settings.configure(INSTALLED_APPS=["django_email_relay"])
+    settings.configure(INSTALLED_APPS=["email_relay"])
     execute_from_command_line(sys.argv + "{{ COMMAND }}".split(" "))
 
 alias mm := makemigrations
