@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from django_email_relay import __version__
+from email_relay import __version__
 
 
 def test_version():
