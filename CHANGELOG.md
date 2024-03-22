@@ -27,6 +27,10 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 -   Now using [`django-twc-package`](https://github.com/westerveltco/django-twc-package) template for repository and package structure.
     -   This includes using `uv` internally for managing Python dependencies.
 
+### Fixed
+
+-   Resolved a type mismatch error in from_email_message method when encoding attachments to base64. Added type checking to confirm that the payload extracted from a MIMEBase object is of type bytes before passing it to base64.b64encode.
+
 ## [0.3.0]
 
 ### Added
