@@ -5,6 +5,9 @@ from pathlib import Path
 
 import nox
 
+nox.options.default_venv_backend = "uv|virtualenv"
+nox.options.reuse_existing_virtualenvs = True
+
 PY38 = "3.8"
 PY39 = "3.9"
 PY310 = "3.10"
@@ -64,10 +67,12 @@ def test(session):
     ],
 )
 def tests(session, django):
-    session.install(".[dev]")
+    session.install("django-email-relay[dev] @ .")
 
     if django == DJMAIN:
-        session.install("https://github.com/django/django/archive/refs/heads/main.zip")
+        session.install(
+            "django @ https://github.com/django/django/archive/refs/heads/main.zip"
+        )
     else:
         session.install(f"django=={django}")
 
@@ -76,7 +81,7 @@ def tests(session, django):
 
 @nox.session
 def coverage(session):
-    session.install(".[dev]")
+    session.install("django-email-relay[dev] @ .")
     session.run("python", "-m", "pytest", "--cov=email_relay")
 
     try:
@@ -105,11 +110,11 @@ def coverage(session):
 
 @nox.session
 def lint(session):
-    session.install(".[lint]")
+    session.install("django-email-relay[lint] @ .")
     session.run("python", "-m", "pre_commit", "run", "--all-files")
 
 
 @nox.session
 def mypy(session):
-    session.install(".[dev]")
+    session.install("django-email-relay[dev] @ .")
     session.run("python", "-m", "mypy", ".")
