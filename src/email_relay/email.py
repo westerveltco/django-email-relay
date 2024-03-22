@@ -69,14 +69,16 @@ class RelayEmailData:
         attachments = []
         for attachment in email_message.attachments:
             if isinstance(attachment, MIMEBase):
+                payload = attachment.get_payload(decode=True)
+                if not isinstance(payload, bytes):
+                    raise TypeError("Payload must be bytes for base64 encoding")
+
                 attachments.append(
                     {
                         "filename": attachment.get_filename(
                             failobj="filename_not_found"
                         ),
-                        "content": base64.b64encode(
-                            attachment.get_payload(decode=True)
-                        ).decode(),
+                        "content": base64.b64encode(payload).decode(),
                         "mimetype": attachment.get_content_type(),
                     }
                 )
