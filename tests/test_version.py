@@ -4,4 +4,4 @@ from email_relay import __version__
 
 
 def test_version():
-    assert __version__ == "0.4.1"
+    assert __version__ == "0.4.2"
