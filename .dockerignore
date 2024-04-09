@@ -9,6 +9,5 @@ fly.toml
 .yarnrc.yml
 Dockerfile
 Justfile
-LICENSE
 requirements.in
 __pycache__
