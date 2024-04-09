@@ -18,6 +18,10 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ## [Unreleased]
 
+### Fixed
+
+-   Added `LICENSE` to `Dockerfile`.
+
 ## [0.4.1]
 
 ### Fixed
