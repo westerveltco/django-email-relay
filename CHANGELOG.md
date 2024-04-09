@@ -18,6 +18,10 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ## [Unreleased]
 
+### Fixed
+
+-   Added all documentation pages back to `toctree`.
+
 ## [0.4.2]
 
 ### Fixed
