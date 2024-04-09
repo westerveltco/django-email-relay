@@ -18,6 +18,10 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ## [Unreleased]
 
+### Fixed
+
+-   Added back Docker publishing to `release.yml` GitHub Actions workflow.
+
 ## [0.4.0]
 
 ### Added
