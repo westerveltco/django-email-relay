@@ -22,6 +22,7 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 -   Added all documentation pages back to `toctree`.
 -   Added back missing copyright information from `django-mailer`. Sorry to all the maintainers and contributors of that package! It was a major oversight.
+-   Added back all missing extras: `hc`, `psycopg`, and `relay`.
 
 ## [0.4.2]
 
