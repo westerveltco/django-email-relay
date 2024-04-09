@@ -3,9 +3,7 @@ build-backend = "hatchling.build"
 requires = ["hatchling"]
 
 [project]
-authors = [
-  {name = "Josh Thomas", email = "josh@joshthomas.dev"}
-]
+authors = [{name = "Josh Thomas", email = "josh@joshthomas.dev"}]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Framework :: Django",
@@ -24,9 +22,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: Implementation :: CPython"
 ]
-dependencies = [
-  "django>=3.2"
-]
+dependencies = ["django>=3.2"]
 description = "Centralize and relay email from multiple distributed Django projects to an internal SMTP server via a database queue."
 dynamic = ["version"]
 keywords = []
@@ -68,7 +64,10 @@ docs = [
   "sphinx-copybutton",
   "sphinx-inline-tabs"
 ]
+hc = ["requests"]
 lint = ["pre-commit"]
+psycopg = ["psycopg[binary]"]
+relay = ["environs[django]"]
 
 [project.urls]
 Documentation = "https://django-email-relay.westervelt.dev/"
@@ -84,15 +83,9 @@ tag = false
 version_pattern = "MAJOR.MINOR.PATCH[PYTAGNUM]"
 
 [tool.bumpver.file_patterns]
-".copier/package.yml" = [
-  'current_version: {version}'
-]
-"src/email_relay/__init__.py" = [
-  '__version__ = "{version}"'
-]
-"tests/test_version.py" = [
-  'assert __version__ == "{version}"'
-]
+".copier/package.yml" = ['current_version: {version}']
+"src/email_relay/__init__.py" = ['__version__ = "{version}"']
+"tests/test_version.py" = ['assert __version__ == "{version}"']
 
 [tool.coverage.paths]
 source = ["src"]
@@ -109,10 +102,7 @@ exclude_lines = [
 fail_under = 75
 
 [tool.coverage.run]
-omit = [
-  "src/email_relay/migrations/*",
-  "tests/*"
-]
+omit = ["src/email_relay/migrations/*", "tests/*"]
 source = ["email_relay", "service"]
 
 [tool.django-stubs]
@@ -123,10 +113,7 @@ strict_settings = false
 indent = 2
 
 [tool.hatch.build]
-exclude = [
-  ".*",
-  "Justfile"
-]
+exclude = [".*", "Justfile"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/email_relay"]
@@ -139,9 +126,7 @@ check_untyped_defs = true
 exclude = "docs/.*\\.py$"
 mypy_path = "src/"
 no_implicit_optional = true
-plugins = [
-  "mypy_django_plugin.main"
-]
+plugins = ["mypy_django_plugin.main"]
 warn_redundant_casts = true
 warn_unused_configs = true
 warn_unused_ignores = true
@@ -149,10 +134,7 @@ warn_unused_ignores = true
 [[tool.mypy.overrides]]
 ignore_errors = true
 ignore_missing_imports = true
-module = [
-  "email_relay.*.migrations.*",
-  "tests.*"
-]
+module = ["email_relay.*.migrations.*", "tests.*"]
 
 [tool.mypy_django_plugin]
 ignore_missing_model_attributes = true
