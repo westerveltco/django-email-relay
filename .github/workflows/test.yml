@@ -27,6 +27,7 @@ jobs:
         with:
           python-version: 3.8
           extra-python-dependencies: nox
+          use-uv: true
 
       - id: set-matrix
         run: |

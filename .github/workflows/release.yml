@@ -50,6 +50,7 @@ jobs:
         with:
           python-version: 3.12
           extra-python-dependencies: hatch
+          use-uv: true
 
       - name: Build package
         run: |
