@@ -9,6 +9,9 @@ set dotenv-load := true
 
 bootstrap:
     @just pup
+    @just install
+
+install:
     python -m uv pip install --editable '.[dev]'
 
 pup:
