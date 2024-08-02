@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from ._typing import override
 from django.conf import settings
 
 EMAIL_RELAY_SETTINGS_NAME = "DJANGO_EMAIL_RELAY"
