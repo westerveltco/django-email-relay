@@ -18,60 +18,68 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ## [Unreleased]
 
+### Added
+
+- Added support for Python 3.13.
+
 ### Changed
 
--   Now using v2024.18 of `django-twc-package`.
+- Now using v2024.24 of `django-twc-package`.
+
+### Removed
+
+- Removed support for Django 3.2.
 
 ## [0.4.3]
 
 ### Fixed
 
--   Added all documentation pages back to `toctree`.
--   Added back missing copyright information from `django-mailer`. Sorry to all the maintainers and contributors of that package! It was a major oversight.
--   Added back all missing extras: `hc`, `psycopg`, and `relay`.
+- Added all documentation pages back to `toctree`.
+- Added back missing copyright information from `django-mailer`. Sorry to all the maintainers and contributors of that package! It was a major oversight.
+- Added back all missing extras: `hc`, `psycopg`, and `relay`.
 
 ## [0.4.2]
 
 ### Fixed
 
--   Added `LICENSE` to `Dockerfile`.
+- Added `LICENSE` to `Dockerfile`.
 
 ## [0.4.1]
 
 ### Fixed
 
--   Added back Docker publishing to `release.yml` GitHub Actions workflow.
+- Added back Docker publishing to `release.yml` GitHub Actions workflow.
 
 ## [0.4.0]
 
 ### Added
 
--   A `_email_relay_version` field to `RelayEmailData` to track the version of the schema used to serialize the data. This should allow for future changes to the schema to be handled more gracefully.
+- A `_email_relay_version` field to `RelayEmailData` to track the version of the schema used to serialize the data. This should allow for future changes to the schema to be handled more gracefully.
 
 ### Changed
 
--   Now using [`django-twc-package`](https://github.com/westerveltco/django-twc-package) template for repository and package structure.
-    -   This includes using `uv` internally for managing Python dependencies.
+- Now using [`django-twc-package`](https://github.com/westerveltco/django-twc-package) template for repository and package structure.
+  - This includes using `uv` internally for managing Python dependencies.
 
 ### Fixed
 
--   Resolved a type mismatch error in from_email_message method when encoding attachments to base64. Added type checking to confirm that the payload extracted from a MIMEBase object is of type bytes before passing it to base64.b64encode.
+- Resolved a type mismatch error in from_email_message method when encoding attachments to base64. Added type checking to confirm that the payload extracted from a MIMEBase object is of type bytes before passing it to base64.b64encode.
 
 ## [0.3.0]
 
 ### Added
 
--   Support for Django 5.0.
+- Support for Django 5.0.
 
 ### Removed
 
--   Support for Django 4.1.
+- Support for Django 4.1.
 
 ## [0.2.1]
 
 ### Fixed
 
--   Migration 0002 was not being applied to the `default` database, which is the norm when running the relay in Docker.
+- Migration 0002 was not being applied to the `default` database, which is the norm when running the relay in Docker.
 
 ## [0.2.0] - **YANKED**
 
@@ -81,24 +89,24 @@ This release has been yanked from PyPI due to a bug in the migration that was no
 
 ### Added
 
--   A `RelayEmailData` dataclass for representing the `Message.data` field.
--   Documentation in the package's deprecation policy about the road to 1.0.0.
--   Complete test coverage for all of the public ways of sending emails that Django provides.
+- A `RelayEmailData` dataclass for representing the `Message.data` field.
+- Documentation in the package's deprecation policy about the road to 1.0.0.
+- Complete test coverage for all of the public ways of sending emails that Django provides.
 
 ### Changed
 
--   **Breaking**: The internal JSON schema for the `Message.data` field has been updated to bring it more in line with all of the possible fields provided by Django's `EmailMessage` and `EmailMultiAlternatives`. This change involves a migration to update the `Message.data` field to the new schema. This is a one-way update and cannot be rolled back. Please take care when updating to this version and ensure that all projects using `django-email-relay` are updated at the same time. See the [updating](https://django-email-relay.westervelt.dev/en/latest/updating.html) documentation for more information.
--   The internal `AppSettings` dataclass is now a `frozen=True` dataclass.
+- **Breaking**: The internal JSON schema for the `Message.data` field has been updated to bring it more in line with all of the possible fields provided by Django's `EmailMessage` and `EmailMultiAlternatives`. This change involves a migration to update the `Message.data` field to the new schema. This is a one-way update and cannot be rolled back. Please take care when updating to this version and ensure that all projects using `django-email-relay` are updated at the same time. See the [updating](https://django-email-relay.westervelt.dev/en/latest/updating.html) documentation for more information.
+- The internal `AppSettings` dataclass is now a `frozen=True` dataclass.
 
 ## [0.1.1]
 
 ### Added
 
--   Moved a handful of common `Message` queries and actions from the `runrelay` management command to methods on the `MessageManager` class.
+- Moved a handful of common `Message` queries and actions from the `runrelay` management command to methods on the `MessageManager` class.
 
 ### Fixed
 
--   The relay service would crash if requests raised an `Exception` during the healthcheck ping. Now it will log the exception and continue processing the queue.
+- The relay service would crash if requests raised an `Exception` during the healthcheck ping. Now it will log the exception and continue processing the queue.
 
 ## [0.1.0]
 
@@ -106,25 +114,25 @@ Initial release!
 
 ### Added
 
--   An email backend that stores emails in a database ala a Message model rather than sending them via SMTP or other means.
-    -   Designed to work seamlessly with Django's built-in ways of sending emails.
--   A database backend that routes writes to the Message model to a separate database.
--   A Message model that stores the contents of an email.
-    -   The Message model stores the contents of the email as a JSONField.
-    -   Attachments are stored in the database, under the 'attachments' key in the JSONField.
-        -   Should be able to handle anything that Django can by default.
--   A relay service intended to be run separately, either as a standalone Docker image or as a management command within a Django project.
-    -   A Docker image is provided for the relay service. Currently only PostgreSQL is supported as a database backend.
-    -   A management command is provided for the relay service. Any database backend supported by Django should work (minus SQLite which doesn't make sense for a relay service).
-    -   The relay service can be configured with a healthcheck url to ensure it is running.
--   Initial documentation.
--   Initial tests.
--   Initial CI/CD (GitHub Actions).
+- An email backend that stores emails in a database ala a Message model rather than sending them via SMTP or other means.
+  - Designed to work seamlessly with Django's built-in ways of sending emails.
+- A database backend that routes writes to the Message model to a separate database.
+- A Message model that stores the contents of an email.
+  - The Message model stores the contents of the email as a JSONField.
+  - Attachments are stored in the database, under the 'attachments' key in the JSONField.
+    - Should be able to handle anything that Django can by default.
+- A relay service intended to be run separately, either as a standalone Docker image or as a management command within a Django project.
+  - A Docker image is provided for the relay service. Currently only PostgreSQL is supported as a database backend.
+  - A management command is provided for the relay service. Any database backend supported by Django should work (minus SQLite which doesn't make sense for a relay service).
+  - The relay service can be configured with a healthcheck url to ensure it is running.
+- Initial documentation.
+- Initial tests.
+- Initial CI/CD (GitHub Actions).
 
 ### New Contributors
 
--   Josh Thomas <josh@joshthomas.dev> (maintainer)
--   Jeff Triplett [@jefftriplett](https://github.com/jefftriplett)
+- Josh Thomas <josh@joshthomas.dev> (maintainer)
+- Jeff Triplett [@jefftriplett](https://github.com/jefftriplett)
 
 ### Thanks ❤️
 
