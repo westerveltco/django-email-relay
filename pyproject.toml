@@ -7,7 +7,6 @@ authors = [{name = "Josh Thomas", email = "josh@joshthomas.dev"}]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Framework :: Django",
-  "Framework :: Django :: 3.2",
   "Framework :: Django :: 4.2",
   "Framework :: Django :: 5.0",
   "License :: OSI Approved :: MIT License",
@@ -20,9 +19,12 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython"
 ]
-dependencies = ["django>=3.2"]
+dependencies = [
+  "django>=4.2"
+]
 description = "Centralize and relay email from multiple distributed Django projects to an internal SMTP server via a database queue."
 dynamic = ["version"]
 keywords = []
@@ -53,6 +55,7 @@ dev = [
   "pytest-reverse",
   "pytest-xdist",
   "responses",
+  "ruff",
   "types-requests"
 ]
 docs = [
@@ -110,7 +113,12 @@ django_settings_module = "tests.settings"
 strict_settings = false
 
 [tool.djlint]
+blank_line_after_tag = "endblock,endpartialdef,extends,load"
+blank_line_before_tag = "block,partialdef"
+custom_blocks = "partialdef"
+ignore = "H031"  # Don't require `meta` tag keywords
 indent = 2
+profile = "django"
 
 [tool.hatch.build]
 exclude = [".*", "Justfile"]
@@ -123,7 +131,13 @@ path = "src/email_relay/__init__.py"
 
 [tool.mypy]
 check_untyped_defs = true
-exclude = "docs/.*\\.py$"
+exclude = [
+  "docs",
+  "tests",
+  "migrations",
+  "venv",
+  ".venv"
+]
 mypy_path = "src/"
 no_implicit_optional = true
 plugins = ["mypy_django_plugin.main"]
@@ -134,7 +148,11 @@ warn_unused_ignores = true
 [[tool.mypy.overrides]]
 ignore_errors = true
 ignore_missing_imports = true
-module = ["email_relay.*.migrations.*", "tests.*"]
+module = [
+  "*.migrations.*",
+  "docs.*",
+  "tests.*"
+]
 
 [tool.mypy_django_plugin]
 ignore_missing_model_attributes = true
