@@ -8,12 +8,11 @@ import nox
 nox.options.default_venv_backend = "uv|virtualenv"
 nox.options.reuse_existing_virtualenvs = True
 
-PY38 = "3.8"
 PY39 = "3.9"
 PY310 = "3.10"
 PY311 = "3.11"
 PY312 = "3.12"
-PY_VERSIONS = [PY38, PY39, PY310, PY311, PY312]
+PY_VERSIONS = [PY39, PY310, PY311, PY312]
 PY_DEFAULT = PY_VERSIONS[0]
 PY_LATEST = PY_VERSIONS[-1]
 
