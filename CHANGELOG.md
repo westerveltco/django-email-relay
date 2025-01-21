@@ -20,7 +20,7 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ### Added
 
-- Added support for Django 5.1.
+- Added support for Django 5.1 and 5.2.
 
 ### Changed
 
