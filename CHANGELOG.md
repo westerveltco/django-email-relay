@@ -18,6 +18,10 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ## [Unreleased]
 
+### Added
+
+- Added support for Django 5.1.
+
 ### Changed
 
 - Now using v2024.18 of `django-twc-package`.
