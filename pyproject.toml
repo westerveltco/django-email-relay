@@ -3,7 +3,7 @@ build-backend = "hatchling.build"
 requires = ["hatchling"]
 
 [project]
-authors = [{ name = "Josh Thomas", email = "josh@joshthomas.dev" }]
+authors = [{name = "Josh Thomas", email = "josh@joshthomas.dev"}]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Framework :: Django",
@@ -19,13 +19,13 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: CPython"
 ]
 dependencies = ["django>=3.2"]
 description = "Centralize and relay email from multiple distributed Django projects to an internal SMTP server via a database queue."
 dynamic = ["version"]
 keywords = []
-license = { file = "LICENSE" }
+license = {file = "LICENSE"}
 name = "django-email-relay"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -52,7 +52,7 @@ dev = [
   "pytest-reverse",
   "pytest-xdist",
   "responses",
-  "types-requests",
+  "types-requests"
 ]
 docs = [
   "cogapp",
@@ -61,7 +61,7 @@ docs = [
   "sphinx",
   "sphinx-autobuild",
   "sphinx-copybutton",
-  "sphinx-inline-tabs",
+  "sphinx-inline-tabs"
 ]
 hc = ["requests"]
 lint = ["pre-commit"]
@@ -77,7 +77,7 @@ Source = "https://github.com/westerveltco/django-email-relay"
 commit = true
 commit_message = ":bookmark: bump version {old_version} -> {new_version}"
 current_version = "0.4.3"
-push = false                                                              # set to false for CI
+push = false  # set to false for CI
 tag = false
 version_pattern = "MAJOR.MINOR.PATCH[PYTAGNUM]"
 
@@ -96,7 +96,7 @@ exclude_lines = [
   "if not DEBUG:",
   "if settings.DEBUG:",
   "if TYPE_CHECKING:",
-  'def __str__\(self\)\s?\-?\>?\s?\w*\:',
+  'def __str__\(self\)\s?\-?\>?\s?\w*\:'
 ]
 fail_under = 75
 
@@ -166,7 +166,7 @@ exclude = [
   "dist",
   "migrations",
   "node_modules",
-  "venv",
+  "venv"
 ]
 extend-include = ["*.pyi?"]
 indent-width = 4
@@ -188,13 +188,13 @@ quote-style = "double"
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 # Allow autofix for all enabled rules (when `--fix`) is provided.
 fixable = ["A", "B", "C", "D", "E", "F", "I"]
-ignore = ["E501", "E741"] # temporary
+ignore = ["E501", "E741"]  # temporary
 select = [
   "B",  # flake8-bugbear
   "E",  # Pycodestyle
   "F",  # Pyflakes
   "I",  # isort
-  "UP", # pyupgrade
+  "UP"  # pyupgrade
 ]
 unfixable = []
 
