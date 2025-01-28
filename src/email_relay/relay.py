@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import datetime
 import logging
 import smtplib
 import time
 from socket import error as socket_error
 
 from django.conf import settings
+from django.core.mail import EmailMessage
 from django.core.mail import get_connection
 from django.db import transaction
 
@@ -74,6 +76,16 @@ def send_all():
                     connection = None
                     counts["deferred"] += 1
                 else:
+                    # Attempting to add some basic error reporting until we are able
+                    # To add better monitoring such as Sentry
+                    current_date = datetime.now().strftime("%Y-%m-%d")
+                    email = EmailMessage(
+                        subject=f"Exception not handled with Email Relay - {current_date}",
+                        body=f"Message {message.id} did not send due to {err}",
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        to=["jthomas@westervelt.com", "dmann@westervelt.com"],
+                    )
+                    email.send()
                     raise err
 
         if (
