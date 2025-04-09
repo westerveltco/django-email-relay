@@ -22,7 +22,7 @@ dev = [
   "pytest-randomly",
   "pytest-reverse",
   "pytest-xdist",
-  "responses",
+  "responses"
 ]
 docs = [
   "cogapp",
