@@ -2,35 +2,7 @@
 build-backend = "hatchling.build"
 requires = ["hatchling"]
 
-[project]
-authors = [{name = "Josh Thomas", email = "josh@joshthomas.dev"}]
-classifiers = [
-  "Development Status :: 4 - Beta",
-  "Framework :: Django",
-  "Framework :: Django :: 4.2",
-  "Framework :: Django :: 5.1",
-  "Framework :: Django :: 5.2",
-  "License :: OSI Approved :: MIT License",
-  "Operating System :: OS Independent",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: Implementation :: CPython"
-]
-dependencies = ["django>=4.2"]
-description = "Centralize and relay email from multiple distributed Django projects to an internal SMTP server via a database queue."
-dynamic = ["version"]
-keywords = []
-license = {file = "LICENSE"}
-name = "django-email-relay"
-readme = "README.md"
-requires-python = ">=3.9"
-
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
   "bumpver",
   "copier",
@@ -63,8 +35,38 @@ docs = [
   "sphinx-copybutton",
   "sphinx-inline-tabs"
 ]
-hc = ["requests"]
 lint = ["pre-commit"]
+
+[project]
+authors = [{name = "Josh Thomas", email = "josh@joshthomas.dev"}]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Framework :: Django",
+  "Framework :: Django :: 4.2",
+  "Framework :: Django :: 5.1",
+  "Framework :: Django :: 5.2",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython"
+]
+dependencies = ["django>=4.2"]
+description = "Centralize and relay email from multiple distributed Django projects to an internal SMTP server via a database queue."
+dynamic = ["version"]
+keywords = []
+license = {file = "LICENSE"}
+name = "django-email-relay"
+readme = "README.md"
+requires-python = ">=3.9"
+
+[project.optional-dependencies]
+hc = ["requests"]
 psycopg = ["psycopg[binary]"]
 relay = ["environs[django]"]
 
@@ -210,3 +212,6 @@ required-imports = ["from __future__ import annotations"]
 [tool.ruff.lint.pyupgrade]
 # Preserve types, even if a file imports `from __future__ import annotations`.
 keep-runtime-typing = true
+
+[tool.uv]
+required-version = "<0.7"

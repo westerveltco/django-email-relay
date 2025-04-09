@@ -22,6 +22,10 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 - Added support for Python 3.13.
 
+### Changed
+
+- Now using `uv` for project management.
+
 ### Removed
 
 - Dropped support for Django 5.0.

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 
@@ -69,7 +70,17 @@ def test(session):
     ],
 )
 def tests(session, django):
-    session.install("django-email-relay[dev] @ .")
+    session.run_install(
+        "uv",
+        "sync",
+        "--frozen",
+        "--inexact",
+        "--no-install-package",
+        "django",
+        "--python",
+        session.python,
+        env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
+    )
 
     if django == DJMAIN:
         session.install(
@@ -78,48 +89,116 @@ def tests(session, django):
     else:
         session.install(f"django=={django}")
 
+    command = ["python", "-m", "pytest"]
     if session.posargs:
-        session.run("python", "-m", "pytest", *session.posargs)
-    else:
-        session.run("python", "-m", "pytest")
+        args = []
+        for arg in session.posargs:
+            if arg:
+                args.extend(arg.split(" "))
+        command.extend(args)
+    session.run(*command)
 
 
 @nox.session
 def coverage(session):
-    session.install("django-email-relay[dev] @ .")
-    session.run("python", "-m", "pytest", "--cov=email_relay")
+    session.run_install(
+        "uv",
+        "sync",
+        "--frozen",
+        "--python",
+        PY_DEFAULT,
+        env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
+    )
 
     try:
-        summary = os.environ["GITHUB_STEP_SUMMARY"]
-        with Path(summary).open("a") as output_buffer:
-            output_buffer.write("")
-            output_buffer.write("### Coverage\n\n")
-            output_buffer.flush()
+        command = ["python", "-m", "pytest", "--cov", "--cov-report="]
+        if session.posargs:
+            args = []
+            for arg in session.posargs:
+                if arg:
+                    args.extend(arg.split(" "))
+            command.extend(args)
+        session.run(*command)
+    finally:
+        # 0 -> OK
+        # 2 -> code coverage percent unmet
+        success_codes = [0, 2]
+
+        report_cmd = ["python", "-m", "coverage", "report"]
+        session.run(*report_cmd, success_codes=success_codes)
+
+        if summary := os.getenv("GITHUB_STEP_SUMMARY"):
+            report_cmd.extend(["--skip-covered", "--skip-empty", "--format=markdown"])
+
+            with Path(summary).open("a") as output_buffer:
+                output_buffer.write("")
+                output_buffer.write("### Coverage\n\n")
+                output_buffer.flush()
+                session.run(
+                    *report_cmd, stdout=output_buffer, success_codes=success_codes
+                )
+        else:
             session.run(
                 "python",
                 "-m",
                 "coverage",
-                "report",
+                "html",
                 "--skip-covered",
                 "--skip-empty",
-                "--format=markdown",
-                stdout=output_buffer,
+                success_codes=success_codes,
             )
-    except KeyError:
-        session.run(
-            "python", "-m", "coverage", "html", "--skip-covered", "--skip-empty"
-        )
-
-    session.run("python", "-m", "coverage", "report")
 
 
 @nox.session
 def lint(session):
-    session.install("django-email-relay[lint] @ .")
+    session.run_install(
+        "uv",
+        "sync",
+        "--group",
+        "lint",
+        "--frozen",
+        "--python",
+        PY_LATEST,
+        env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
+    )
     session.run("python", "-m", "pre_commit", "run", "--all-files")
 
 
 @nox.session
 def mypy(session):
-    session.install("django-email-relay[dev] @ .")
-    session.run("python", "-m", "mypy", ".")
+    session.run_install(
+        "uv",
+        "sync",
+        "--group",
+        "types",
+        "--frozen",
+        "--python",
+        PY_LATEST,
+        env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
+    )
+
+    command = ["python", "-m", "mypy", "."]
+    if session.posargs:
+        args = []
+        for arg in session.posargs:
+            if arg:
+                args.extend(arg.split(" "))
+        command.extend(args)
+    session.run(*command)
+
+
+@nox.session
+def gha_matrix(session):
+    sessions = session.run("nox", "-l", "--json", silent=True)
+    matrix = {
+        "include": [
+            {
+                "python-version": session["python"],
+                "django-version": session["call_spec"]["django"],
+            }
+            for session in json.loads(sessions)
+            if session["name"] == "tests"
+        ]
+    }
+    with Path(os.environ["GITHUB_OUTPUT"]).open("a") as fh:
+        print(f"matrix={matrix}", file=fh)

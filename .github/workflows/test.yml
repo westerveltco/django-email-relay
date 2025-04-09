@@ -20,18 +20,16 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
 
-      - uses: westerveltco/setup-ci-action@v0
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: 3.9
-          extra-python-dependencies: nox
-          use-uv: true
+          enable-cache: true
+          pyproject-file: pyproject.toml
 
       - id: set-matrix
         run: |
-          echo "matrix=$(python -m nox -l --json | jq -c '[.[] | select(.name == "tests") | {"python-version": .python, "django-version": .call_spec.django}] | {include: .}')" >> $GITHUB_OUTPUT
+          uv run nox --session "gha_matrix"
 
   test:
     name: Python ${{ matrix.python-version }}, Django ${{ matrix.django-version }}
@@ -42,18 +40,16 @@ jobs:
       matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
 
-      - uses: westerveltco/setup-ci-action@v0
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          extra-python-dependencies: nox
-          use-uv: true
+          enable-cache: true
+          pyproject-file: pyproject.toml
 
       - name: Run tests
         run: |
-          python -m nox --session "tests(python='${{ matrix.python-version }}', django='${{ matrix.django-version }}')"
+          uv run nox --session "tests(python='${{ matrix.python-version }}', django='${{ matrix.django-version }}')" -- --slow
 
   tests:
     runs-on: ubuntu-latest
@@ -71,32 +67,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
 
-      - uses: westerveltco/setup-ci-action@v0
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: 3.9
-          extra-python-dependencies: nox
-          use-uv: true
+          enable-cache: true
+          pyproject-file: pyproject.toml
 
-      - name: Run mypy
+      - name: Run type checks
         run: |
-          python -m nox --session "mypy"
+          uv run nox --session "mypy"
 
   coverage:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
 
-      - uses: westerveltco/setup-ci-action@v0
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: 3.9
-          extra-python-dependencies: nox
-          use-uv: true
+          enable-cache: true
+          pyproject-file: pyproject.toml
 
-      - name: Run coverage
+      - name: Generate code coverage
         run: |
-          python -m nox --session "coverage"
+          uv run nox --session "coverage"
