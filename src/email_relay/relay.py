@@ -59,6 +59,7 @@ def send_all():
                     smtplib.SMTPRecipientsRefused,
                     smtplib.SMTPSenderRefused,
                     socket_error,
+                    ValueError,
                 )
                 if isinstance(err, handled_exceptions):
                     logger.debug(f"deferring message {message.id} due to {err}")
