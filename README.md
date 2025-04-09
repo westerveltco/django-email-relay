@@ -19,7 +19,7 @@ It consists of two parts:
 
 ## Requirements
 
-- Python 3.8, 3.9, 3.10, 3.11, 3.12
+- Python 3.9, 3.10, 3.11, 3.12, 3.13
 - Django 4.2, 5.1, 5.2
 
 ## Getting Started
