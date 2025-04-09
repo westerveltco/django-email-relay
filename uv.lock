@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.9"
 resolution-markers = [
     "python_full_version >= '3.11'",
@@ -613,7 +614,6 @@ dev = [
     { name = "faker" },
     { name = "hatch" },
     { name = "model-bakery" },
-    { name = "mypy" },
     { name = "nox", extra = ["uv"] },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -622,7 +622,6 @@ dev = [
     { name = "pytest-reverse" },
     { name = "pytest-xdist" },
     { name = "responses" },
-    { name = "types-requests" },
 ]
 docs = [
     { name = "cogapp" },
@@ -639,6 +638,12 @@ docs = [
 lint = [
     { name = "pre-commit" },
 ]
+types = [
+    { name = "django-stubs" },
+    { name = "django-stubs-ext" },
+    { name = "mypy" },
+    { name = "types-requests" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -647,6 +652,7 @@ requires-dist = [
     { name = "psycopg", extras = ["binary"], marker = "extra == 'psycopg'" },
     { name = "requests", marker = "extra == 'hc'" },
 ]
+provides-extras = ["hc", "psycopg", "relay"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -661,7 +667,6 @@ dev = [
     { name = "faker" },
     { name = "hatch" },
     { name = "model-bakery" },
-    { name = "mypy" },
     { name = "nox", extras = ["uv"] },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -670,7 +675,6 @@ dev = [
     { name = "pytest-reverse" },
     { name = "pytest-xdist" },
     { name = "responses" },
-    { name = "types-requests" },
 ]
 docs = [
     { name = "cogapp" },
@@ -682,6 +686,12 @@ docs = [
     { name = "sphinx-inline-tabs" },
 ]
 lint = [{ name = "pre-commit" }]
+types = [
+    { name = "django-stubs" },
+    { name = "django-stubs-ext" },
+    { name = "mypy" },
+    { name = "types-requests" },
+]
 
 [[package]]
 name = "django-stubs"

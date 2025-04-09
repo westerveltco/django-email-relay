@@ -14,7 +14,6 @@ dev = [
   "environs",
   "faker",
   "hatch",
-  "mypy",
   "model-bakery",
   "nox[uv]",
   "pytest",
@@ -24,7 +23,6 @@ dev = [
   "pytest-reverse",
   "pytest-xdist",
   "responses",
-  "types-requests"
 ]
 docs = [
   "cogapp",
@@ -36,6 +34,12 @@ docs = [
   "sphinx-inline-tabs"
 ]
 lint = ["pre-commit"]
+types = [
+  "django-stubs",
+  "django-stubs-ext",
+  "mypy",
+  "types-requests"
+]
 
 [project]
 authors = [{name = "Josh Thomas", email = "josh@joshthomas.dev"}]

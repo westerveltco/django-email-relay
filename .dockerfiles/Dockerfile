@@ -1,28 +1,30 @@
-FROM python:3.11-slim as base
-ENV PYTHONPATH /app
+FROM python:3.13-slim as base
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
-ENV DEBUG False
+ENV UV_LINK_MODE copy
+ENV UV_COMPILE_BYTECODE 1
+ENV UV_PYTHON_DOWNLOADS never
+ENV UV_PYTHON /usr/local/bin/python
+ENV UV_PROJECT_ENVIRONMENT /app
+ENV PATH /app/bin:$PATH
+COPY --from=ghcr.io/astral-sh/uv:0.6.14 /uv /uvx /bin/
 RUN mkdir -p /app
 WORKDIR /app
 
 
-FROM base as py
+FROM base as builder
+COPY pyproject.toml uv.lock* ./
+RUN uv sync --locked --no-dev --no-install-project
 COPY src /app/src
-COPY LICENSE pyproject.toml README.md /app/
-RUN python -m pip install --upgrade pip \
-  && python -m pip install '.[hc,psycopg,relay]'
-
-
-FROM base as app
-COPY src/service /app/service
+COPY LICENSE README.md ./
+RUN uv sync --locked --no-dev --no-editable
 
 
 FROM base as final
-COPY --from=py /usr/local /usr/local
-COPY --from=app /app /app
+COPY --from=builder /app /app
 RUN addgroup --system django \
   && adduser --system --ingroup django django \
+  # Ensure the app directory is owned by the user
   && chown -R django:django /app
 USER django
-CMD ["python", "-m", "service"]
+CMD ["uv", "run", "-m", "service"]

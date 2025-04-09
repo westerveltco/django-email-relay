@@ -59,9 +59,6 @@ manage *COMMAND:
 mypy *ARGS:
     @just nox mypy {{ ARGS }}
 
-pyright *ARGS:
-    @just nox pyright {{ ARGS }}
-
 test *ARGS:
     @just nox test {{ ARGS }}
 
