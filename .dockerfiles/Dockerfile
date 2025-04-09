@@ -8,22 +8,25 @@ ENV UV_PYTHON /usr/local/bin/python
 ENV UV_PROJECT_ENVIRONMENT /app
 ENV PATH /app/bin:$PATH
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-RUN mkdir -p /app
-WORKDIR /app
 
 
 FROM base as builder
-COPY pyproject.toml uv.lock* ./
-RUN uv sync --locked --no-dev --no-install-project
-COPY src /app/src
-COPY LICENSE README.md ./
-RUN uv sync --locked --no-dev --no-editable
+RUN --mount=type=cache,target=/root/.cache
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --locked --no-dev --no-install-project
+COPY . /src
+WORKDIR /src
+RUN --mount=type=cache,target=/root/.cache \
+    uv sync --locked --no-dev --no-editable
 
 
 FROM base as final
+RUN mkdir -p /app
 COPY --from=builder /app /app
 RUN addgroup --system django \
   && adduser --system --ingroup django django \
   && chown -R django:django /app
 USER django
+WORKDIR /app
 CMD ["uv", "run", "-m", "service"]
