@@ -7,7 +7,7 @@ ENV UV_PYTHON_DOWNLOADS never
 ENV UV_PYTHON /usr/local/bin/python
 ENV UV_PROJECT_ENVIRONMENT /app
 ENV PATH /app/bin:$PATH
-COPY --from=ghcr.io/astral-sh/uv:0.6.14 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 RUN mkdir -p /app
 WORKDIR /app
 
@@ -24,7 +24,6 @@ FROM base as final
 COPY --from=builder /app /app
 RUN addgroup --system django \
   && adduser --system --ingroup django django \
-  # Ensure the app directory is owned by the user
   && chown -R django:django /app
 USER django
 CMD ["uv", "run", "-m", "service"]
