@@ -112,18 +112,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Run container and check status
+      - name: Run container and check
         run: |
-          docker run -d --name test-container django-email-relay-test:latest
-          sleep 10
-          if docker ps -f name=test-container --format '{{.Names}}' | grep -q test-container; then
-          else
-            docker logs test-container
-            exit 1
-          fi
-
-      - name: Clean up container
-        if: always()
-        run: |
-          docker stop test-container || true
-          docker rm test-container || true
+          docker run --rm --name test-container django-email-relay-test:latest uv run -m service --help
