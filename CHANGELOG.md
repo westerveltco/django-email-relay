@@ -18,6 +18,8 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ## [Unreleased]
 
+## [0.6.0]
+
 ### Added
 
 - Added support for Python 3.13.
@@ -160,7 +162,7 @@ Initial release!
 
 Big thank you to the original authors of [`django-mailer`](https://github.com/pinax/django-mailer) for the inspiration and for doing the hard work of figuring out a good way of queueing emails in a database in the first place.
 
-[unreleased]: https://github.com/westerveltco/django-email-relay/compare/v0.5.0...HEAD
+[unreleased]: https://github.com/westerveltco/django-email-relay/compare/v0.6.0...HEAD
 [0.1.0]: https://github.com/westerveltco/django-email-relay/releases/tag/v0.1.0
 [0.1.1]: https://github.com/westerveltco/django-email-relay/releases/tag/v0.1.1
 [0.2.0]: https://github.com/westerveltco/django-email-relay/releases/tag/v0.2.0
@@ -171,3 +173,4 @@ Big thank you to the original authors of [`django-mailer`](https://github.com/pi
 [0.4.2]: https://github.com/westerveltco/django-email-relay/releases/tag/v0.4.2
 [0.4.3]: https://github.com/westerveltco/django-email-relay/releases/tag/v0.4.3
 [0.5.0]: https://github.com/westerveltco/django-email-relay/releases/tag/v0.5.0
+[0.6.0]: https://github.com/westerveltco/django-email-relay/releases/tag/v0.6.0
