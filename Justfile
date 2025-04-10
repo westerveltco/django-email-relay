@@ -4,7 +4,7 @@ set unstable := true
 mod copier ".just/copier.just"
 mod docker ".just/docker.just"
 mod docs ".just/documentation.just"
-mod? project ".just/project.just"
+mod project ".just/project.just"
 
 [private]
 default:
@@ -22,6 +22,7 @@ fmt:
     @just copier fmt
     @just docker fmt
     @just docs fmt
+    @just project fmt
 
 [private]
 nox SESSION *ARGS:
