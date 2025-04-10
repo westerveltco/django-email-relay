@@ -35,7 +35,7 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ### Fixed
 
-- In the email relay service, any `Exception` beyond SMTP transport errors now fails the message instead of raising.
+- In the email relay service, any `Exception` beyond SMTP transport errors now fails the message instead of raising the `Exception`. This allows the relay service to stay operational and sending messages that are OK, while any messages that are causing errors will be failed immediately.
 
 ## [0.5.0]
 
