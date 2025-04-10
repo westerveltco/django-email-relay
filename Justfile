@@ -20,8 +20,8 @@ diff SHA="HEAD":
 fmt:
     @just --fmt
     @just copier fmt
+    @just docker fmt
     @just docs fmt
-    @just project fmt
 
 [private]
 nox SESSION *ARGS:
@@ -53,7 +53,7 @@ manage *COMMAND:
             "forget to activate a virtual environment?"
         ) from exc
 
-    settings.configure(INSTALLED_APPS=["django_bird"])
+    settings.configure(INSTALLED_APPS=["email_relay"])
     execute_from_command_line(sys.argv + "{{ COMMAND }}".split(" "))
 
 mypy *ARGS:
