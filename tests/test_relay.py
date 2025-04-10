@@ -48,11 +48,8 @@ def test_send_all_single_message(mailoutbox, caplog):
     send_all()
 
     assert len(mailoutbox) == 1
-
-    sent_email = mailoutbox[0]
-
-    assert sent_email.subject == "Test Subject"
-    assert sent_email.to == ["to@example.com"]
+    assert mailoutbox[0].subject == "Test Subject"
+    assert mailoutbox[0].to == ["to@example.com"]
 
     queued.refresh_from_db()
 
