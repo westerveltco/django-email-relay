@@ -113,9 +113,6 @@ source = ["email_relay"]
 django_settings_module = "tests.settings"
 strict_settings = false
 
-[tool.djlint]
-indent = 2
-
 [tool.hatch.build]
 exclude = [".*", "Justfile"]
 

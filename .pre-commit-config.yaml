@@ -1,5 +1,5 @@
 default_language_version:
-  python: python3.12
+  python: python3.13
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -14,7 +14,7 @@ repos:
     rev: 1.24.0
     hooks:
       - id: django-upgrade
-        args: [--target-version, "3.2"]
+        args: [--target-version, "4.2"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.11.4
@@ -43,23 +43,6 @@ repos:
         # - yaml
         # ignore any minified code
         files: '^(?!.*\.min\..*)(?P<name>[\w-]+(\.[\w-]+)*\.(js|jsx|ts|tsx|yml|yaml|css))$'
-
-  - repo: https://github.com/djlint/djLint
-    rev: v1.36.4
-    hooks:
-      - id: djlint-reformat-django
-      - id: djlint-django
-
-  - repo: local
-    hooks:
-      - id: rustywind
-        name: rustywind Tailwind CSS class linter
-        language: node
-        additional_dependencies:
-          - rustywind@0.21.0
-        entry: rustywind
-        args: [--write]
-        types_or: [html, jsx, tsx]
 
   - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
     rev: v2.14.0
