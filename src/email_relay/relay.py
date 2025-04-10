@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import smtplib
 import time
-from socket import error as socket_error
 
 from django.conf import settings
 from django.core.mail import get_connection
@@ -19,8 +18,9 @@ def send_all():
     logger.info("sending emails")
 
     counts = {
-        "sent": 0,
         "deferred": 0,
+        "failed": 0,
+        "sent": 0,
     }
 
     message_batch = Message.objects.get_message_batch()
@@ -51,30 +51,41 @@ def send_all():
                 else:
                     msg = f"Message {message.id} has no email object"
                     message.fail(log=msg)
+                    counts["failed"] += 1
                     logger.warning(msg)
-            except Exception as err:
-                handled_exceptions = (
-                    smtplib.SMTPAuthenticationError,
-                    smtplib.SMTPDataError,
-                    smtplib.SMTPRecipientsRefused,
-                    smtplib.SMTPSenderRefused,
-                    socket_error,
-                )
-                if isinstance(err, handled_exceptions):
-                    logger.debug(f"deferring message {message.id} due to {err}")
-                    message.defer(log=str(err))
-                    if (
-                        app_settings.EMAIL_MAX_RETRIES is not None
-                        and message.retry_count >= app_settings.EMAIL_MAX_RETRIES
-                    ):
-                        logger.warning(
-                            f"max retries reached, marking message {message.id} as failed"
-                        )
-                        message.fail(log=str(err))
+            except (
+                smtplib.SMTPAuthenticationError,
+                smtplib.SMTPDataError,
+                smtplib.SMTPRecipientsRefused,
+                smtplib.SMTPSenderRefused,
+                OSError,
+            ) as err:
+                if (
+                    app_settings.EMAIL_MAX_RETRIES is not None
+                    and message.retry_count >= app_settings.EMAIL_MAX_RETRIES
+                ):
+                    logger.warning(
+                        f"max retries reached, marking message {message.id} as failed"
+                    )
+                    message.fail(log=str(err))
                     connection = None
-                    counts["deferred"] += 1
-                else:
-                    raise err
+                    counts["failed"] += 1
+                    continue
+
+                logger.debug(
+                    f"deferring message {message.id} due to {err}", exc_info=True
+                )
+                message.defer(log=str(err))
+                connection = None
+                counts["deferred"] += 1
+            except Exception as err:
+                logger.error(
+                    f"unexpected error processing message {message.id}, marking as failed.",
+                    exc_info=True,
+                )
+                message.fail(log=str(err))
+                connection = None
+                counts["failed"] += 1
 
         if (
             app_settings.EMAIL_MAX_DEFERRED is not None
@@ -91,4 +102,6 @@ def send_all():
             )
             time.sleep(app_settings.EMAIL_THROTTLE)
 
-    logger.info(f"sent {counts['sent']} emails, deferred {counts['deferred']} emails")
+    logger.info(
+        f"sent {counts['sent']} emails, deferred {counts['deferred']} emails, failed {counts['failed']} emails"
+    )
