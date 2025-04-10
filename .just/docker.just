@@ -12,7 +12,7 @@ fmt:
 
 [no-cd]
 build:
-    docker build --file .dockerfiles/Dockerfile --tag docker-email-relay:local .
+    docker build --tag docker-email-relay:local .
 
 [no-cd]
 run *ARGS: build
