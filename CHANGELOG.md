@@ -33,6 +33,10 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 - Dropped support for Django 5.0.
 - `[dev]`, `[docs]`, and `[lint]` extras have been removed and migrated to `[dependency-groups]`.
 
+### Fixed
+
+- In the email relay service, any `Exception` beyond SMTP transport errors now fails the message instead of raising.
+
 ## [0.5.0]
 
 ### Added
