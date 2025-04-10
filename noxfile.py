@@ -79,6 +79,8 @@ def tests(session, django):
         "django",
         "--python",
         session.python,
+        "--extra",
+        "relay",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 
@@ -107,6 +109,8 @@ def coverage(session):
         "--frozen",
         "--python",
         PY_DEFAULT,
+        "--extra",
+        "relay",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 

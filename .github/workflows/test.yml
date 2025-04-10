@@ -114,4 +114,4 @@ jobs:
 
       - name: Run container and check
         run: |
-          docker run --rm --name test-container django-email-relay-test:latest uv run -m service --help
+          docker run --rm --name test-container django-email-relay-test:latest uv run -m email_relay.service --help
