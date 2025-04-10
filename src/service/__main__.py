@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import argparse
+
 import django
 from django.conf import settings
 from django.core.management import call_command
@@ -39,11 +41,18 @@ def main() -> int:
     Returns:
         int: Exit code. Should always return 0 as `runrelay` is expected to run indefinitely.
     """
+    parser = argparse.ArgumentParser(
+        description="Run the Django Email Relay service.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    # just here so we get a --help for testing
+    parser.parse_args()
     user_settings = get_user_settings_from_env()
     SETTINGS = merge_with_defaults(default_settings, user_settings)
     settings.configure(**SETTINGS)
     django.setup()
     call_command("migrate")
+    print("Starting email relay service...")
     call_command("runrelay")
     # should never get here, `runrelay` is an infinite loop
     # but if it does, exit with 0

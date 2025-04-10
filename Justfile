@@ -27,8 +27,7 @@ nox SESSION *ARGS:
     uv run nox --session "{{ SESSION }}" -- "{{ ARGS }}"
 
 bootstrap:
-    uv python install
-    uv sync --locked
+    uv sync --locked --extra hc --extra psycopg --extra relay
 
 coverage *ARGS:
     @just nox coverage {{ ARGS }}
