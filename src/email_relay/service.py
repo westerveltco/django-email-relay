@@ -159,7 +159,7 @@ default_settings = {
 }
 
 
-def main() -> int:
+def run_relay_service() -> int:
     """Main entrypoint for the email relay service, designed to be run independently of a Django project.
 
     Returns:
@@ -184,4 +184,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(run_relay_service())
