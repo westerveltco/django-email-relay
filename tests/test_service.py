@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import os
 
-from service.utils import coerce_dict_values
-from service.utils import env_vars_to_nested_dict
-from service.utils import filter_valid_django_settings
-from service.utils import get_user_settings_from_env
-from service.utils import merge_with_defaults
+from email_relay.service import coerce_dict_values
+from email_relay.service import env_vars_to_nested_dict
+from email_relay.service import filter_valid_django_settings
+from email_relay.service import get_user_settings_from_env
+from email_relay.service import merge_with_defaults
 
 
 def test_env_vars_to_nested_dict():

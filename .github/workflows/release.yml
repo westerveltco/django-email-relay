@@ -2,69 +2,47 @@ name: release
 
 on:
   release:
-    types: [released]
+    types: [published]
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Check most recent test run on `main`
-        id: latest-test-result
-        run: |
-          echo "result=$(gh run list \
-                          --branch=main \
-                          --workflow=test.yml \
-                          --json headBranch,workflowName,conclusion \
-                          --jq '.[] | select(.headBranch=="main" and .conclusion=="success") | .conclusion' \
-                          | head -n 1)" >> $GITHUB_OUTPUT
-
-      - name: OK
-        if: ${{ (contains(steps.latest-test-result.outputs.result, 'success')) }}
-        run: exit 0
-
-      - name: Fail
-        if: ${{ !contains(steps.latest-test-result.outputs.result, 'success') }}
-        run: exit 1
+  test:
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
 
   pypi:
-    if: ${{ github.event_name == 'release' }}
     runs-on: ubuntu-latest
-    needs: check
+    needs: test
     environment: release
     permissions:
-      contents: read
+      contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          persist-credentials: false
-
-      - uses: westerveltco/setup-ci-action@v0
-        with:
-          python-version: 3.12
-          extra-python-dependencies: hatch
-          use-uv: true
+          enable-cache: true
+          pyproject-file: pyproject.toml
 
       - name: Build package
         run: |
-          hatch build
+          uv build
+
+      - name: Upload release assets to GitHub
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} ./dist/*
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        run: |
+          uv publish
 
   docker:
     runs-on: ubuntu-latest
     needs: check
     environment: release
     permissions:
-      contents: read
+      contents: write
       packages: write
     steps:
       - uses: actions/checkout@v4

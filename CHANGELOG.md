@@ -22,9 +22,16 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 - Added support for Python 3.13.
 
+### Changed
+
+- Now using `uv` for project management.
+- Email relay `Dockerfile` service reorganized to take advantage of `uv` and it's features.
+- Email relay service standalone package has been removed and moved to a module within the `email_relay` package.
+
 ### Removed
 
 - Dropped support for Django 5.0.
+- `[dev]`, `[docs]`, and `[lint]` extras have been removed and migrated to `[dependency-groups]`.
 
 ## [0.5.0]
 

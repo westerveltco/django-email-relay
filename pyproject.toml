@@ -2,6 +2,45 @@
 build-backend = "hatchling.build"
 requires = ["hatchling"]
 
+[dependency-groups]
+dev = [
+  "bumpver",
+  "copier",
+  "copier-templates-extensions",
+  "coverage[toml]",
+  "dirty-equals",
+  "django-stubs",
+  "django-stubs-ext",
+  "environs",
+  "faker",
+  "hatch",
+  "model-bakery",
+  "nox[uv]",
+  "pytest",
+  "pytest-cov",
+  "pytest-django",
+  "pytest-randomly",
+  "pytest-reverse",
+  "pytest-xdist",
+  "responses"
+]
+docs = [
+  "cogapp",
+  "furo",
+  "myst-parser",
+  "sphinx",
+  "sphinx-autobuild",
+  "sphinx-copybutton",
+  "sphinx-inline-tabs"
+]
+lint = ["pre-commit"]
+types = [
+  "django-stubs",
+  "django-stubs-ext",
+  "mypy",
+  "types-requests"
+]
+
 [project]
 authors = [{name = "Josh Thomas", email = "josh@joshthomas.dev"}]
 classifiers = [
@@ -31,40 +70,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 
 [project.optional-dependencies]
-dev = [
-  "bumpver",
-  "copier",
-  "copier-templates-extensions",
-  "coverage[toml]",
-  "dirty-equals",
-  "django-stubs",
-  "django-stubs-ext",
-  "environs",
-  "faker",
-  "hatch",
-  "mypy",
-  "model-bakery",
-  "nox[uv]",
-  "pytest",
-  "pytest-cov",
-  "pytest-django",
-  "pytest-randomly",
-  "pytest-reverse",
-  "pytest-xdist",
-  "responses",
-  "types-requests"
-]
-docs = [
-  "cogapp",
-  "furo",
-  "myst-parser",
-  "sphinx",
-  "sphinx-autobuild",
-  "sphinx-copybutton",
-  "sphinx-inline-tabs"
-]
 hc = ["requests"]
-lint = ["pre-commit"]
 psycopg = ["psycopg[binary]"]
 relay = ["environs[django]"]
 
@@ -210,3 +216,6 @@ required-imports = ["from __future__ import annotations"]
 [tool.ruff.lint.pyupgrade]
 # Preserve types, even if a file imports `from __future__ import annotations`.
 keep-runtime-typing = true
+
+[tool.uv]
+required-version = "<0.7"
