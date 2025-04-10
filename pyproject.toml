@@ -33,7 +33,6 @@ docs = [
   "sphinx-copybutton",
   "sphinx-inline-tabs"
 ]
-lint = ["pre-commit"]
 types = [
   "django-stubs",
   "django-stubs-ext",

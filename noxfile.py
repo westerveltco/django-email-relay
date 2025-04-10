@@ -155,17 +155,17 @@ def coverage(session):
 
 @nox.session
 def lint(session):
-    session.run_install(
+    session.run(
         "uv",
-        "sync",
-        "--group",
-        "lint",
-        "--frozen",
+        "run",
+        "--with",
+        "pre-commit-uv",
         "--python",
         PY_LATEST,
-        env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
+        "pre-commit",
+        "run",
+        "--all-files",
     )
-    session.run("python", "-m", "pre_commit", "run", "--all-files")
 
 
 @nox.session
