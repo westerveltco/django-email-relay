@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+import argparse
 import copy
 import os
 from typing import Any
 
+import django
 from django.conf import global_settings
+from django.conf import settings
+from django.core.management import call_command
+from environs import Env
 
-from email_relay.conf import EMAIL_RELAY_SETTINGS_NAME
+from .conf import EMAIL_RELAY_SETTINGS_NAME
 
 
 def get_user_settings_from_env() -> dict[str, Any]:
@@ -127,3 +132,56 @@ def merge_with_defaults(
             return_dict[key] = value
 
     return return_dict
+
+
+env = Env()
+
+default_settings = {
+    "DATABASES": {
+        "default": env.dj_db_url("DATABASE_URL", default="sqlite://:memory:")
+    },
+    "LOGGING": {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+            },
+        },
+        "root": {
+            "handlers": ["console"],
+            "level": env("LOG_LEVEL", "INFO"),
+        },
+    },
+    "INSTALLED_APPS": [
+        "email_relay",
+    ],
+}
+
+
+def main() -> int:
+    """Main entrypoint for the email relay service, designed to be run independently of a Django project.
+
+    Returns:
+        int: Exit code. Should always return 0 as `runrelay` is expected to run indefinitely.
+    """
+    parser = argparse.ArgumentParser(
+        description="Run the Django Email Relay service.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    # just here so we get a --help for testing
+    parser.parse_args()
+    user_settings = get_user_settings_from_env()
+    SETTINGS = merge_with_defaults(default_settings, user_settings)
+    settings.configure(**SETTINGS)
+    django.setup()
+    call_command("migrate")
+    print("Starting email relay service...")
+    call_command("runrelay")
+    # should never get here, `runrelay` is an infinite loop
+    # but if it does, exit with 0
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

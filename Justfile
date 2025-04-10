@@ -2,6 +2,7 @@ set dotenv-load := true
 set unstable := true
 
 mod copier ".just/copier.just"
+mod docker ".just/docker.just"
 mod docs ".just/documentation.just"
 mod? project ".just/project.just"
 
