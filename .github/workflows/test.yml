@@ -26,7 +26,6 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-          pyproject-file: pyproject.toml
 
       - id: set-matrix
         run: |
@@ -46,7 +45,6 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-          pyproject-file: pyproject.toml
 
       - name: Run tests
         run: |
@@ -73,7 +71,6 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-          pyproject-file: pyproject.toml
 
       - name: Run type checks
         run: |
@@ -88,7 +85,6 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-          pyproject-file: pyproject.toml
 
       - name: Generate code coverage
         run: |
