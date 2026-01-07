@@ -155,17 +155,7 @@ def coverage(session):
 
 @nox.session
 def lint(session):
-    session.run(
-        "uv",
-        "run",
-        "--with",
-        "pre-commit-uv",
-        "--python",
-        PY_LATEST,
-        "pre-commit",
-        "run",
-        "--all-files",
-    )
+    session.run("uvx", "prek", "run", "--all-files")
 
 
 @nox.session
