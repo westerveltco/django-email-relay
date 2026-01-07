@@ -110,7 +110,7 @@ All pull requests must include tests to maintain 100% coverage. Coverage configu
 
 ## Linting and Formatting
 
-This project enforces code quality standards using [`pre-commit`](https://github.com/pre-commit/pre-commit).
+This project enforces code quality standards using [`prek`](https://github.com/j178/prek).
 
 To run all formatters and linters:
 
@@ -130,7 +130,7 @@ The following checks are run:
 To enable pre-commit hooks after cloning:
 
 ```bash
-uv run --with pre-commit pre-commit install
+uvx prek install
 ```
 
 Configuration for these tools can be found in:
