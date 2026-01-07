@@ -110,7 +110,7 @@ All pull requests must include tests to maintain 100% coverage. Coverage configu
 
 ## Linting and Formatting
 
-This project enforces code quality standards using [`prek`](https://github.com/RobertCraigie/prek).
+This project enforces code quality standards using [`prek`](https://github.com/j178/prek).
 
 To run all formatters and linters:
 
