@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import base64
-import binascii
 from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
 from email.mime.base import MIMEBase
+from typing import Any
 
 from django.core.mail import EmailMessage
 from django.core.mail import EmailMultiAlternatives
@@ -27,7 +27,7 @@ class RelayEmailData:
     attachments: list[dict[str, str]] = field(default_factory=list)
     _email_relay_version: str = __version__
 
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     def to_email_message(self) -> EmailMultiAlternatives:
@@ -47,12 +47,10 @@ class RelayEmailData:
 
         for attachment in self.attachments:
             content = attachment.get("content", "")
-            try:
-                # Attempt to decode the base64 string into bytes
-                decoded_content = base64.b64decode(content)
-            except binascii.Error:
-                # Fallback to assuming it's plain text, encoded as bytes
-                decoded_content = content.encode("utf-8")
+            if attachment.get("encoding") == "base64":
+                decoded_content: bytes | str = base64.b64decode(content, validate=True)
+            else:
+                decoded_content = content
 
             email.attach(
                 filename=attachment.get("filename", ""),
@@ -79,19 +77,23 @@ class RelayEmailData:
                             failobj="filename_not_found"
                         ),
                         "content": base64.b64encode(payload).decode(),
+                        "encoding": "base64",
                         "mimetype": attachment.get_content_type(),
                     }
                 )
             else:
                 if isinstance(attachment[1], bytes):
                     content = base64.b64encode(attachment[1]).decode("utf-8")
+                    encoding = "base64"
                 else:
                     content = attachment[1]
+                    encoding = "text"
 
                 attachments.append(
                     {
                         "filename": attachment[0],
                         "content": content,
+                        "encoding": encoding,
                         "mimetype": attachment[2],
                     }
                 )
