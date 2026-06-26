@@ -8,7 +8,7 @@ from email_relay.conf import app_settings
 
 
 @pytest.mark.parametrize(
-    "setting,default_setting",
+    ("setting", "default_setting"),
     [
         ("DATABASE_ALIAS", "email_relay_db"),
         ("EMAIL_MAX_BATCH", None),
@@ -32,7 +32,7 @@ def test_default_settings(setting, default_setting):
 
 
 @pytest.mark.parametrize(
-    "setting,user_setting",
+    ("setting", "user_setting"),
     [
         ("DATABASE_ALIAS", "custom_db_name"),
         ("EMAIL_MAX_BATCH", 10),

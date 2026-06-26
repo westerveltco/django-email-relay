@@ -40,7 +40,7 @@ def test_command_with_empty_queue(runrelay, mailoutbox):
 
 
 @pytest.mark.parametrize(
-    "status,quantity,expected_sent",
+    ("status", "quantity", "expected_sent"),
     [
         (Status.QUEUED, 10, 10),
         (Status.DEFERRED, 10, 10),

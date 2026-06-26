@@ -64,7 +64,7 @@ class CommandRunner:
 
     def _run_command(self, command: str) -> tuple[bool, str]:
         try:
-            output = subprocess.check_output(
+            output = subprocess.check_output(  # noqa: S602 - trusted release helper
                 command, shell=True, text=True, stderr=subprocess.STDOUT
             ).strip()
             return True, output
@@ -256,13 +256,15 @@ def release(
 
     version = get_release_version()
 
+    release_exists = True
     try:
         run("gh", "release", "view", f"v{version}")
-        if not force:
-            print(f"Release v{version} already exists!")
-            raise typer.Exit(1)
     except Exception:
-        pass
+        release_exists = False
+
+    if release_exists and not force:
+        print(f"Release v{version} already exists!")
+        raise typer.Exit(1)
 
     if not force and not dry_run:
         typer.confirm(f"Create release v{version}?", abort=True)
