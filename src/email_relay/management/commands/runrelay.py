@@ -58,7 +58,7 @@ class Command(BaseCommand):
                         seconds=app_settings.MESSAGES_RETENTION_SECONDS
                     )
                 )
-            logger.debug(f"deleted {deleted_messages} messages")
+            logger.debug("deleted %s messages", deleted_messages)
 
     def ping_healthcheck(self) -> None:
         if app_settings.RELAY_HEALTHCHECK_URL is not None:
@@ -77,12 +77,14 @@ class Command(BaseCommand):
                     timeout=app_settings.RELAY_HEALTHCHECK_TIMEOUT,
                 )
             except requests.exceptions.RequestException as e:
-                logger.warning(f"healthcheck failed, got exception: {e}")
+                logger.warning("healthcheck failed, got exception: %s", e)
                 return
 
             if response.status_code == app_settings.RELAY_HEALTHCHECK_STATUS_CODE:
                 logger.debug("healthcheck ping successful")
             else:
                 logger.warning(
-                    f"healthcheck failed, got {response.status_code}, expected {app_settings.RELAY_HEALTHCHECK_STATUS_CODE}"
+                    "healthcheck failed, got %s, expected %s",
+                    response.status_code,
+                    app_settings.RELAY_HEALTHCHECK_STATUS_CODE,
                 )

@@ -45,7 +45,7 @@ def send_all():
                 if email is not None:
                     email.connection = connection
                     email.send()
-                    logger.debug(f"sent message {message.id}")
+                    logger.debug("sent message %s", message.id)
                     message.mark_sent()
                     counts["sent"] += 1
                 else:
@@ -65,7 +65,7 @@ def send_all():
                     and message.retry_count >= app_settings.EMAIL_MAX_RETRIES
                 ):
                     logger.warning(
-                        f"max retries reached, marking message {message.id} as failed"
+                        "max retries reached, marking message %s as failed", message.id
                     )
                     message.fail(log=str(err))
                     connection = None
@@ -73,15 +73,15 @@ def send_all():
                     continue
 
                 logger.debug(
-                    f"deferring message {message.id} due to {err}", exc_info=True
+                    "deferring message %s due to %s", message.id, err, exc_info=True
                 )
                 message.defer(log=str(err))
                 connection = None
                 counts["deferred"] += 1
             except Exception as err:
-                logger.error(
-                    f"unexpected error processing message {message.id}, marking as failed.",
-                    exc_info=True,
+                logger.exception(
+                    "unexpected error processing message %s, marking as failed.",
+                    message.id,
                 )
                 message.fail(log=str(err))
                 connection = None
@@ -92,16 +92,21 @@ def send_all():
             and counts["deferred"] >= app_settings.EMAIL_MAX_DEFERRED
         ):
             logger.debug(
-                f"max deferred emails reached ({app_settings.EMAIL_MAX_DEFERRED}), stopping"
+                "max deferred emails reached (%s), stopping",
+                app_settings.EMAIL_MAX_DEFERRED,
             )
             break
 
         if app_settings.EMAIL_THROTTLE > 0:
             logger.debug(
-                f"throttling enabled, sleeping for {app_settings.EMAIL_THROTTLE} seconds"
+                "throttling enabled, sleeping for %s seconds",
+                app_settings.EMAIL_THROTTLE,
             )
             time.sleep(app_settings.EMAIL_THROTTLE)
 
     logger.info(
-        f"sent {counts['sent']} emails, deferred {counts['deferred']} emails, failed {counts['failed']} emails"
+        "sent %s emails, deferred %s emails, failed %s emails",
+        counts["sent"],
+        counts["deferred"],
+        counts["failed"],
     )

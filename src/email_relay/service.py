@@ -26,7 +26,7 @@ def get_user_settings_from_env() -> dict[str, Any]:
         >>> get_user_settings_from_env()
         {'DEBUG': False}
     """
-    all_env_vars = {k: v for k, v in os.environ.items()}
+    all_env_vars = dict(os.environ)
     env_vars_dict = env_vars_to_nested_dict(all_env_vars)
     valid_settings = filter_valid_django_settings(env_vars_dict)
     return coerce_dict_values(valid_settings)
@@ -176,7 +176,7 @@ def run_relay_service() -> int:
     settings.configure(**SETTINGS)
     django.setup()
     call_command("migrate")
-    print("Starting email relay service...")
+    print("Starting email relay service...")  # noqa: T201
     call_command("runrelay")
     # should never get here, `runrelay` is an infinite loop
     # but if it does, exit with 0

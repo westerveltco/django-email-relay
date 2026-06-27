@@ -71,7 +71,7 @@ def test_get_user_settings_from_env():
         "DEBUG": True,
     }
 
-    for k in env_vars.keys():
+    for k in env_vars:
         del os.environ[k]
 
 

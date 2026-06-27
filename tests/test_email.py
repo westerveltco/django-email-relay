@@ -78,7 +78,7 @@ def test_to_dict():
     email_dict = RelayEmailData.from_email_message(email_message).to_dict()
 
     assert email_dict == IsPartialDict(
-        **{
+        {
             "subject": email_message.subject,
             "body": email_message.body,
             "from_email": email_message.from_email,
@@ -111,7 +111,7 @@ def test_to_dict_multi_alternatives():
     email_dict = RelayEmailData.from_email_message(email_multi_alternatives).to_dict()
 
     assert email_dict == IsPartialDict(
-        **{
+        {
             "subject": email_multi_alternatives.subject,
             "body": email_multi_alternatives.body,
             "from_email": email_multi_alternatives.from_email,
@@ -147,7 +147,7 @@ def test_to_dict_with_attachment():
     email_dict = RelayEmailData.from_email_message(email).to_dict()
 
     assert email_dict == IsPartialDict(
-        **{
+        {
             "subject": email.subject,
             "body": email.body,
             "from_email": email.from_email,

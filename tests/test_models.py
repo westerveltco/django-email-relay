@@ -53,7 +53,7 @@ class TestMessageManager:
         assert message_for_sending == message
 
     @pytest.mark.parametrize(
-        "status, expected",
+        ("status", "expected"),
         [
             (Status.QUEUED, True),
             (Status.DEFERRED, True),
