@@ -36,7 +36,7 @@ class MessageManager(models.Manager["Message"]):
                 self.deferred().prioritized(),  # type: ignore[attr-defined]
             )
         )
-        logger.debug(f"found {len(message_batch)} messages to send")
+        logger.debug("found %s messages to send", len(message_batch))
         if app_settings.EMAIL_MAX_BATCH is not None:
             msg = f"max batch size is {app_settings.EMAIL_MAX_BATCH}"
             if len(message_batch) > app_settings.EMAIL_MAX_BATCH:
@@ -45,8 +45,8 @@ class MessageManager(models.Manager["Message"]):
             message_batch = message_batch[: app_settings.EMAIL_MAX_BATCH]
         return message_batch
 
-    def get_message_for_sending(self, id: int) -> Message:
-        return self.filter(id=id).select_for_update(skip_locked=True).get()
+    def get_message_for_sending(self, message_id: int) -> Message:
+        return self.filter(id=message_id).select_for_update(skip_locked=True).get()
 
     def messages_available_to_send(self) -> bool:
         return self.queued().exists() or self.deferred().exists()  # type: ignore[attr-defined]
@@ -124,7 +124,7 @@ class Message(models.Model):
         # Overriding the save method in order to make sure that
         # modified field is updated even if it is not given as
         # a parameter to the update field argument.
-        update_fields = kwargs.get("update_fields", None)
+        update_fields = kwargs.get("update_fields")
         if update_fields:
             kwargs["update_fields"] = set(update_fields).union({"updated_at"})
 

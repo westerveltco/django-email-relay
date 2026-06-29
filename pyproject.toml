@@ -174,8 +174,8 @@ extend-include = ["*.pyi?"]
 indent-width = 4
 # Same as Black.
 line-length = 88
-# Assume Python >3.8
-target-version = "py38"
+# Same as requires-python.
+target-version = "py39"
 
 [tool.ruff.format]
 # Like Black, indent with spaces, rather than tabs.
@@ -192,10 +192,23 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 fixable = ["A", "B", "C", "D", "E", "F", "I"]
 ignore = ["E501", "E741"]  # temporary
 select = [
+  "A",  # flake8-builtins
   "B",  # flake8-bugbear
-  "E",  # Pycodestyle
+  "C4",  # flake8-comprehensions
+  "DJ",  # flake8-django
+  "DTZ",  # flake8-datetimez
+  "E",  # pycodestyle
   "F",  # Pyflakes
+  "G",  # flake8-logging-format
   "I",  # isort
+  "LOG",  # flake8-logging
+  "PIE",  # flake8-pie
+  "PT",  # flake8-pytest-style
+  "RET",  # flake8-return
+  "RUF100",  # unused noqa
+  "S",  # flake8-bandit
+  "SIM",  # flake8-simplify
+  "T20",  # flake8-print
   "UP"  # pyupgrade
 ]
 unfixable = []
@@ -206,6 +219,10 @@ known-first-party = ["email_relay"]
 required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
+# Release helper intentionally shells out to Git/GitHub CLI and prints progress.
+".bin/bump.py" = ["PIE810", "S110", "S602", "T201"]
+# Sphinx uses this conventional variable name.
+"docs/conf.py" = ["A001"]
 # Tests can use magic values, assertions, and relative imports
 "tests/**/*" = ["PLR2004", "S101", "TID252"]
 
