@@ -7,16 +7,6 @@ When updating to a new version, it is recommended to follow the following steps:
 1. Update the relay service to the new version. As part of the update process, the relay service should run any migrations that are needed. If using the provided Docker container, this is done automatically as Django's `migrate` command is baked into the image. When running the relay service from a Django project, you will need to run the `migrate` command yourself, either as part of your deployment strategy or manually.
 2. Update all distributed projects to the new version.
 
-## Attachment table migration
-
-The current version adds a table for attachment bodies. The migration creates the table without changing existing queued messages. The provided relay container applies it during startup. For a relay hosted inside a Django project, run:
-
-```shell
-python manage.py migrate email_relay --database email_relay_db
-```
-
-Replace `email_relay_db` if `DJANGO_EMAIL_RELAY["DATABASE_ALIAS"]` names another database. Upgrade the relay before upgrading producer projects. Producers continue to write the existing message format in this version.
-
 ## Deprecation Policy
 
 ```{admonition} Road to v1.0.0

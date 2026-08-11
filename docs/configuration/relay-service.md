@@ -21,4 +21,4 @@ For the database connection, [`dj-database-url`](https://github.com/jazzband/dj-
 
 ## Django
 
-When running the relay service from a Django project, config values are read from the Django settings for that project. The `runrelay` command validates the configured relay database alias before processing messages.
+When running the relay service from a Django project, config values are read from the Django settings for that project.
