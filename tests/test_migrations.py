@@ -5,10 +5,14 @@ import importlib
 import pytest
 from django.apps import apps
 from django.db import connections
+from django.db import migrations
+from django.db.migrations.writer import MigrationWriter
+from django.test import override_settings
 from model_bakery import baker
 
 from email_relay.conf import EMAIL_RELAY_DATABASE_ALIAS
 from email_relay.models import Message
+from email_relay.models import MessageAttachment
 
 
 @pytest.fixture
@@ -61,3 +65,33 @@ def test_migrate_message_data_to_new_schema(migrate_message_data_to_new_schema):
         assert message.data["alternatives"] == [
             ["<p>HTML</p>", "text/html"],
         ]
+
+
+def test_attachment_migration_is_schema_only():
+    migration = importlib.import_module(
+        "email_relay.migrations.0003_messageattachment"
+    ).Migration
+
+    assert len(migration.operations) == 1
+    assert isinstance(migration.operations[0], migrations.CreateModel)
+    assert not any(
+        isinstance(operation, migrations.RunPython)
+        for operation in migration.operations
+    )
+
+
+def test_attachment_storage_serializes_without_configured_alias():
+    file_field = MessageAttachment._meta.get_field("file")
+
+    with override_settings(
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.memory.InMemoryStorage"}
+        }
+    ):
+        _name, _path, _args, kwargs = file_field.deconstruct()
+        serialized, imports = MigrationWriter.serialize(kwargs["storage"])
+
+    assert serialized == (
+        "email_relay.attachment_storage.EmailRelayAttachmentStorage()"
+    )
+    assert imports == {"import email_relay.attachment_storage"}

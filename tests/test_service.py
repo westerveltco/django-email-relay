@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import os
+from unittest import mock
 
+from email_relay.checks import RELAY_CHECK_TAG
 from email_relay.service import coerce_dict_values
+from email_relay.service import default_settings
 from email_relay.service import env_vars_to_nested_dict
 from email_relay.service import filter_valid_django_settings
 from email_relay.service import get_user_settings_from_env
 from email_relay.service import merge_with_defaults
+from email_relay.service import run_relay_service
 
 
 def test_env_vars_to_nested_dict():
@@ -103,6 +107,42 @@ def test_coerce_dict_values():
             "NONE": None,
         },
     }
+
+
+def test_storage_environment_override_preserves_django_default():
+    settings = merge_with_defaults(
+        default_settings,
+        {
+            "STORAGES": {
+                "email_relay": {
+                    "BACKEND": "example.SharedStorage",
+                }
+            }
+        },
+    )
+
+    assert "default" in settings["STORAGES"]
+    assert settings["STORAGES"]["email_relay"] == {"BACKEND": "example.SharedStorage"}
+
+
+def test_standalone_service_checks_before_migrating():
+    with (
+        mock.patch("email_relay.service.argparse.ArgumentParser.parse_args"),
+        mock.patch("email_relay.service.get_user_settings_from_env", return_value={}),
+        mock.patch("django.conf.LazySettings.configure"),
+        mock.patch("email_relay.service.django.setup"),
+        mock.patch(
+            "email_relay.service.resolved_database_alias", return_value="default"
+        ),
+        mock.patch("email_relay.service.call_command") as call_command,
+    ):
+        assert run_relay_service() == 0
+
+    assert call_command.call_args_list == [
+        mock.call("check", tags=[RELAY_CHECK_TAG], deploy=True),
+        mock.call("migrate", database="default"),
+        mock.call("runrelay"),
+    ]
 
 
 def test_filter_valid_django_settings():

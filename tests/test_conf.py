@@ -2,14 +2,17 @@ from __future__ import annotations
 
 import pytest
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.test import override_settings
 
 from email_relay.conf import app_settings
+from email_relay.conf import resolved_database_alias
 
 
 @pytest.mark.parametrize(
     ("setting", "default_setting"),
     [
+        ("ATTACHMENT_STORAGE_ALIAS", "email_relay"),
         ("DATABASE_ALIAS", "email_relay_db"),
         ("EMAIL_MAX_BATCH", None),
         ("EMAIL_MAX_DEFERRED", None),
@@ -34,6 +37,7 @@ def test_default_settings(setting, default_setting):
 @pytest.mark.parametrize(
     ("setting", "user_setting"),
     [
+        ("ATTACHMENT_STORAGE_ALIAS", "custom_storage_name"),
         ("DATABASE_ALIAS", "custom_db_name"),
         ("EMAIL_MAX_BATCH", 10),
         ("EMAIL_MAX_DEFERRED", 10),
@@ -55,3 +59,15 @@ def test_custom_settings(setting, user_setting):
         },
     ):
         assert getattr(app_settings, setting) == user_setting
+
+
+def test_resolved_database_alias():
+    assert resolved_database_alias() == "email_relay_db"
+
+
+def test_resolved_database_alias_rejects_unknown_alias():
+    with (
+        override_settings(DJANGO_EMAIL_RELAY={"DATABASE_ALIAS": "missing_database"}),
+        pytest.raises(ImproperlyConfigured, match="missing_database"),
+    ):
+        resolved_database_alias()

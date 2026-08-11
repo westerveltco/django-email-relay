@@ -1,15 +1,22 @@
 from __future__ import annotations
 
-from dirty_equals import IsPartialDict
+import base64
+from email.mime.base import MIMEBase
+
+import pytest
 from django.core.mail import EmailMessage
 from django.core.mail import EmailMultiAlternatives
 
+from email_relay import __version__
+from email_relay.attachments import PersistedAttachmentError
 from email_relay.email import RelayEmailData
-from email_relay.email import __version__
+from email_relay.email import relay_email_from_legacy_data
+from email_relay.email import serialize_legacy_email
 
 
-def test_from_email_message():
-    email_message = EmailMessage(
+@pytest.fixture
+def email_message():
+    return EmailMessage(
         "Subject here",
         "Here is the message.",
         "from@example.com",
@@ -20,166 +27,165 @@ def test_from_email_message():
         headers={"Test-Header": "Test Value"},
     )
 
-    relay_email_data = RelayEmailData.from_email_message(email_message)
 
-    assert relay_email_data.subject == email_message.subject
-    assert relay_email_data.body == email_message.body
-    assert relay_email_data.from_email == email_message.from_email
-    assert relay_email_data.to == email_message.to
-    assert relay_email_data.cc == email_message.cc
-    assert relay_email_data.bcc == email_message.bcc
-    assert relay_email_data.reply_to == email_message.reply_to
-    assert relay_email_data.extra_headers == email_message.extra_headers
-    assert relay_email_data.alternatives == []
-    assert relay_email_data.attachments == []
+def test_envelope_from_email_message(email_message):
+    envelope = RelayEmailData.from_email_message(email_message)
 
-
-def test_from_email_message_multi_alternatives():
-    email_multi_alternatives = EmailMultiAlternatives(
-        "Subject here",
-        "Here is the message.",
-        "from@example.com",
-        ["to@example.com"],
+    assert envelope == RelayEmailData(
+        subject="Subject here",
+        body="Here is the message.",
+        from_email="from@example.com",
+        to=["to@example.com"],
         cc=["cc@example.com"],
         bcc=["bcc@example.com"],
         reply_to=["reply_to@example.com"],
-        headers={"Test-Header": "Test Value"},
+        extra_headers={"Test-Header": "Test Value"},
+        alternatives=[],
+        _email_relay_version=__version__,
     )
-    email_multi_alternatives.attach_alternative(
-        "<p>Here is the message.</p>", "text/html"
+    assert not hasattr(envelope, "attachments")
+
+
+def test_envelope_from_email_message_with_alternative(email_message):
+    email = EmailMultiAlternatives(
+        subject=email_message.subject,
+        body=email_message.body,
+        from_email=email_message.from_email,
+        to=email_message.to,
     )
+    email.attach_alternative("<p>Here is the message.</p>", "text/html")
 
-    relay_email_data = RelayEmailData.from_email_message(email_multi_alternatives)
+    envelope = RelayEmailData.from_email_message(email)
 
-    assert relay_email_data.subject == email_multi_alternatives.subject
-    assert relay_email_data.body == email_multi_alternatives.body
-    assert relay_email_data.from_email == email_multi_alternatives.from_email
-    assert relay_email_data.to == email_multi_alternatives.to
-    assert relay_email_data.cc == email_multi_alternatives.cc
-    assert relay_email_data.bcc == email_multi_alternatives.bcc
-    assert relay_email_data.reply_to == email_multi_alternatives.reply_to
-    assert relay_email_data.extra_headers == email_multi_alternatives.extra_headers
-    assert relay_email_data.alternatives == email_multi_alternatives.alternatives
-    assert relay_email_data.attachments == []
+    assert envelope.alternatives == [("<p>Here is the message.</p>", "text/html")]
 
 
-def test_to_dict():
-    email_message = EmailMessage(
-        "Subject here",
-        "Here is the message.",
-        "from@example.com",
-        ["to@example.com"],
-        cc=["cc@example.com"],
-        bcc=["bcc@example.com"],
-        reply_to=["reply_to@example.com"],
-        headers={"Test-Header": "Test Value"},
-    )
+def test_serialize_legacy_email_without_attachments(email_message):
+    data = serialize_legacy_email(email_message)
 
-    email_dict = RelayEmailData.from_email_message(email_message).to_dict()
+    assert data == {
+        "subject": "Subject here",
+        "body": "Here is the message.",
+        "from_email": "from@example.com",
+        "to": ["to@example.com"],
+        "cc": ["cc@example.com"],
+        "bcc": ["bcc@example.com"],
+        "reply_to": ["reply_to@example.com"],
+        "extra_headers": {"Test-Header": "Test Value"},
+        "alternatives": [],
+        "attachments": [],
+        "_email_relay_version": __version__,
+    }
+    assert list(data)[-2:] == ["attachments", "_email_relay_version"]
 
-    assert email_dict == IsPartialDict(
+
+def test_serialize_legacy_plain_text_attachment(email_message):
+    email_message.attach("test.txt", b"Hello World!", "text/plain")
+
+    data = serialize_legacy_email(email_message)
+
+    assert data["attachments"] == [
         {
-            "subject": email_message.subject,
-            "body": email_message.body,
-            "from_email": email_message.from_email,
-            "to": email_message.to,
-            "cc": email_message.cc,
-            "bcc": email_message.bcc,
-            "reply_to": email_message.reply_to,
-            "extra_headers": email_message.extra_headers,
-            "alternatives": [],
-            "attachments": [],
+            "filename": "test.txt",
+            "content": "Hello World!",
+            "mimetype": "text/plain",
         }
-    )
+    ]
 
 
-def test_to_dict_multi_alternatives():
-    email_multi_alternatives = EmailMultiAlternatives(
-        "Subject here",
-        "Here is the message.",
-        "from@example.com",
-        ["to@example.com"],
-        cc=["cc@example.com"],
-        bcc=["bcc@example.com"],
-        reply_to=["reply_to@example.com"],
-        headers={"Test-Header": "Test Value"},
-    )
-    email_multi_alternatives.attach_alternative(
-        "<p>Here is the message.</p>", "text/html"
-    )
+def test_serialize_legacy_binary_attachment(email_message):
+    email_message.attach("test.zip", b"\x00\xffpayload", "application/zip")
 
-    email_dict = RelayEmailData.from_email_message(email_multi_alternatives).to_dict()
+    data = serialize_legacy_email(email_message)
 
-    assert email_dict == IsPartialDict(
+    assert data["attachments"] == [
         {
-            "subject": email_multi_alternatives.subject,
-            "body": email_multi_alternatives.body,
-            "from_email": email_multi_alternatives.from_email,
-            "to": email_multi_alternatives.to,
-            "cc": email_multi_alternatives.cc,
-            "bcc": email_multi_alternatives.bcc,
-            "reply_to": email_multi_alternatives.reply_to,
-            "extra_headers": email_multi_alternatives.extra_headers,
-            "alternatives": email_multi_alternatives.alternatives,
-            "attachments": [],
+            "filename": "test.zip",
+            "content": "AP9wYXlsb2Fk",
+            "mimetype": "application/zip",
         }
-    )
+    ]
 
 
-def test_to_dict_with_attachment():
-    email = EmailMessage(
-        "Subject here",
-        "Here is the message.",
-        "from@example.com",
-        ["to@example.com"],
-        cc=["cc@example.com"],
-        bcc=["bcc@example.com"],
-        reply_to=["reply_to@example.com"],
-        headers={"Test-Header": "Test Value"},
-    )
-    attachment_content = b"Hello World!"
-    email.attach(
-        filename="test.txt",
-        content=attachment_content,
-        mimetype="text/plain",
-    )
+def test_serialize_and_read_unnamed_legacy_attachment(email_message):
+    email_message.attach(None, b"payload", "application/octet-stream")
 
-    email_dict = RelayEmailData.from_email_message(email).to_dict()
+    data = serialize_legacy_email(email_message)
+    relay_email = relay_email_from_legacy_data(data)
 
-    assert email_dict == IsPartialDict(
+    assert data["attachments"][0]["filename"] is None
+    assert relay_email.attachments[0].filename is None
+    assert relay_email.attachments[0].content == b"payload"
+
+
+def test_serialize_legacy_mimebase_attachment(email_message):
+    part = MIMEBase("application", "octet-stream")
+    part["Content-Disposition"] = 'attachment; filename="test.bin"'
+    part.set_payload(b"payload")
+    email_message.attach(part)
+
+    data = serialize_legacy_email(email_message)
+
+    assert data["attachments"] == [
         {
-            "subject": email.subject,
-            "body": email.body,
-            "from_email": email.from_email,
-            "to": email.to,
-            "cc": email.cc,
-            "bcc": email.bcc,
-            "reply_to": email.reply_to,
-            "extra_headers": email.extra_headers,
+            "filename": "test.bin",
+            "content": base64.b64encode(b"payload").decode(),
+            "mimetype": "application/octet-stream",
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    ("content", "expected"),
+    [
+        ("Hello World!", b"Hello World!"),
+        ("\ufeffcaf\u00e9", "\ufeffcaf\u00e9".encode()),
+        ("AP9wYXlsb2Fk", b"\x00\xffpayload"),
+        ("dGVzdA==", b"test"),
+    ],
+)
+def test_literal_legacy_attachment_decoding(content, expected):
+    relay_email = relay_email_from_legacy_data(
+        {
+            "subject": "Legacy",
+            "body": "Body",
+            "from_email": "from@example.com",
+            "to": ["to@example.com"],
+            "cc": [],
+            "bcc": [],
+            "reply_to": [],
+            "extra_headers": {},
             "alternatives": [],
+            "_email_relay_version": "0.6.0",
             "attachments": [
                 {
-                    "filename": "test.txt",
-                    "content": attachment_content.decode(),
-                    "mimetype": "text/plain",
+                    "filename": "fixture.bin",
+                    "content": content,
+                    "mimetype": "application/octet-stream",
                 }
             ],
         }
     )
 
+    assert relay_email.attachments[0].content == expected
 
-def test_email_message_version():
-    email_message = EmailMessage(
-        "Subject here",
-        "Here is the message.",
-        "from@example.com",
-        ["to@example.com"],
-        cc=["cc@example.com"],
-        bcc=["bcc@example.com"],
-        reply_to=["reply_to@example.com"],
-        headers={"Test-Header": "Test Value"},
+
+def test_base64_looking_plain_text_keeps_legacy_ambiguous_meaning():
+    relay_email = relay_email_from_legacy_data(
+        {
+            "attachments": [
+                {
+                    "filename": "ambiguous.txt",
+                    "content": "dGVzdA==",
+                    "mimetype": "text/plain",
+                }
+            ]
+        }
     )
 
-    relay_email_data = RelayEmailData.from_email_message(email_message)
+    assert relay_email.attachments[0].content == b"test"
 
-    assert relay_email_data._email_relay_version == __version__
+
+def test_invalid_legacy_attachment_shape_fails_before_email_construction():
+    with pytest.raises(PersistedAttachmentError, match="must be a list"):
+        relay_email_from_legacy_data({"attachments": {}})

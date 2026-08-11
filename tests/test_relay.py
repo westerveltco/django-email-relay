@@ -1,16 +1,21 @@
 from __future__ import annotations
 
+import hashlib
 import logging
 import smtplib
 from unittest import mock
 
 import pytest
+from django.core.files.base import ContentFile
+from django.core.files.storage import storages
 from django.core.mail import EmailMultiAlternatives
+from django.db import transaction
 from django.test import override_settings
 from model_bakery import baker
 
 from email_relay.conf import EMAIL_RELAY_DATABASE_ALIAS
 from email_relay.models import Message
+from email_relay.models import MessageAttachment
 from email_relay.models import Priority
 from email_relay.models import Status
 from email_relay.relay import send_all
@@ -22,6 +27,38 @@ pytestmark = pytest.mark.django_db(databases=["default", EMAIL_RELAY_DATABASE_AL
 def caplog_level(caplog):
     with caplog.at_level(logging.DEBUG):
         yield
+
+
+def create_stored_message(*, content=b"stored payload", sha256=None, file_exists=True):
+    key = "email-relay/attachments/v1/96/96-relay-fixture"
+    storage = storages["email_relay"]
+    if storage.exists(key):
+        storage.delete(key)
+    if file_exists:
+        assert storage.save(key, ContentFile(content)) == key
+    message = baker.make(
+        "email_relay.Message",
+        data={
+            "subject": "Stored",
+            "to": ["to@example.com"],
+            "_email_relay_attachments": {
+                "format": "stored-v1",
+                "count": 1,
+            },
+        },
+        status=Status.QUEUED,
+    )
+    MessageAttachment.objects.create(
+        message=message,
+        position=0,
+        kind="bytes",
+        filename="fixture.bin",
+        content_type="application/octet-stream",
+        file=key,
+        size=len(content),
+        sha256=sha256 or hashlib.sha256(content).hexdigest(),
+    )
+    return message
 
 
 def test_send_all_empty_queue(mailoutbox, caplog):
@@ -392,3 +429,71 @@ def test_send_all_fail_message_no_email_object(mock_email, mailoutbox, caplog):
     assert error_msg in queued.log
     assert error_msg in caplog.text
     assert "sent 0 emails, deferred 0 emails, failed 1 emails" in caplog.text
+
+
+def test_send_all_defers_missing_stored_object_before_smtp(mailoutbox, caplog):
+    queued = create_stored_message(file_exists=False)
+
+    send_all()
+
+    queued.refresh_from_db()
+    assert len(mailoutbox) == 0
+    assert queued.status == Status.DEFERRED
+    assert queued.retry_count == 1
+    assert "Could not read stored attachment" in queued.log
+    assert "sent 0 emails, deferred 1 emails, failed 0 emails" in caplog.text
+
+
+def test_send_all_fails_missing_object_after_max_retries(mailoutbox, caplog):
+    queued = create_stored_message(file_exists=False)
+    queued.status = Status.DEFERRED
+    queued.retry_count = 2
+    queued.save()
+
+    with override_settings(DJANGO_EMAIL_RELAY={"EMAIL_MAX_RETRIES": 2}):
+        send_all()
+
+    queued.refresh_from_db()
+    assert len(mailoutbox) == 0
+    assert queued.status == Status.FAILED
+    assert queued.retry_count == 2
+    assert f"max retries reached, marking message {queued.id} as failed" in caplog.text
+
+
+def test_send_all_fails_checksum_mismatch_before_smtp(mailoutbox, caplog):
+    queued = create_stored_message(sha256="0" * 64)
+
+    send_all()
+
+    queued.refresh_from_db()
+    assert len(mailoutbox) == 0
+    assert queued.status == Status.FAILED
+    assert queued.retry_count == 0
+    assert "checksum does not match" in queued.log
+    assert f"invalid stored attachments for message {queued.id}" in caplog.text
+
+
+def test_send_all_uses_the_configured_database_transaction(mailoutbox):
+    queued = baker.make(
+        "email_relay.Message",
+        data={"subject": "Alias", "to": ["to@example.com"]},
+        status=Status.QUEUED,
+    )
+
+    with (
+        mock.patch(
+            "email_relay.relay.transaction.atomic", wraps=transaction.atomic
+        ) as atomic,
+        mock.patch.object(
+            Message.objects,
+            "db_manager",
+            wraps=Message.objects.db_manager,
+        ) as db_manager,
+    ):
+        send_all()
+
+    queued.refresh_from_db()
+    assert len(mailoutbox) == 1
+    assert queued.status == Status.SENT
+    db_manager.assert_called_once_with(EMAIL_RELAY_DATABASE_ALIAS)
+    atomic.assert_called_once_with(using=EMAIL_RELAY_DATABASE_ALIAS)

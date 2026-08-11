@@ -11,7 +11,10 @@ from django.conf import settings
 from django.core.management import call_command
 from environs import Env
 
+from .checks import RELAY_CHECK_TAG
+from .checks import relay_check_context
 from .conf import EMAIL_RELAY_SETTINGS_NAME
+from .conf import resolved_database_alias
 
 
 def get_user_settings_from_env() -> dict[str, Any]:
@@ -137,9 +140,13 @@ def merge_with_defaults(
 env = Env()
 
 default_settings = {
+    EMAIL_RELAY_SETTINGS_NAME: {
+        "DATABASE_ALIAS": "default",
+    },
     "DATABASES": {
         "default": env.dj_db_url("DATABASE_URL", default="sqlite://:memory:")
     },
+    "STORAGES": copy.deepcopy(global_settings.STORAGES),
     "LOGGING": {
         "version": 1,
         "disable_existing_loggers": False,
@@ -175,7 +182,9 @@ def run_relay_service() -> int:
     SETTINGS = merge_with_defaults(default_settings, user_settings)
     settings.configure(**SETTINGS)
     django.setup()
-    call_command("migrate")
+    with relay_check_context():
+        call_command("check", tags=[RELAY_CHECK_TAG], deploy=True)
+    call_command("migrate", database=resolved_database_alias())
     print("Starting email relay service...")  # noqa: T201
     call_command("runrelay")
     # should never get here, `runrelay` is an infinite loop

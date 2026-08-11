@@ -4,13 +4,16 @@ from dataclasses import dataclass
 from typing import Any
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 
 EMAIL_RELAY_SETTINGS_NAME = "DJANGO_EMAIL_RELAY"
 EMAIL_RELAY_DATABASE_ALIAS = "email_relay_db"
+EMAIL_RELAY_ATTACHMENT_STORAGE_ALIAS = "email_relay"
 
 
 @dataclass(frozen=True)
 class AppSettings:
+    ATTACHMENT_STORAGE_ALIAS: str = EMAIL_RELAY_ATTACHMENT_STORAGE_ALIAS
     DATABASE_ALIAS: str = EMAIL_RELAY_DATABASE_ALIAS
     EMAIL_MAX_BATCH: int | None = None
     EMAIL_MAX_DEFERRED: int | None = None
@@ -30,3 +33,12 @@ class AppSettings:
 
 
 app_settings = AppSettings()
+
+
+def resolved_database_alias() -> str:
+    alias = app_settings.DATABASE_ALIAS
+    if alias not in settings.DATABASES:
+        raise ImproperlyConfigured(
+            f"DJANGO_EMAIL_RELAY['DATABASE_ALIAS'] refers to unknown database {alias!r}"
+        )
+    return alias

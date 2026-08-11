@@ -7,6 +7,7 @@ from unittest import mock
 import pytest
 import responses
 from django.core.management import call_command
+from django.core.management.base import SystemCheckError
 from django.test.utils import override_settings
 from django.utils import timezone
 from model_bakery import baker
@@ -30,6 +31,53 @@ def test_runrelay_help():
 @pytest.fixture
 def runrelay():
     return Command()
+
+
+@pytest.mark.django_db(databases=["default", "email_relay_db"])
+def test_regular_deployment_checks_do_not_require_relay_storage():
+    with override_settings(
+        STORAGES={
+            "default": {"BACKEND": "django.core.files.storage.memory.InMemoryStorage"}
+        }
+    ):
+        call_command("check", deploy=True)
+
+
+def test_runrelay_requires_named_attachment_storage(runrelay):
+    with (
+        override_settings(
+            STORAGES={
+                "default": {
+                    "BACKEND": "django.core.files.storage.memory.InMemoryStorage"
+                }
+            }
+        ),
+        pytest.raises(SystemCheckError, match="email_relay.E002"),
+    ):
+        runrelay.handle(_loop_count=1)
+
+
+def test_runrelay_rejects_invalid_attachment_storage(runrelay):
+    with (
+        override_settings(
+            STORAGES={
+                "default": {
+                    "BACKEND": "django.core.files.storage.memory.InMemoryStorage"
+                },
+                "email_relay": {},
+            }
+        ),
+        pytest.raises(SystemCheckError, match="email_relay.E002"),
+    ):
+        runrelay.handle(_loop_count=1)
+
+
+def test_runrelay_requires_configured_database_alias(runrelay):
+    with (
+        override_settings(DJANGO_EMAIL_RELAY={"DATABASE_ALIAS": "missing_database"}),
+        pytest.raises(SystemCheckError, match="email_relay.E001"),
+    ):
+        runrelay.handle(_loop_count=1)
 
 
 @pytest.mark.django_db(databases=["default", "email_relay_db"])

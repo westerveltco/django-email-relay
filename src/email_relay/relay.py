@@ -8,7 +8,9 @@ from django.conf import settings
 from django.core.mail import get_connection
 from django.db import transaction
 
+from email_relay.attachments import PersistedAttachmentError
 from email_relay.conf import app_settings
+from email_relay.conf import resolved_database_alias
 from email_relay.models import Message
 
 logger = logging.getLogger(__name__)
@@ -23,14 +25,16 @@ def send_all():
         "sent": 0,
     }
 
-    message_batch = Message.objects.get_message_batch()
+    database_alias = resolved_database_alias()
+    messages = Message.objects.db_manager(database_alias)
+    message_batch = messages.get_message_batch()
 
     connection = None
 
     for message in message_batch:
-        with transaction.atomic():
+        with transaction.atomic(using=database_alias):
             try:
-                message = Message.objects.get_message_for_sending(message.id)
+                message = messages.get_message_for_sending(message.id)
             except Message.DoesNotExist:
                 continue
             try:
@@ -78,6 +82,15 @@ def send_all():
                 message.defer(log=str(err))
                 connection = None
                 counts["deferred"] += 1
+            except PersistedAttachmentError as err:
+                logger.warning(
+                    "invalid stored attachments for message %s, marking as failed: %s",
+                    message.id,
+                    err,
+                )
+                message.fail(log=str(err))
+                connection = None
+                counts["failed"] += 1
             except Exception as err:
                 logger.exception(
                     "unexpected error processing message %s, marking as failed.",

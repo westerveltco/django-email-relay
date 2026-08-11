@@ -7,6 +7,8 @@ import time
 from django.core.management import BaseCommand
 from django.utils import timezone
 
+from email_relay.checks import RELAY_CHECK_TAG
+from email_relay.checks import relay_check_context
 from email_relay.conf import app_settings
 from email_relay.models import Message
 from email_relay.relay import send_all
@@ -25,6 +27,8 @@ class Command(BaseCommand):
         # it is not intended to be used in production
         loop_count = 0 if _loop_count is not None else None
 
+        with relay_check_context():
+            self.check(tags=[RELAY_CHECK_TAG], include_deployment_checks=True)
         logger.info("starting relay")
 
         while True:

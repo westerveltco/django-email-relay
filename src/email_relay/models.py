@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import datetime
+import hashlib
 import logging
+import re
 from itertools import chain
 
 from django.core.mail import EmailMessage
@@ -9,8 +11,21 @@ from django.core.mail import EmailMultiAlternatives
 from django.db import models
 from django.utils import timezone
 
+from email_relay.attachment_storage import ATTACHMENT_STORAGE_PREFIX
+from email_relay.attachment_storage import attachment_storage
+from email_relay.attachment_storage import attachment_upload_to
+from email_relay.attachment_storage import read_attachment_file
+from email_relay.attachments import STORED_ATTACHMENTS_KEY
+from email_relay.attachments import AttachmentKind
+from email_relay.attachments import PersistedAttachmentError
+from email_relay.attachments import RelayAttachment
+from email_relay.attachments import StoredAttachmentMarker
 from email_relay.conf import app_settings
+from email_relay.conf import resolved_database_alias
+from email_relay.email import RelayEmail
 from email_relay.email import RelayEmailData
+from email_relay.email import relay_email_from_legacy_data
+from email_relay.email import serialize_legacy_email
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +61,14 @@ class MessageManager(models.Manager["Message"]):
         return message_batch
 
     def get_message_for_sending(self, message_id: int) -> Message:
-        return self.filter(id=message_id).select_for_update(skip_locked=True).get()
+        return (
+            self.filter(
+                id=message_id,
+                status__in=(Status.QUEUED, Status.DEFERRED),
+            )
+            .select_for_update(skip_locked=True)
+            .get()
+        )
 
     def messages_available_to_send(self) -> bool:
         return self.queued().exists() or self.deferred().exists()  # type: ignore[attr-defined]
@@ -152,8 +174,136 @@ class Message(models.Model):
         if not data:
             return None
 
-        return RelayEmailData(**data).to_email_message()
+        if STORED_ATTACHMENTS_KEY not in data:
+            logger.info(
+                "reading legacy JSON attachments for message %s",
+                self.pk,
+                extra={
+                    "attachment_format": "legacy-json",
+                    "message_id": self.pk,
+                },
+            )
+            return relay_email_from_legacy_data(data).to_email_message()
+
+        if "attachments" in data:
+            raise PersistedAttachmentError(
+                "Message contains both legacy and stored attachments"
+            )
+
+        marker = StoredAttachmentMarker.from_value(data[STORED_ATTACHMENTS_KEY])
+        database_alias = self._state.db or resolved_database_alias()
+        rows = list(
+            MessageAttachment.objects.using(database_alias)  # type: ignore[misc]  # django-stubs cannot resolve the later model here.
+            .filter(message=self)
+            .order_by("position")
+        )
+        if len(rows) != marker.count:
+            raise PersistedAttachmentError(
+                "Stored attachment count does not match attachment rows"
+            )
+        if [row.position for row in rows] != list(range(marker.count)):
+            raise PersistedAttachmentError(
+                "Stored attachment positions must be contiguous"
+            )
+
+        attachments: list[RelayAttachment] = []
+        for row in rows:
+            if not re.fullmatch(r"[0-9a-f]{64}", row.sha256):
+                raise PersistedAttachmentError(
+                    f"Stored attachment {row.pk} has an invalid checksum"
+                )
+            try:
+                kind = AttachmentKind(row.kind)
+            except ValueError as exc:
+                raise PersistedAttachmentError(
+                    f"Stored attachment {row.pk} has an unknown kind"
+                ) from exc
+            if not row.content_type:
+                raise PersistedAttachmentError(
+                    f"Stored attachment {row.pk} has no content type"
+                )
+            if not isinstance(row.file.name, str) or not row.file.name.startswith(
+                ATTACHMENT_STORAGE_PREFIX
+            ):
+                raise PersistedAttachmentError(
+                    f"Stored attachment {row.pk} is outside the package storage prefix"
+                )
+
+            content = read_attachment_file(row)
+            if len(content) != row.size:
+                raise PersistedAttachmentError(
+                    f"Stored attachment {row.pk} size does not match its metadata"
+                )
+            if hashlib.sha256(content).hexdigest() != row.sha256:
+                raise PersistedAttachmentError(
+                    f"Stored attachment {row.pk} checksum does not match its metadata"
+                )
+            attachments.append(
+                RelayAttachment(
+                    kind=kind,
+                    filename=row.filename,
+                    content_type=row.content_type,
+                    content=content,
+                )
+            )
+
+        envelope_data = dict(data)
+        del envelope_data[STORED_ATTACHMENTS_KEY]
+        try:
+            envelope = RelayEmailData(**envelope_data)
+        except TypeError as exc:
+            raise PersistedAttachmentError("Invalid stored email envelope") from exc
+        return RelayEmail(
+            envelope=envelope, attachments=tuple(attachments)
+        ).to_email_message()
 
     @email.setter
     def email(self, email_message: EmailMessage | EmailMultiAlternatives) -> None:
-        self.data = RelayEmailData.from_email_message(email_message).to_dict()
+        self.data = serialize_legacy_email(email_message)
+
+
+_MessageAttachmentManager = models.Manager["MessageAttachment"]
+
+
+class MessageAttachment(models.Model):
+    message_id: int
+
+    message = models.ForeignKey(
+        Message,
+        on_delete=models.CASCADE,
+        related_name="attachments",
+    )
+    position = models.PositiveIntegerField()
+    kind = models.CharField(
+        max_length=16,
+        choices=[
+            (AttachmentKind.BYTES.value, "Bytes"),
+            (AttachmentKind.MIME.value, "MIME"),
+        ],
+    )
+    filename = models.TextField(null=True, blank=True)  # noqa: DJ001
+    content_type = models.TextField()
+    file = models.FileField(
+        max_length=500,
+        storage=attachment_storage,
+        upload_to=attachment_upload_to,
+    )
+    size = models.PositiveBigIntegerField()
+    sha256 = models.CharField(max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    objects = _MessageAttachmentManager()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("message", "position"),
+                name="email_relay_msgattach_pos_uniq",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return (
+            f"attachment {self.pk} for message {self.message_id} "
+            f"at position {self.position}"
+        )

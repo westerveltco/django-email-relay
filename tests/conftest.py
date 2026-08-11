@@ -36,6 +36,14 @@ TEST_SETTINGS = {
     "DATABASE_ROUTERS": [
         "email_relay.db.EmailDatabaseRouter",
     ],
+    "STORAGES": {
+        "default": {
+            "BACKEND": "django.core.files.storage.memory.InMemoryStorage",
+        },
+        "email_relay": {
+            "BACKEND": "django.core.files.storage.memory.InMemoryStorage",
+        },
+    },
     "INSTALLED_APPS": [
         "django.contrib.contenttypes",
         "email_relay",
