@@ -5,7 +5,6 @@ import logging
 from unittest import mock
 
 import pytest
-import responses
 from django.core.management import call_command
 from django.test.utils import override_settings
 from django.utils import timezone
@@ -155,24 +154,22 @@ def test_delete_sent_messages_based_on_retention_non_zero(runrelay):
         "RELAY_HEALTHCHECK_URL": "http://example.com/healthcheck",
     }
 )
-@responses.activate
-def test_relay_healthcheck_url(runrelay, caplog):
+def test_relay_healthcheck_url(runrelay, caplog, requests_mock):
     caplog.set_level(logging.DEBUG)
-    responses.add(responses.GET, "http://example.com/healthcheck", status=200)
+    requests_mock.get("http://example.com/healthcheck", status_code=200)
 
     runrelay.ping_healthcheck()
 
-    assert len(responses.calls) == 1
+    assert requests_mock.call_count == 1
     assert "healthcheck ping successful" in caplog.text
 
 
-@responses.activate
-def test_relay_healthcheck_url_not_configured(runrelay):
-    responses.add(responses.GET, "http://example.com/healthcheck", status=200)
+def test_relay_healthcheck_url_not_configured(runrelay, requests_mock):
+    requests_mock.get("http://example.com/healthcheck", status_code=200)
 
     runrelay.ping_healthcheck()
 
-    assert len(responses.calls) == 0
+    assert requests_mock.call_count == 0
 
 
 @override_settings(
@@ -181,14 +178,13 @@ def test_relay_healthcheck_url_not_configured(runrelay):
         "RELAY_HEALTHCHECK_STATUS_CODE": 201,
     }
 )
-@responses.activate
-def test_relay_healthcheck_status_code(runrelay, caplog):
+def test_relay_healthcheck_status_code(runrelay, caplog, requests_mock):
     caplog.set_level(logging.DEBUG)
-    responses.add(responses.GET, "http://example.com/healthcheck", status=201)
+    requests_mock.get("http://example.com/healthcheck", status_code=201)
 
     runrelay.ping_healthcheck()
 
-    assert len(responses.calls) == 1
+    assert requests_mock.call_count == 1
     assert "healthcheck ping successful" in caplog.text
 
 
@@ -198,14 +194,13 @@ def test_relay_healthcheck_status_code(runrelay, caplog):
         "RELAY_HEALTHCHECK_METHOD": "POST",
     }
 )
-@responses.activate
-def test_relay_healthcheck_method(runrelay, caplog):
+def test_relay_healthcheck_method(runrelay, caplog, requests_mock):
     caplog.set_level(logging.DEBUG)
-    responses.add(responses.POST, "http://example.com/healthcheck", status=200)
+    requests_mock.post("http://example.com/healthcheck", status_code=200)
 
     runrelay.ping_healthcheck()
 
-    assert len(responses.calls) == 1
+    assert requests_mock.call_count == 1
     assert "healthcheck ping successful" in caplog.text
 
 
@@ -214,14 +209,13 @@ def test_relay_healthcheck_method(runrelay, caplog):
         "RELAY_HEALTHCHECK_URL": "http://example.com/healthcheck",
     }
 )
-@responses.activate
-def test_relay_healthcheck_failure(runrelay, caplog):
+def test_relay_healthcheck_failure(runrelay, caplog, requests_mock):
     caplog.set_level(logging.WARNING)
-    responses.add(responses.GET, "http://example.com/healthcheck", status=500)
+    requests_mock.get("http://example.com/healthcheck", status_code=500)
 
     runrelay.ping_healthcheck()
 
-    assert len(responses.calls) == 1
+    assert requests_mock.call_count == 1
     assert "healthcheck ping successful" not in caplog.text
 
 

@@ -21,6 +21,11 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 ### Added
 
 - Added support for Django 6.0 and 6.1.
+- Added support for Python 3.14.
+
+### Changed
+
+- Swapped the `responses` test dependency for `requests-mock`, which does not pull in PyYAML.
 
 ### Removed
 
