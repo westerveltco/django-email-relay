@@ -187,6 +187,7 @@ dist-ssr
 
 staticfiles/
 mediafiles/
+email-relay/
 
 # pyright config for nvim-lspconfig
 pyrightconfig.json

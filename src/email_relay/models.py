@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import base64
 import datetime
 import logging
 from itertools import chain
+from typing import Any
+from typing import cast
 
+from django.core.files.base import ContentFile
 from django.core.mail import EmailMessage
 from django.core.mail import EmailMultiAlternatives
 from django.db import models
@@ -13,6 +17,33 @@ from email_relay.conf import app_settings
 from email_relay.email import RelayEmailData
 
 logger = logging.getLogger(__name__)
+
+
+def attachment_upload_to(instance: MessageAttachment, filename: str) -> str:
+    return f"email-relay/attachments/{instance.message.pk}/{filename}"
+
+
+def store_message_attachments(
+    message: Message, attachments: list[dict[str, str]]
+) -> None:
+    cast(Any, message).attachments.all().delete()
+    for attachment in attachments:
+        content = attachment.get("content", "")
+        if attachment.get("encoding") == "base64":
+            file_content = base64.b64decode(content, validate=True)
+        else:
+            file_content = content.encode("utf-8")
+
+        message_attachment = MessageAttachment(
+            message=message,
+            filename=attachment.get("filename", ""),
+            mimetype=attachment.get("mimetype", ""),
+        )
+        message_attachment.file.save(
+            message_attachment.filename,
+            ContentFile(file_content),
+            save=True,
+        )
 
 
 class Priority(models.IntegerChoices):
@@ -94,6 +125,7 @@ _MessageManager = MessageManager.from_queryset(MessageQuerySet)
 class Message(models.Model):
     id: int
     data = models.JSONField()
+
     priority = models.PositiveSmallIntegerField(
         choices=Priority.choices, default=Priority.LOW
     )
@@ -128,7 +160,14 @@ class Message(models.Model):
         if update_fields:
             kwargs["update_fields"] = set(update_fields).union({"updated_at"})
 
+        attachments = self.data.pop("attachments", [])
+        if attachments and update_fields:
+            kwargs["update_fields"] = set(kwargs["update_fields"]).union({"data"})
+
         super().save(*args, **kwargs)
+
+        if attachments:
+            store_message_attachments(self, attachments)
 
     def mark_sent(self):
         self.status = Status.SENT
@@ -152,8 +191,35 @@ class Message(models.Model):
         if not data:
             return None
 
+        data = dict(data)
+        attachments = cast(Any, self).attachments
+        if self.pk and attachments.exists():
+            data["attachments"] = []
+            for attachment in attachments.all().order_by("id"):
+                with attachment.file.open("rb") as attachment_file:
+                    content = base64.b64encode(attachment_file.read()).decode("utf-8")
+                data["attachments"].append(
+                    {
+                        "filename": attachment.filename,
+                        "content": content,
+                        "encoding": "base64",
+                        "mimetype": attachment.mimetype,
+                    }
+                )
+
         return RelayEmailData(**data).to_email_message()
 
     @email.setter
     def email(self, email_message: EmailMessage | EmailMultiAlternatives) -> None:
         self.data = RelayEmailData.from_email_message(email_message).to_dict()
+
+
+class MessageAttachment(models.Model):
+    message = models.ForeignKey(
+        Message, on_delete=models.CASCADE, related_name="attachments"
+    )
+    filename = models.CharField(max_length=255)
+    mimetype = models.CharField(max_length=255, blank=True)
+    file = models.FileField(upload_to=attachment_upload_to)
+
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)

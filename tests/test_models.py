@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import base64
 import datetime
 from email.mime.base import MIMEBase
 
@@ -327,11 +326,12 @@ class TestMessageModel:
         assert Message.objects.count() == 1
 
         saved_message = Message.objects.first()
-        assert saved_message.data["attachments"][0]["filename"] == "test.txt"
-        assert saved_message.data["attachments"][0][
-            "content"
-        ] == attachment_content.decode("utf-8")
-        assert saved_message.data["attachments"][0]["mimetype"] == "text/plain"
+        assert "attachments" not in saved_message.data
+
+        saved_attachment = saved_message.attachments.get()
+        assert saved_attachment.filename == "test.txt"
+        assert saved_attachment.file.read() == attachment_content
+        assert saved_attachment.mimetype == "text/plain"
 
         email_from_db = saved_message.email
         assert email_from_db.attachments[0][0] == "test.txt"
@@ -353,11 +353,12 @@ class TestMessageModel:
         assert Message.objects.count() == 1
 
         saved_message = Message.objects.first()
-        assert saved_message.data["attachments"][0]["filename"] == "test.zip"
-        assert saved_message.data["attachments"][0]["content"] == base64.b64encode(
-            attachment_content
-        ).decode("utf-8")
-        assert saved_message.data["attachments"][0]["mimetype"] == "application/zip"
+        assert "attachments" not in saved_message.data
+
+        saved_attachment = saved_message.attachments.get()
+        assert saved_attachment.filename == "test.zip"
+        assert saved_attachment.file.read() == attachment_content
+        assert saved_attachment.mimetype == "application/zip"
 
         email_from_db = saved_message.email
         assert email_from_db.attachments[0][0] == "test.zip"
@@ -378,14 +379,12 @@ class TestMessageModel:
         assert Message.objects.count() == 1
 
         saved_message = Message.objects.first()
-        assert saved_message.data["attachments"][0]["filename"] == "test.txt"
-        assert saved_message.data["attachments"][0]["content"] == base64.b64encode(
-            attachment_content
-        ).decode("utf-8")
-        assert (
-            saved_message.data["attachments"][0]["mimetype"]
-            == "application/octet-stream"
-        )
+        assert "attachments" not in saved_message.data
+
+        saved_attachment = saved_message.attachments.get()
+        assert saved_attachment.filename == "test.txt"
+        assert saved_attachment.file.read() == attachment_content
+        assert saved_attachment.mimetype == "application/octet-stream"
 
         email_from_db = saved_message.email
         assert email_from_db.attachments[0][0] == "test.txt"

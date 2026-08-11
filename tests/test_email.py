@@ -161,6 +161,7 @@ def test_to_dict_with_attachment():
                 {
                     "filename": "test.txt",
                     "content": attachment_content.decode(),
+                    "encoding": "text",
                     "mimetype": "text/plain",
                 }
             ],
