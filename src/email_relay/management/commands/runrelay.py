@@ -29,13 +29,13 @@ class Command(BaseCommand):
         # it is not intended to be used in production
         loop_count = 0 if _loop_count is not None else None
 
-        database_alias = resolved_database_alias()
-        messages = Message.objects.db_manager(database_alias)
+        # Validate the configured database before entering the retry loop.
+        resolved_database_alias()
         logger.info("starting relay")
 
         while True:
             try:
-                if messages.messages_available_to_send():
+                if Message.objects.messages_available_to_send():
                     send_all()
                 self.delete_old_messages()
             except (InterfaceError, OperationalError) as err:
@@ -58,12 +58,11 @@ class Command(BaseCommand):
 
     def delete_old_messages(self) -> None:
         if app_settings.MESSAGES_RETENTION_SECONDS is not None:
-            messages = Message.objects.db_manager(resolved_database_alias())
             logger.debug("deleting old messages")
             if app_settings.MESSAGES_RETENTION_SECONDS == 0:
-                deleted_messages = messages.delete_all_sent_messages()
+                deleted_messages = Message.objects.delete_all_sent_messages()
             else:
-                deleted_messages = messages.delete_messages_sent_before(
+                deleted_messages = Message.objects.delete_messages_sent_before(
                     timezone.now()
                     - datetime.timedelta(
                         seconds=app_settings.MESSAGES_RETENTION_SECONDS

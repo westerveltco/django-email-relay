@@ -43,16 +43,19 @@ def test_runrelay_requires_configured_database_alias(runrelay):
         runrelay.handle(_loop_count=1)
 
 
+@override_settings(DATABASE_ROUTERS=[])
 @pytest.mark.django_db(databases=["default", "email_relay_db"])
-def test_command_uses_configured_database_alias(runrelay):
-    with mock.patch.object(
-        Message.objects,
-        "db_manager",
-        wraps=Message.objects.db_manager,
-    ) as db_manager:
-        runrelay.handle(_loop_count=1)
+def test_command_uses_configured_database_alias(runrelay, mailoutbox):
+    queued = Message.objects.using(EMAIL_RELAY_DATABASE_ALIAS).create(
+        data={"subject": "Configured database", "to": ["to@example.com"]},
+        status=Status.QUEUED,
+    )
 
-    db_manager.assert_called_once_with(EMAIL_RELAY_DATABASE_ALIAS)
+    runrelay.handle(_loop_count=1)
+
+    queued.refresh_from_db(using=EMAIL_RELAY_DATABASE_ALIAS)
+    assert queued.status == Status.SENT
+    assert len(mailoutbox) == 1
 
 
 @pytest.mark.django_db(databases=["default", "email_relay_db"])

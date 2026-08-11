@@ -36,8 +36,9 @@ class Status(models.IntegerChoices):
 
 class MessageManager(models.Manager["Message"]):
     def get_message_batch(self) -> list[Message]:
-        queued = self.queued().prioritized()  # type: ignore[attr-defined]
-        deferred = self.deferred().prioritized()  # type: ignore[attr-defined]
+        messages = self.using(resolved_database_alias())
+        queued = messages.queued().prioritized()  # type: ignore[attr-defined]
+        deferred = messages.deferred().prioritized()  # type: ignore[attr-defined]
         if app_settings.EMAIL_MAX_BATCH is None:
             message_batch = list(chain(queued, deferred))
         else:
@@ -51,7 +52,8 @@ class MessageManager(models.Manager["Message"]):
 
     def get_message_for_sending(self, message_id: int) -> Message:
         return (
-            self.filter(
+            self.using(resolved_database_alias())
+            .filter(
                 id=message_id,
                 status__in=(Status.QUEUED, Status.DEFERRED),
             )
@@ -60,14 +62,17 @@ class MessageManager(models.Manager["Message"]):
         )
 
     def messages_available_to_send(self) -> bool:
-        return self.queued().exists() or self.deferred().exists()  # type: ignore[attr-defined]
+        messages = self.using(resolved_database_alias())
+        return messages.queued().exists() or messages.deferred().exists()  # type: ignore[attr-defined]
 
     def delete_all_sent_messages(self) -> int:
-        _, deleted_by_model = self.sent().only("pk").delete()  # type: ignore[attr-defined]
+        messages = self.using(resolved_database_alias())
+        _, deleted_by_model = messages.sent().only("pk").delete()  # type: ignore[attr-defined]
         return deleted_by_model.get(self.model._meta.label, 0)
 
     def delete_messages_sent_before(self, dt: datetime.datetime) -> int:
-        _, deleted_by_model = self.sent_before(dt).only("pk").delete()  # type: ignore[attr-defined]
+        messages = self.using(resolved_database_alias())
+        _, deleted_by_model = messages.sent_before(dt).only("pk").delete()  # type: ignore[attr-defined]
         return deleted_by_model.get(self.model._meta.label, 0)
 
 

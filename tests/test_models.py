@@ -85,6 +85,40 @@ class TestMessageManager:
         assert len(message_batch) == 1
         assert any("LIMIT 1" in query["sql"] for query in queries)
 
+    @override_settings(DATABASE_ROUTERS=[])
+    def test_operations_use_configured_database_without_db_manager(self):
+        database_alias = "email_relay_db"
+        now = timezone.now()
+        queued = Message.objects.using(database_alias).create(
+            data={"subject": "Queued", "to": ["to@example.com"]},
+            status=Status.QUEUED,
+        )
+        old_sent = Message.objects.using(database_alias).create(
+            data={},
+            status=Status.SENT,
+            sent_at=now - datetime.timedelta(days=2),
+        )
+        recent_sent = Message.objects.using(database_alias).create(
+            data={},
+            status=Status.SENT,
+            sent_at=now,
+        )
+
+        assert Message.objects.messages_available_to_send()
+        assert Message.objects.get_message_batch() == [queued]
+        assert Message.objects.get_message_for_sending(queued.pk) == queued
+        assert (
+            Message.objects.delete_messages_sent_before(
+                now - datetime.timedelta(days=1)
+            )
+            == 1
+        )
+        assert Message.objects.delete_all_sent_messages() == 1
+        assert not Message.objects.using(database_alias).filter(pk=old_sent.pk).exists()
+        assert (
+            not Message.objects.using(database_alias).filter(pk=recent_sent.pk).exists()
+        )
+
     def test_get_message_for_sending(self):
         message = baker.make("email_relay.Message", status=Status.QUEUED)
 

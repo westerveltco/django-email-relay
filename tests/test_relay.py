@@ -510,20 +510,12 @@ def test_send_all_uses_the_configured_database_transaction(mailoutbox):
         status=Status.QUEUED,
     )
 
-    with (
-        mock.patch(
-            "email_relay.relay.transaction.atomic", wraps=transaction.atomic
-        ) as atomic,
-        mock.patch.object(
-            Message.objects,
-            "db_manager",
-            wraps=Message.objects.db_manager,
-        ) as db_manager,
-    ):
+    with mock.patch(
+        "email_relay.relay.transaction.atomic", wraps=transaction.atomic
+    ) as atomic:
         send_all()
 
     queued.refresh_from_db()
     assert len(mailoutbox) == 1
     assert queued.status == Status.SENT
-    db_manager.assert_called_once_with(EMAIL_RELAY_DATABASE_ALIAS)
     atomic.assert_called_once_with(using=EMAIL_RELAY_DATABASE_ALIAS)

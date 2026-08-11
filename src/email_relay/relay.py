@@ -29,9 +29,8 @@ def send_all():
     }
 
     database_alias = resolved_database_alias()
-    messages = Message.objects.db_manager(database_alias)
     try:
-        message_batch = messages.get_message_batch()
+        message_batch = Message.objects.get_message_batch()
     except (InterfaceError, OperationalError) as err:
         close_old_connections()
         logger.warning("database error loading message batch: %s", err)
@@ -45,7 +44,7 @@ def send_all():
         try:
             with transaction.atomic(using=database_alias):
                 try:
-                    message = messages.get_message_for_sending(message.id)
+                    message = Message.objects.get_message_for_sending(message.id)
                 except Message.DoesNotExist:
                     continue
                 try:
