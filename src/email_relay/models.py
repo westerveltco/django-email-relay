@@ -13,6 +13,8 @@ from django.utils import timezone
 from email_relay.attachments import STORED_ATTACHMENTS_KEY
 from email_relay.attachments import PersistedAttachmentError
 from email_relay.attachments import mime_attachment_from_bytes
+from email_relay.attachments import normalize_attachment_content_type
+from email_relay.attachments import normalize_attachment_filename
 from email_relay.attachments import parse_stored_attachment_marker
 from email_relay.conf import app_settings
 from email_relay.conf import resolved_database_alias
@@ -164,6 +166,28 @@ class Message(models.Model):
         self.log = log
         self.save(update_fields=["status", "log"])
 
+    def _stored_email_attachments(
+        self, expected_count: int
+    ) -> list[tuple[str | None, bytes, str] | MIMEMessage]:
+        if self.pk is None:
+            raise PersistedAttachmentError("Stored message has not been saved")
+
+        database_alias = self._state.db or resolved_database_alias()
+        rows = list(
+            MessageAttachment.objects.using(database_alias)
+            .filter(message_id=self.pk)
+            .order_by("position")
+        )
+        if len(rows) != expected_count:
+            raise PersistedAttachmentError(
+                "Stored attachment count does not match attachment rows"
+            )
+        if [row.position for row in rows] != list(range(expected_count)):
+            raise PersistedAttachmentError(
+                "Stored attachment positions must be contiguous"
+            )
+        return [row.to_email_attachment() for row in rows]
+
     @property
     def email(self) -> EmailMultiAlternatives | None:
         data = self.data
@@ -187,46 +211,7 @@ class Message(models.Model):
             )
 
         attachment_count = parse_stored_attachment_marker(data[STORED_ATTACHMENTS_KEY])
-        database_alias = self._state.db or resolved_database_alias()
-        rows = list(
-            MessageAttachment.objects.using(database_alias)
-            .filter(message=self)
-            .order_by("position")
-        )
-        if len(rows) != attachment_count:
-            raise PersistedAttachmentError(
-                "Stored attachment count does not match attachment rows"
-            )
-        if [row.position for row in rows] != list(range(attachment_count)):
-            raise PersistedAttachmentError(
-                "Stored attachment positions must be contiguous"
-            )
-
-        prepared_attachments: list[tuple[str | None, bytes, str] | MIMEMessage] = []
-        for row in rows:
-            if not row.content_type or "/" not in row.content_type:
-                raise PersistedAttachmentError(
-                    f"Stored attachment {row.pk} has an invalid content type"
-                )
-
-            content = bytes(row.content)
-            if row.kind == MessageAttachment.Kind.BYTES:
-                prepared_attachments.append((row.filename, content, row.content_type))
-            elif row.kind == MessageAttachment.Kind.MIME:
-                mime_part = mime_attachment_from_bytes(content)
-                if mime_part.get_content_type() != row.content_type:
-                    raise PersistedAttachmentError(
-                        "Stored MIME attachment content type does not match its metadata"
-                    )
-                if mime_part.get_filename() != row.filename:
-                    raise PersistedAttachmentError(
-                        "Stored MIME attachment filename does not match its metadata"
-                    )
-                prepared_attachments.append(mime_part)
-            else:
-                raise PersistedAttachmentError(
-                    f"Stored attachment {row.pk} has an unknown kind"
-                )
+        prepared_attachments = self._stored_email_attachments(attachment_count)
 
         envelope_data = dict(data)
         del envelope_data[STORED_ATTACHMENTS_KEY]
@@ -288,3 +273,43 @@ class MessageAttachment(models.Model):
         if update_fields:
             kwargs["update_fields"] = set(update_fields).union({"updated_at"})
         super().save(*args, **kwargs)
+
+    def to_email_attachment(self) -> tuple[str | None, bytes, str] | MIMEMessage:
+        try:
+            content_type = normalize_attachment_content_type(self.content_type)
+        except PersistedAttachmentError as exc:
+            raise PersistedAttachmentError(
+                f"Stored attachment {self.pk} has an invalid content type"
+            ) from exc
+
+        content = bytes(self.content)
+        if self.kind == self.Kind.BYTES:
+            return self.filename, content, content_type
+
+        if self.kind == self.Kind.MIME:
+            try:
+                mime_part = mime_attachment_from_bytes(content)
+            except PersistedAttachmentError as exc:
+                raise PersistedAttachmentError(
+                    f"Stored attachment {self.pk} MIME content is invalid: {exc}"
+                ) from exc
+            if mime_part.get_content_type() != content_type:
+                raise PersistedAttachmentError(
+                    f"Stored attachment {self.pk} MIME content type does not match its metadata"
+                )
+            try:
+                mime_filename = normalize_attachment_filename(mime_part.get_filename())
+                stored_filename = normalize_attachment_filename(self.filename)
+            except PersistedAttachmentError as exc:
+                raise PersistedAttachmentError(
+                    f"Stored attachment {self.pk} has an invalid MIME filename"
+                ) from exc
+            if mime_filename != stored_filename:
+                raise PersistedAttachmentError(
+                    f"Stored attachment {self.pk} MIME filename does not match its metadata"
+                )
+            return mime_part
+
+        raise PersistedAttachmentError(
+            f"Stored attachment {self.pk} has an unknown kind"
+        )

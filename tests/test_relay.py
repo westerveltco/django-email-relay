@@ -6,7 +6,9 @@ from unittest import mock
 
 import pytest
 from django.core.mail import EmailMultiAlternatives
+from django.db import InterfaceError
 from django.db import OperationalError
+from django.db import connections
 from django.db import transaction
 from django.test import override_settings
 from model_bakery import baker
@@ -462,26 +464,34 @@ def test_send_all_retries_database_batch_error(mailoutbox, caplog):
     assert "database error loading message batch" in caplog.text
 
 
-@mock.patch("email_relay.models.Message.email", new_callable=mock.PropertyMock)
-def test_send_all_retries_database_read_error(mock_email, mailoutbox, caplog):
-    mock_email.side_effect = OperationalError("connection lost")
-    queued = baker.make(
+@pytest.mark.parametrize("error_type", [InterfaceError, OperationalError])
+def test_send_all_retries_attachment_query_error(error_type, mailoutbox, caplog):
+    stored = create_stored_message()
+    stored.priority = Priority.HIGH
+    stored.save(update_fields=["priority"])
+    following = baker.make(
         "email_relay.Message",
-        data={"subject": "Retry", "to": ["to@example.com"]},
+        data={"subject": "Following", "to": ["to@example.com"]},
         status=Status.QUEUED,
-        _quantity=2,
     )
 
-    with mock.patch("email_relay.relay.close_old_connections") as close_connections:
+    def fail_attachment_query(execute, sql, params, many, context):
+        if MessageAttachment._meta.db_table in sql:
+            raise error_type("connection lost")
+        return execute(sql, params, many, context)
+
+    with (
+        connections[EMAIL_RELAY_DATABASE_ALIAS].execute_wrapper(fail_attachment_query),
+        mock.patch("email_relay.relay.close_old_connections") as close_connections,
+    ):
         send_all()
 
     close_connections.assert_called_once_with()
-    for message in queued:
+    for message in (stored, following):
         message.refresh_from_db()
         assert message.status == Status.QUEUED
         assert message.retry_count == 0
     assert len(mailoutbox) == 0
-    assert mock_email.call_count == 1
     assert "leaving it queued for retry" in caplog.text
 
 
