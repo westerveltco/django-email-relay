@@ -5,9 +5,9 @@ author_email: josh@joshthomas.dev
 author_name: Josh Thomas
 current_version: 0.6.0
 django_versions:
-- '3.2'
-- '4.2'
-- '5.0'
+- '5.2'
+- '6.0'
+- '6.1'
 docs_domain: westervelt.dev
 github_owner: westerveltco
 github_repo: django-email-relay
@@ -16,10 +16,10 @@ package_description: Centralize and relay email from multiple distributed Django
     to an internal SMTP server via a database queue.
 package_name: django-email-relay
 python_versions:
-- '3.8'
-- '3.9'
 - '3.10'
 - '3.11'
 - '3.12'
+- '3.13'
+- '3.14'
 test_django_main: true
 versioning_scheme: SemVer
