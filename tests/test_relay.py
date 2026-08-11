@@ -446,8 +446,10 @@ def test_send_all_retries_database_read_error(mock_email, mailoutbox, caplog):
         _quantity=2,
     )
 
-    send_all()
+    with mock.patch("email_relay.relay.close_old_connections") as close_connections:
+        send_all()
 
+    close_connections.assert_called_once_with()
     for message in queued:
         message.refresh_from_db()
         assert message.status == Status.QUEUED
