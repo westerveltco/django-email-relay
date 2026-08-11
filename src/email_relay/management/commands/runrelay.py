@@ -5,11 +5,13 @@ import logging
 import time
 
 from django.core.management import BaseCommand
+from django.db import InterfaceError
+from django.db import OperationalError
+from django.db import close_old_connections
 from django.utils import timezone
 
-from email_relay.checks import RELAY_CHECK_TAG
-from email_relay.checks import relay_check_context
 from email_relay.conf import app_settings
+from email_relay.conf import resolved_database_alias
 from email_relay.models import Message
 from email_relay.relay import send_all
 
@@ -27,15 +29,19 @@ class Command(BaseCommand):
         # it is not intended to be used in production
         loop_count = 0 if _loop_count is not None else None
 
-        with relay_check_context():
-            self.check(tags=[RELAY_CHECK_TAG], include_deployment_checks=True)
+        database_alias = resolved_database_alias()
+        messages = Message.objects.db_manager(database_alias)
         logger.info("starting relay")
 
         while True:
-            if Message.objects.messages_available_to_send():
-                send_all()
+            try:
+                if messages.messages_available_to_send():
+                    send_all()
+                self.delete_old_messages()
+            except (InterfaceError, OperationalError) as err:
+                close_old_connections()
+                logger.warning("database error in relay loop: %s", err)
 
-            self.delete_old_messages()
             self.ping_healthcheck()
 
             msg = "loop complete"
@@ -52,11 +58,12 @@ class Command(BaseCommand):
 
     def delete_old_messages(self) -> None:
         if app_settings.MESSAGES_RETENTION_SECONDS is not None:
+            messages = Message.objects.db_manager(resolved_database_alias())
             logger.debug("deleting old messages")
             if app_settings.MESSAGES_RETENTION_SECONDS == 0:
-                deleted_messages = Message.objects.delete_all_sent_messages()
+                deleted_messages = messages.delete_all_sent_messages()
             else:
-                deleted_messages = Message.objects.delete_messages_sent_before(
+                deleted_messages = messages.delete_messages_sent_before(
                     timezone.now()
                     - datetime.timedelta(
                         seconds=app_settings.MESSAGES_RETENTION_SECONDS

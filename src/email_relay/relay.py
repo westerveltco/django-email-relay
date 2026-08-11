@@ -30,11 +30,18 @@ def send_all():
 
     database_alias = resolved_database_alias()
     messages = Message.objects.db_manager(database_alias)
-    message_batch = messages.get_message_batch()
+    try:
+        message_batch = messages.get_message_batch()
+    except (InterfaceError, OperationalError) as err:
+        close_old_connections()
+        logger.warning("database error loading message batch: %s", err)
+        message_batch = []
 
     connection = None
 
     for message in message_batch:
+        outcome: str | None = None
+        skip_post_processing = False
         try:
             with transaction.atomic(using=database_alias):
                 try:
@@ -55,11 +62,11 @@ def send_all():
                         email.send()
                         logger.debug("sent message %s", message.id)
                         message.mark_sent()
-                        counts["sent"] += 1
+                        outcome = "sent"
                     else:
                         msg = f"Message {message.id} has no email object"
                         message.fail(log=msg)
-                        counts["failed"] += 1
+                        outcome = "failed"
                         logger.warning(msg)
                 except (InterfaceError, OperationalError):
                     raise
@@ -80,18 +87,18 @@ def send_all():
                         )
                         message.fail(log=str(err))
                         connection = None
-                        counts["failed"] += 1
-                        continue
-
-                    logger.debug(
-                        "deferring message %s due to %s",
-                        message.id,
-                        err,
-                        exc_info=True,
-                    )
-                    message.defer(log=str(err))
-                    connection = None
-                    counts["deferred"] += 1
+                        outcome = "failed"
+                        skip_post_processing = True
+                    else:
+                        logger.debug(
+                            "deferring message %s due to %s",
+                            message.id,
+                            err,
+                            exc_info=True,
+                        )
+                        message.defer(log=str(err))
+                        connection = None
+                        outcome = "deferred"
                 except PersistedAttachmentError as err:
                     logger.warning(
                         "invalid stored attachments for message %s, marking as failed: %s",
@@ -100,7 +107,7 @@ def send_all():
                     )
                     message.fail(log=str(err))
                     connection = None
-                    counts["failed"] += 1
+                    outcome = "failed"
                 except Exception as err:
                     logger.exception(
                         "unexpected error processing message %s, marking as failed.",
@@ -108,7 +115,7 @@ def send_all():
                     )
                     message.fail(log=str(err))
                     connection = None
-                    counts["failed"] += 1
+                    outcome = "failed"
         except (InterfaceError, OperationalError) as err:
             close_old_connections()
             logger.warning(
@@ -118,6 +125,11 @@ def send_all():
             )
             connection = None
             break
+
+        if outcome is not None:
+            counts[outcome] += 1
+        if skip_post_processing:
+            continue
 
         if (
             app_settings.EMAIL_MAX_DEFERRED is not None

@@ -20,8 +20,8 @@ class Migration(migrations.Migration):
                 ('filename', models.TextField(blank=True, null=True)),
                 ('content_type', models.TextField()),
                 ('content', models.BinaryField()),
-                ('size', models.PositiveBigIntegerField()),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
                 ('message', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='attachments', to='email_relay.message')),
             ],
             options={

@@ -21,8 +21,7 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 ### Added
 
 - Added schema for raw attachment bytes outside `Message.data`.
-- Added relay reads for both existing JSON attachments and raw attachment rows.
-- Added relay startup checks for the configured database alias.
+- Added relay reads for both existing JSON attachments and raw attachment rows. Producers continue to write the existing JSON attachment format in this release.
 
 ### Changed
 

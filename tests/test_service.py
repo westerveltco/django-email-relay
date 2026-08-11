@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 from unittest import mock
 
-from email_relay.checks import RELAY_CHECK_TAG
 from email_relay.service import coerce_dict_values
 from email_relay.service import env_vars_to_nested_dict
 from email_relay.service import filter_valid_django_settings
@@ -108,7 +107,7 @@ def test_coerce_dict_values():
     }
 
 
-def test_standalone_service_checks_before_migrating():
+def test_standalone_service_migrates_configured_database():
     with (
         mock.patch("email_relay.service.argparse.ArgumentParser.parse_args"),
         mock.patch("email_relay.service.get_user_settings_from_env", return_value={}),
@@ -122,7 +121,6 @@ def test_standalone_service_checks_before_migrating():
         assert run_relay_service() == 0
 
     assert call_command.call_args_list == [
-        mock.call("check", tags=[RELAY_CHECK_TAG], deploy=True),
         mock.call("migrate", database="default"),
         mock.call("runrelay"),
     ]

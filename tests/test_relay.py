@@ -47,7 +47,6 @@ def create_stored_message(*, content=b"stored payload"):
         filename="fixture.bin",
         content_type="application/octet-stream",
         content=content,
-        size=len(content),
     )
     return message
 
@@ -436,6 +435,33 @@ def test_send_all_fails_incomplete_stored_message_before_smtp(mailoutbox, caplog
     assert f"invalid stored attachments for message {queued.id}" in caplog.text
 
 
+def test_send_all_sends_stored_attachment(mailoutbox, caplog):
+    queued = create_stored_message()
+
+    send_all()
+
+    queued.refresh_from_db()
+    assert queued.status == Status.SENT
+    assert len(mailoutbox) == 1
+    assert mailoutbox[0].attachments[0][1] == b"stored payload"
+    assert "sent 1 emails, deferred 0 emails, failed 0 emails" in caplog.text
+
+
+def test_send_all_retries_database_batch_error(mailoutbox, caplog):
+    with (
+        mock.patch(
+            "email_relay.models.MessageManager.get_message_batch",
+            side_effect=OperationalError("connection lost"),
+        ),
+        mock.patch("email_relay.relay.close_old_connections") as close_connections,
+    ):
+        send_all()
+
+    close_connections.assert_called_once_with()
+    assert len(mailoutbox) == 0
+    assert "database error loading message batch" in caplog.text
+
+
 @mock.patch("email_relay.models.Message.email", new_callable=mock.PropertyMock)
 def test_send_all_retries_database_read_error(mock_email, mailoutbox, caplog):
     mock_email.side_effect = OperationalError("connection lost")
@@ -457,6 +483,24 @@ def test_send_all_retries_database_read_error(mock_email, mailoutbox, caplog):
     assert len(mailoutbox) == 0
     assert mock_email.call_count == 1
     assert "leaving it queued for retry" in caplog.text
+
+
+@mock.patch("email_relay.models.Message.mark_sent")
+def test_send_all_does_not_count_rolled_back_send(mark_sent, mailoutbox, caplog):
+    mark_sent.side_effect = OperationalError("commit failed")
+    queued = baker.make(
+        "email_relay.Message",
+        data={"subject": "Retry", "to": ["to@example.com"]},
+        status=Status.QUEUED,
+    )
+
+    with mock.patch("email_relay.relay.close_old_connections"):
+        send_all()
+
+    queued.refresh_from_db()
+    assert len(mailoutbox) == 1
+    assert queued.status == Status.QUEUED
+    assert "sent 0 emails, deferred 0 emails, failed 0 emails" in caplog.text
 
 
 def test_send_all_uses_the_configured_database_transaction(mailoutbox):

@@ -11,8 +11,6 @@ from django.conf import settings
 from django.core.management import call_command
 from environs import Env
 
-from .checks import RELAY_CHECK_TAG
-from .checks import relay_check_context
 from .conf import EMAIL_RELAY_SETTINGS_NAME
 from .conf import resolved_database_alias
 
@@ -181,8 +179,6 @@ def run_relay_service() -> int:
     SETTINGS = merge_with_defaults(default_settings, user_settings)
     settings.configure(**SETTINGS)
     django.setup()
-    with relay_check_context():
-        call_command("check", tags=[RELAY_CHECK_TAG], deploy=True)
     call_command("migrate", database=resolved_database_alias())
     print("Starting email relay service...")  # noqa: T201
     call_command("runrelay")

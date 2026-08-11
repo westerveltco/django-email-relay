@@ -2,28 +2,23 @@ from __future__ import annotations
 
 import datetime
 import logging
+from email.message import Message as MIMEMessage
 from itertools import chain
 
 from django.core.mail import EmailMessage
 from django.core.mail import EmailMultiAlternatives
 from django.db import models
-from django.db import transaction
 from django.utils import timezone
 
 from email_relay.attachments import STORED_ATTACHMENTS_KEY
-from email_relay.attachments import AttachmentKind
 from email_relay.attachments import PersistedAttachmentError
-from email_relay.attachments import RelayAttachment
-from email_relay.attachments import StoredAttachmentMarker
+from email_relay.attachments import mime_attachment_from_bytes
+from email_relay.attachments import parse_stored_attachment_marker
 from email_relay.conf import app_settings
 from email_relay.conf import resolved_database_alias
-from email_relay.email import RelayEmail
 from email_relay.email import RelayEmailData
-from email_relay.email import relay_email_from_legacy_data
-from email_relay.email import serialize_legacy_email
 
 logger = logging.getLogger(__name__)
-RETENTION_DELETE_BATCH_SIZE = 1000
 
 
 class Priority(models.IntegerChoices):
@@ -67,32 +62,13 @@ class MessageManager(models.Manager["Message"]):
     def messages_available_to_send(self) -> bool:
         return self.queued().exists() or self.deferred().exists()  # type: ignore[attr-defined]
 
-    def _delete_messages(self, queryset: models.QuerySet[Message]) -> int:
-        deleted_messages = 0
-        while message_ids := list(
-            queryset.order_by().values_list("pk", flat=True)[
-                :RETENTION_DELETE_BATCH_SIZE
-            ]
-        ):
-            with transaction.atomic(using=self.db):
-                (
-                    MessageAttachment.objects.using(self.db)  # type: ignore[misc]
-                    .filter(message_id__in=message_ids)
-                    .only("pk")
-                    .delete()
-                )
-                _, deleted_by_model = queryset.filter(pk__in=message_ids).delete()
-            batch_count = deleted_by_model.get(queryset.model._meta.label, 0)
-            deleted_messages += batch_count
-            if batch_count == 0:
-                break
-        return deleted_messages
-
     def delete_all_sent_messages(self) -> int:
-        return self._delete_messages(self.sent())  # type: ignore[attr-defined]
+        _, deleted_by_model = self.sent().only("pk").delete()  # type: ignore[attr-defined]
+        return deleted_by_model.get(self.model._meta.label, 0)
 
     def delete_messages_sent_before(self, dt: datetime.datetime) -> int:
-        return self._delete_messages(self.sent_before(dt))  # type: ignore[attr-defined]
+        _, deleted_by_model = self.sent_before(dt).only("pk").delete()  # type: ignore[attr-defined]
+        return deleted_by_model.get(self.model._meta.label, 0)
 
 
 class MessageQuerySet(models.QuerySet["Message"]):
@@ -198,79 +174,79 @@ class Message(models.Model):
                     "message_id": self.pk,
                 },
             )
-            return relay_email_from_legacy_data(data).to_email_message()
+            return RelayEmailData(**data).to_email_message()
 
         if "attachments" in data:
             raise PersistedAttachmentError(
                 "Message contains both legacy and stored attachments"
             )
 
-        marker = StoredAttachmentMarker.from_value(data[STORED_ATTACHMENTS_KEY])
+        attachment_count = parse_stored_attachment_marker(data[STORED_ATTACHMENTS_KEY])
         database_alias = self._state.db or resolved_database_alias()
         rows = list(
-            MessageAttachment.objects.using(database_alias)  # type: ignore[misc]  # django-stubs cannot resolve the later model here.
+            MessageAttachment.objects.using(database_alias)
             .filter(message=self)
             .order_by("position")
         )
-        if len(rows) != marker.count:
+        if len(rows) != attachment_count:
             raise PersistedAttachmentError(
                 "Stored attachment count does not match attachment rows"
             )
-        if [row.position for row in rows] != list(range(marker.count)):
+        if [row.position for row in rows] != list(range(attachment_count)):
             raise PersistedAttachmentError(
                 "Stored attachment positions must be contiguous"
             )
 
-        attachments: list[RelayAttachment] = []
+        prepared_attachments: list[tuple[str | None, bytes, str] | MIMEMessage] = []
         for row in rows:
-            try:
-                kind = AttachmentKind(row.kind)
-            except ValueError as exc:
+            if not row.content_type or "/" not in row.content_type:
                 raise PersistedAttachmentError(
-                    f"Stored attachment {row.pk} has an unknown kind"
-                ) from exc
-            if not row.content_type:
-                raise PersistedAttachmentError(
-                    f"Stored attachment {row.pk} has no content type"
+                    f"Stored attachment {row.pk} has an invalid content type"
                 )
 
             content = bytes(row.content)
-            if len(content) != row.size:
-                logger.warning(
-                    "stored attachment %s size metadata is %s, actual size is %s",
-                    row.pk,
-                    row.size,
-                    len(content),
-                    extra={"attachment_id": row.pk, "message_id": self.pk},
+            if row.kind == MessageAttachment.Kind.BYTES:
+                prepared_attachments.append((row.filename, content, row.content_type))
+            elif row.kind == MessageAttachment.Kind.MIME:
+                mime_part = mime_attachment_from_bytes(content)
+                if mime_part.get_content_type() != row.content_type:
+                    raise PersistedAttachmentError(
+                        "Stored MIME attachment content type does not match its metadata"
+                    )
+                if mime_part.get_filename() != row.filename:
+                    raise PersistedAttachmentError(
+                        "Stored MIME attachment filename does not match its metadata"
+                    )
+                prepared_attachments.append(mime_part)
+            else:
+                raise PersistedAttachmentError(
+                    f"Stored attachment {row.pk} has an unknown kind"
                 )
-            attachments.append(
-                RelayAttachment(
-                    kind=kind,
-                    filename=row.filename,
-                    content_type=row.content_type,
-                    content=content,
-                )
-            )
 
         envelope_data = dict(data)
         del envelope_data[STORED_ATTACHMENTS_KEY]
         try:
-            envelope = RelayEmailData(**envelope_data)
+            email = RelayEmailData(**envelope_data).to_email_message()
         except TypeError as exc:
             raise PersistedAttachmentError("Invalid stored email envelope") from exc
-        return RelayEmail(
-            envelope=envelope, attachments=tuple(attachments)
-        ).to_email_message()
+
+        for attachment in prepared_attachments:
+            if isinstance(attachment, tuple):
+                email.attach(*attachment)
+            else:
+                email.attach(attachment)  # type: ignore[call-overload]
+        return email
 
     @email.setter
     def email(self, email_message: EmailMessage | EmailMultiAlternatives) -> None:
-        self.data = serialize_legacy_email(email_message)
-
-
-_MessageAttachmentManager = models.Manager["MessageAttachment"]
+        self.data = RelayEmailData.from_email_message(email_message).to_dict()
 
 
 class MessageAttachment(models.Model):
+    class Kind(models.TextChoices):
+        BYTES = "bytes", "Bytes"
+        MIME = "mime", "MIME"
+
     message_id: int
 
     message = models.ForeignKey(
@@ -279,20 +255,14 @@ class MessageAttachment(models.Model):
         related_name="attachments",
     )
     position = models.PositiveIntegerField()
-    kind = models.CharField(
-        max_length=16,
-        choices=[
-            (AttachmentKind.BYTES.value, "Bytes"),
-            (AttachmentKind.MIME.value, "MIME"),
-        ],
-    )
+    kind = models.CharField(max_length=16, choices=Kind.choices)
     filename = models.TextField(null=True, blank=True)  # noqa: DJ001
     content_type = models.TextField()
     content = models.BinaryField()
-    size = models.PositiveBigIntegerField()
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    objects = _MessageAttachmentManager()
+    objects: models.Manager[MessageAttachment]
 
     class Meta:
         constraints = [
@@ -307,3 +277,9 @@ class MessageAttachment(models.Model):
             f"attachment {self.pk} for message {self.message_id} "
             f"at position {self.position}"
         )
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get("update_fields")
+        if update_fields:
+            kwargs["update_fields"] = set(update_fields).union({"updated_at"})
+        super().save(*args, **kwargs)

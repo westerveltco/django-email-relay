@@ -6,12 +6,14 @@ from unittest import mock
 
 import pytest
 import responses
+from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command
-from django.core.management.base import SystemCheckError
+from django.db import OperationalError
 from django.test.utils import override_settings
 from django.utils import timezone
 from model_bakery import baker
 
+from email_relay.conf import EMAIL_RELAY_DATABASE_ALIAS
 from email_relay.management.commands.runrelay import Command
 from email_relay.models import Message
 from email_relay.models import Status
@@ -33,17 +35,44 @@ def runrelay():
     return Command()
 
 
-@pytest.mark.django_db(databases=["default", "email_relay_db"])
-def test_regular_deployment_checks_do_not_run_relay_checks():
-    call_command("check", deploy=True)
-
-
 def test_runrelay_requires_configured_database_alias(runrelay):
     with (
         override_settings(DJANGO_EMAIL_RELAY={"DATABASE_ALIAS": "missing_database"}),
-        pytest.raises(SystemCheckError, match="email_relay.E001"),
+        pytest.raises(ImproperlyConfigured, match="unknown database"),
     ):
         runrelay.handle(_loop_count=1)
+
+
+@pytest.mark.django_db(databases=["default", "email_relay_db"])
+def test_command_uses_configured_database_alias(runrelay):
+    with mock.patch.object(
+        Message.objects,
+        "db_manager",
+        wraps=Message.objects.db_manager,
+    ) as db_manager:
+        runrelay.handle(_loop_count=1)
+
+    db_manager.assert_called_once_with(EMAIL_RELAY_DATABASE_ALIAS)
+
+
+@pytest.mark.django_db(databases=["default", "email_relay_db"])
+def test_command_recovers_from_database_poll_error(runrelay):
+    with (
+        mock.patch(
+            "email_relay.models.MessageManager.messages_available_to_send",
+            side_effect=OperationalError("connection lost"),
+        ),
+        mock.patch(
+            "email_relay.management.commands.runrelay.close_old_connections"
+        ) as close_connections,
+        mock.patch(
+            "email_relay.management.commands.runrelay.logger.warning"
+        ) as warning,
+    ):
+        runrelay.handle(_loop_count=1)
+
+    close_connections.assert_called_once_with()
+    warning.assert_called_once_with("database error in relay loop: %s", mock.ANY)
 
 
 @pytest.mark.django_db(databases=["default", "email_relay_db"])

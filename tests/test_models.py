@@ -6,7 +6,6 @@ from email import policy
 from email.message import EmailMessage as StandardEmailMessage
 from email.mime.base import MIMEBase
 from email.mime.message import MIMEMessage
-from unittest import mock
 
 import pytest
 from django.core.mail import EmailMessage
@@ -41,7 +40,6 @@ STORED_ATTACHMENT_FIXTURE = {
     "filename": "fixture.bin",
     "content_type": "application/octet-stream",
     "content": b"stored bytes",
-    "size": 12,
 }
 
 
@@ -53,7 +51,6 @@ def create_stored_attachment(message, fixture=STORED_ATTACHMENT_FIXTURE):
         filename=fixture["filename"],
         content_type=fixture["content_type"],
         content=fixture["content"],
-        size=fixture["size"],
     )
 
 
@@ -123,36 +120,19 @@ class TestMessageManager:
         for message in messages:
             create_stored_attachment(message)
 
-        with (
-            mock.patch("email_relay.models.RETENTION_DELETE_BATCH_SIZE", 2),
-            CaptureQueriesContext(connections["email_relay_db"]) as queries,
-        ):
+        with CaptureQueriesContext(connections["email_relay_db"]) as queries:
             deleted_messages = Message.objects.delete_all_sent_messages()
 
         assert deleted_messages == 5
         assert Message.objects.count() == 0
         assert MessageAttachment.objects.count() == 0
-        assert not any(
-            query["sql"].lstrip().upper().startswith("SELECT")
-            and '"content"' in query["sql"]
+        selected_sql = " ".join(
+            query["sql"]
             for query in queries
+            if query["sql"].lstrip().upper().startswith("SELECT")
         )
-
-    def test_retention_rolls_back_attachment_delete_with_message_delete(self):
-        message = baker.make("email_relay.Message", status=Status.SENT)
-        attachment = create_stored_attachment(message)
-
-        with (
-            mock.patch(
-                "email_relay.models.MessageQuerySet.delete",
-                side_effect=RuntimeError("delete failed"),
-            ),
-            pytest.raises(RuntimeError, match="delete failed"),
-        ):
-            Message.objects.delete_all_sent_messages()
-
-        assert Message.objects.filter(pk=message.pk).exists()
-        assert MessageAttachment.objects.filter(pk=attachment.pk).exists()
+        assert '"data"' not in selected_sql
+        assert '"content"' not in selected_sql
 
     def test_delete_messages_sent_before(self):
         one_week = baker.make(
@@ -602,7 +582,6 @@ class TestMessageModel:
             "filename": "second.bin",
             "content_type": "application/octet-stream",
             "content": b"second attachment",
-            "size": 17,
         }
         message = Message.objects.create(
             data={
@@ -630,7 +609,6 @@ class TestMessageModel:
             "filename": "mime.bin",
             "content_type": "application/octet-stream",
             "content": STORED_MIME_CONTENT,
-            "size": 230,
         }
         message = Message.objects.create(
             data={
@@ -643,7 +621,9 @@ class TestMessageModel:
         )
         create_stored_attachment(message, fixture)
 
-        attached = message.email.attachments[0]
+        email = message.email
+        attached = email.attachments[0]
+        email.message()
 
         assert attached.get_payload(decode=True) == b"mime payload"
         assert attached.get_filename() == "mime.bin"
@@ -659,7 +639,6 @@ class TestMessageModel:
             "filename": None,
             "content_type": "text/plain",
             "content": b"not a serialized MIME entity",
-            "size": 28,
         }
         message = Message.objects.create(
             data={
@@ -690,7 +669,6 @@ class TestMessageModel:
             "filename": "nested.eml",
             "content_type": "message/rfc822",
             "content": content,
-            "size": len(content),
         }
         message = Message.objects.create(
             data={
@@ -703,7 +681,9 @@ class TestMessageModel:
         )
         create_stored_attachment(message, fixture)
 
-        attached = message.email.attachments[0]
+        email = message.email
+        attached = email.attachments[0]
+        email.message()
 
         assert attached.get_content_type() == "message/rfc822"
         assert attached.get_filename() == "nested.eml"
@@ -739,6 +719,22 @@ class TestMessageModel:
         with pytest.raises(PersistedAttachmentError, match="nonnegative"):
             _ = message.email
 
+    @pytest.mark.parametrize(
+        "marker",
+        [
+            {},
+            {"format": "stored-v1", "count": 0, "extra": True},
+            [],
+        ],
+    )
+    def test_invalid_stored_marker_is_rejected(self, data, marker):
+        message = Message.objects.create(
+            data={**data, "_email_relay_attachments": marker}
+        )
+
+        with pytest.raises(PersistedAttachmentError, match="Invalid"):
+            _ = message.email
+
     def test_unknown_stored_format_is_invalid(self, data):
         message = Message.objects.create(
             data={
@@ -767,34 +763,6 @@ class TestMessageModel:
         with pytest.raises(PersistedAttachmentError, match="count"):
             _ = message.email
 
-    def test_stored_attachment_size_mismatch_is_logged(self, data):
-        fixture = {**STORED_ATTACHMENT_FIXTURE, "size": 999}
-        message = Message.objects.create(
-            data={
-                **data,
-                "_email_relay_attachments": {
-                    "format": "stored-v1",
-                    "count": 1,
-                },
-            }
-        )
-        create_stored_attachment(message, fixture)
-
-        with mock.patch("email_relay.models.logger.warning") as warning:
-            email = message.email
-
-        assert email.attachments[0][1] == b"stored bytes"
-        warning.assert_called_once_with(
-            "stored attachment %s size metadata is %s, actual size is %s",
-            message.attachments.get().pk,
-            999,
-            12,
-            extra={
-                "attachment_id": message.attachments.get().pk,
-                "message_id": message.pk,
-            },
-        )
-
     def test_stored_attachment_positions_must_be_contiguous(self, data):
         fixture = {**STORED_ATTACHMENT_FIXTURE, "position": 1}
         message = Message.objects.create(
@@ -811,6 +779,58 @@ class TestMessageModel:
         with pytest.raises(PersistedAttachmentError, match="positions"):
             _ = message.email
 
+    @pytest.mark.parametrize(
+        ("fixture", "match"),
+        [
+            ({**STORED_ATTACHMENT_FIXTURE, "kind": "unknown"}, "unknown kind"),
+            ({**STORED_ATTACHMENT_FIXTURE, "content_type": ""}, "content type"),
+        ],
+    )
+    def test_invalid_stored_attachment_metadata_is_rejected(self, data, fixture, match):
+        message = Message.objects.create(
+            data={
+                **data,
+                "_email_relay_attachments": {
+                    "format": "stored-v1",
+                    "count": 1,
+                },
+            }
+        )
+        create_stored_attachment(message, fixture)
+
+        with pytest.raises(PersistedAttachmentError, match=match):
+            _ = message.email
+
+    @pytest.mark.parametrize(
+        ("field", "value", "match"),
+        [
+            ("filename", "other.bin", "filename"),
+            ("content_type", "application/pdf", "content type"),
+        ],
+    )
+    def test_stored_mime_metadata_must_match_content(self, data, field, value, match):
+        fixture = {
+            "position": 0,
+            "kind": "mime",
+            "filename": "mime.bin",
+            "content_type": "application/octet-stream",
+            "content": STORED_MIME_CONTENT,
+            field: value,
+        }
+        message = Message.objects.create(
+            data={
+                **data,
+                "_email_relay_attachments": {
+                    "format": "stored-v1",
+                    "count": 1,
+                },
+            }
+        )
+        create_stored_attachment(message, fixture)
+
+        with pytest.raises(PersistedAttachmentError, match=match):
+            _ = message.email
+
     def test_stored_attachment_positions_are_unique(self, data):
         message = Message.objects.create(data=data)
         create_stored_attachment(message)
@@ -822,7 +842,6 @@ class TestMessageModel:
         fixture = {
             **STORED_ATTACHMENT_FIXTURE,
             "content": memoryview(b"database bytes"),
-            "size": 14,
         }
         message = Message.objects.create(
             data={
@@ -836,3 +855,15 @@ class TestMessageModel:
         create_stored_attachment(message, fixture)
 
         assert message.email.attachments[0][1] == b"database bytes"
+
+    def test_attachment_timestamps(self, data):
+        message = Message.objects.create(data=data)
+        attachment = create_stored_attachment(message)
+        created_at = attachment.created_at
+        updated_at = attachment.updated_at
+
+        attachment.filename = "updated.bin"
+        attachment.save(update_fields=["filename"])
+
+        assert attachment.created_at == created_at
+        assert attachment.updated_at > updated_at
