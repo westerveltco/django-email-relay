@@ -23,6 +23,11 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 - Added support for Django 6.0 and 6.1.
 - Added support for Python 3.14.
 
+### Removed
+
+- Dropped support for Django 4.2 and 5.1.
+- Dropped support for Python 3.9.
+
 ## [0.6.0]
 
 ### Added

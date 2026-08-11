@@ -45,8 +45,6 @@ authors = [{name = "Josh Thomas", email = "josh@joshthomas.dev"}]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Framework :: Django",
-  "Framework :: Django :: 4.2",
-  "Framework :: Django :: 5.1",
   "Framework :: Django :: 5.2",
   "Framework :: Django :: 6.0",
   "Framework :: Django :: 6.1",
@@ -55,7 +53,6 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -63,14 +60,14 @@ classifiers = [
   "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Implementation :: CPython"
 ]
-dependencies = ["django>=4.2"]
+dependencies = ["django>=5.2"]
 description = "Centralize and relay email from multiple distributed Django projects to an internal SMTP server via a database queue."
 dynamic = ["version"]
 keywords = []
 license = {file = "LICENSE"}
 name = "django-email-relay"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 [project.optional-dependencies]
 hc = ["requests"]
@@ -179,7 +176,7 @@ indent-width = 4
 # Same as Black.
 line-length = 88
 # Same as requires-python.
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.format]
 # Like Black, indent with spaces, rather than tabs.
