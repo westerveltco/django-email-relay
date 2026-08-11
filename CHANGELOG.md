@@ -20,19 +20,19 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 ### Added
 
-- Added the schema and named shared-storage interface for file-backed attachments.
-- Added relay reads for both legacy JSON attachments and the `stored-v1` format.
-- Added relay startup checks for the configured database and attachment storage aliases.
+- Added schema for raw attachment bytes outside `Message.data`.
+- Added relay reads for both existing JSON attachments and raw attachment rows.
+- Added relay startup checks for the configured database alias.
 
 ### Changed
 
 - Relay database transactions now use the same configured alias as message queries and row locks.
-- The standalone relay preserves Django's default storage entry while accepting nested `STORAGES__email_relay__...` configuration.
+- Message status updates now write only the fields that changed.
 
 ### Fixed
 
 - Non-ASCII legacy text attachments now fall back to UTF-8 bytes instead of raising during Base64 detection.
-- Stored attachment sets are verified for format, count, order, size, and checksum before SMTP receives the message.
+- Stored attachment sets are verified for format, count, and order before SMTP receives the message.
 
 ## [0.6.0]
 

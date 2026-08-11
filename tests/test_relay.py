@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import hashlib
 import logging
 import smtplib
 from unittest import mock
 
 import pytest
-from django.core.files.base import ContentFile
-from django.core.files.storage import storages
 from django.core.mail import EmailMultiAlternatives
+from django.db import OperationalError
 from django.db import transaction
 from django.test import override_settings
 from model_bakery import baker
@@ -29,13 +27,7 @@ def caplog_level(caplog):
         yield
 
 
-def create_stored_message(*, content=b"stored payload", sha256=None, file_exists=True):
-    key = "email-relay/attachments/v1/96/96-relay-fixture"
-    storage = storages["email_relay"]
-    if storage.exists(key):
-        storage.delete(key)
-    if file_exists:
-        assert storage.save(key, ContentFile(content)) == key
+def create_stored_message(*, content=b"stored payload"):
     message = baker.make(
         "email_relay.Message",
         data={
@@ -54,9 +46,8 @@ def create_stored_message(*, content=b"stored payload", sha256=None, file_exists
         kind="bytes",
         filename="fixture.bin",
         content_type="application/octet-stream",
-        file=key,
+        content=content,
         size=len(content),
-        sha256=sha256 or hashlib.sha256(content).hexdigest(),
     )
     return message
 
@@ -431,37 +422,9 @@ def test_send_all_fail_message_no_email_object(mock_email, mailoutbox, caplog):
     assert "sent 0 emails, deferred 0 emails, failed 1 emails" in caplog.text
 
 
-def test_send_all_defers_missing_stored_object_before_smtp(mailoutbox, caplog):
-    queued = create_stored_message(file_exists=False)
-
-    send_all()
-
-    queued.refresh_from_db()
-    assert len(mailoutbox) == 0
-    assert queued.status == Status.DEFERRED
-    assert queued.retry_count == 1
-    assert "Could not read stored attachment" in queued.log
-    assert "sent 0 emails, deferred 1 emails, failed 0 emails" in caplog.text
-
-
-def test_send_all_fails_missing_object_after_max_retries(mailoutbox, caplog):
-    queued = create_stored_message(file_exists=False)
-    queued.status = Status.DEFERRED
-    queued.retry_count = 2
-    queued.save()
-
-    with override_settings(DJANGO_EMAIL_RELAY={"EMAIL_MAX_RETRIES": 2}):
-        send_all()
-
-    queued.refresh_from_db()
-    assert len(mailoutbox) == 0
-    assert queued.status == Status.FAILED
-    assert queued.retry_count == 2
-    assert f"max retries reached, marking message {queued.id} as failed" in caplog.text
-
-
-def test_send_all_fails_checksum_mismatch_before_smtp(mailoutbox, caplog):
-    queued = create_stored_message(sha256="0" * 64)
+def test_send_all_fails_incomplete_stored_message_before_smtp(mailoutbox, caplog):
+    queued = create_stored_message()
+    queued.attachments.all().delete()
 
     send_all()
 
@@ -469,8 +432,29 @@ def test_send_all_fails_checksum_mismatch_before_smtp(mailoutbox, caplog):
     assert len(mailoutbox) == 0
     assert queued.status == Status.FAILED
     assert queued.retry_count == 0
-    assert "checksum does not match" in queued.log
+    assert "count does not match" in queued.log
     assert f"invalid stored attachments for message {queued.id}" in caplog.text
+
+
+@mock.patch("email_relay.models.Message.email", new_callable=mock.PropertyMock)
+def test_send_all_retries_database_read_error(mock_email, mailoutbox, caplog):
+    mock_email.side_effect = OperationalError("connection lost")
+    queued = baker.make(
+        "email_relay.Message",
+        data={"subject": "Retry", "to": ["to@example.com"]},
+        status=Status.QUEUED,
+        _quantity=2,
+    )
+
+    send_all()
+
+    for message in queued:
+        message.refresh_from_db()
+        assert message.status == Status.QUEUED
+        assert message.retry_count == 0
+    assert len(mailoutbox) == 0
+    assert mock_email.call_count == 1
+    assert "leaving it queued for retry" in caplog.text
 
 
 def test_send_all_uses_the_configured_database_transaction(mailoutbox):

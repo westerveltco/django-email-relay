@@ -78,6 +78,8 @@ def tests(session, django):
         session.python,
         "--extra",
         "relay",
+        "--extra",
+        "psycopg",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 

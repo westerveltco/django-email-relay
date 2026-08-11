@@ -8,7 +8,6 @@ All settings are optional. Here is an example configuration with the default val
 
 ```python
 DJANGO_EMAIL_RELAY = {
-    "ATTACHMENT_STORAGE_ALIAS": "email_relay",
     "DATABASE_ALIAS": email_relay.conf.EMAIL_RELAY_DATABASE_ALIAS,  # "email_relay_db"
     "EMAIL_MAX_BATCH": None,
     "EMAIL_MAX_DEFERRED": None,
@@ -29,23 +28,6 @@ DJANGO_EMAIL_RELAY = {
 
 relay-service
 ```
-
-## `ATTACHMENT_STORAGE_ALIAS`
-
-```{table}
-:align: left
-
-| Component     | Configurable |
-|---------------|--------------|
-| Relay Service | Yes ✅       |
-| Django App    | Yes ✅       |
-```
-
-The alias in Django's `STORAGES` setting that holds attachment bodies. It defaults to `"email_relay"`. Every relay must configure this alias and point it at the same physical storage. Do not point it at Django's `default` storage or at a host-local directory that other relay instances cannot read.
-
-The package owns the `email-relay/attachments/v1/` prefix inside that storage. Keep the location dedicated to relay attachments, even when it shares a bucket with other applications. Release B producers will need create access; relays need read access; retention and reconciliation need list and delete access.
-
-Release A producers still write attachments to JSON and do not need this storage merely because `email_relay` is installed. The `runrelay` command checks the alias before it starts.
 
 ## `DATABASE_ALIAS`
 
@@ -97,7 +79,7 @@ The maximum number of emails that can be deferred before the relay service stops
 | Django App    | No 🚫        |
 ```
 
-The maximum number of times an email can be deferred before being marked as failed. The default is `None`, which means there is no limit. Set a finite value on relays that read stored attachments so a permanently missing object does not remain deferred forever.
+The maximum number of times an email can be deferred before being marked as failed. The default is `None`, which means there is no limit.
 
 ## `EMPTY_QUEUE_SLEEP`
 

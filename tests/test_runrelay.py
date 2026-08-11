@@ -34,42 +34,8 @@ def runrelay():
 
 
 @pytest.mark.django_db(databases=["default", "email_relay_db"])
-def test_regular_deployment_checks_do_not_require_relay_storage():
-    with override_settings(
-        STORAGES={
-            "default": {"BACKEND": "django.core.files.storage.memory.InMemoryStorage"}
-        }
-    ):
-        call_command("check", deploy=True)
-
-
-def test_runrelay_requires_named_attachment_storage(runrelay):
-    with (
-        override_settings(
-            STORAGES={
-                "default": {
-                    "BACKEND": "django.core.files.storage.memory.InMemoryStorage"
-                }
-            }
-        ),
-        pytest.raises(SystemCheckError, match="email_relay.E002"),
-    ):
-        runrelay.handle(_loop_count=1)
-
-
-def test_runrelay_rejects_invalid_attachment_storage(runrelay):
-    with (
-        override_settings(
-            STORAGES={
-                "default": {
-                    "BACKEND": "django.core.files.storage.memory.InMemoryStorage"
-                },
-                "email_relay": {},
-            }
-        ),
-        pytest.raises(SystemCheckError, match="email_relay.E002"),
-    ):
-        runrelay.handle(_loop_count=1)
+def test_regular_deployment_checks_do_not_run_relay_checks():
+    call_command("check", deploy=True)
 
 
 def test_runrelay_requires_configured_database_alias(runrelay):

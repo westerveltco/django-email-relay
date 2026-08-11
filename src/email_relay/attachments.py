@@ -27,10 +27,6 @@ class PersistedAttachmentError(ValueError):
     """Stored attachment metadata or content is invalid."""
 
 
-class AttachmentStorageError(OSError):
-    """An attachment object could not be read from storage."""
-
-
 @dataclass(frozen=True)
 class RelayAttachment:
     kind: AttachmentKind
@@ -102,7 +98,7 @@ def deserialize_legacy_attachments(value: Any) -> tuple[RelayAttachment, ...]:
 
 
 def serialize_legacy_attachments(email_message: EmailMessage) -> list[dict[str, Any]]:
-    """Write the 0.6 attachment shape until producer convergence is complete."""
+    """Preserve the attachment format written by 0.6.x producers."""
     attachments: list[dict[str, Any]] = []
     for attachment in email_message.attachments:
         if isinstance(attachment, MIMEBase):
@@ -140,11 +136,15 @@ def mime_attachment_from_bytes(content: bytes) -> MIMEMessage:
             _class=MIMEPart,  # type: ignore[arg-type]  # Django 6 requires MIMEPart.
             policy=policy.default,
         ).parsebytes(content)
+        if mime_part.defects or mime_part.get("Content-Type") is None:
+            raise PersistedAttachmentError("Stored MIME attachment is malformed")
         if mime_part.get_content_maintype() == "multipart":
             raise PersistedAttachmentError("Multipart MIME attachments are unsupported")
         return mime_part
 
     parsed = BytesParser(policy=policy.compat32).parsebytes(content)
+    if parsed.defects or parsed.get("Content-Type") is None:
+        raise PersistedAttachmentError("Stored MIME attachment is malformed")
     if parsed.get_content_maintype() == "multipart":
         raise PersistedAttachmentError("Multipart MIME attachments are unsupported")
 

@@ -8,12 +8,10 @@ from django.core.exceptions import ImproperlyConfigured
 
 EMAIL_RELAY_SETTINGS_NAME = "DJANGO_EMAIL_RELAY"
 EMAIL_RELAY_DATABASE_ALIAS = "email_relay_db"
-EMAIL_RELAY_ATTACHMENT_STORAGE_ALIAS = "email_relay"
 
 
 @dataclass(frozen=True)
 class AppSettings:
-    ATTACHMENT_STORAGE_ALIAS: str = EMAIL_RELAY_ATTACHMENT_STORAGE_ALIAS
     DATABASE_ALIAS: str = EMAIL_RELAY_DATABASE_ALIAS
     EMAIL_MAX_BATCH: int | None = None
     EMAIL_MAX_DEFERRED: int | None = None

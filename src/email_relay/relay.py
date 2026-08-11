@@ -6,6 +6,9 @@ import time
 
 from django.conf import settings
 from django.core.mail import get_connection
+from django.db import InterfaceError
+from django.db import OperationalError
+from django.db import close_old_connections
 from django.db import transaction
 
 from email_relay.attachments import PersistedAttachmentError
@@ -32,73 +35,89 @@ def send_all():
     connection = None
 
     for message in message_batch:
-        with transaction.atomic(using=database_alias):
-            try:
-                message = messages.get_message_for_sending(message.id)
-            except Message.DoesNotExist:
-                continue
-            try:
-                if connection is None:
-                    relay_email_backend = getattr(
-                        settings,
-                        "EMAIL_BACKEND",
-                        "django.core.mail.backends.smtp.EmailBackend",
+        try:
+            with transaction.atomic(using=database_alias):
+                try:
+                    message = messages.get_message_for_sending(message.id)
+                except Message.DoesNotExist:
+                    continue
+                try:
+                    if connection is None:
+                        relay_email_backend = getattr(
+                            settings,
+                            "EMAIL_BACKEND",
+                            "django.core.mail.backends.smtp.EmailBackend",
+                        )
+                        connection = get_connection(backend=relay_email_backend)
+                    email = message.email
+                    if email is not None:
+                        email.connection = connection
+                        email.send()
+                        logger.debug("sent message %s", message.id)
+                        message.mark_sent()
+                        counts["sent"] += 1
+                    else:
+                        msg = f"Message {message.id} has no email object"
+                        message.fail(log=msg)
+                        counts["failed"] += 1
+                        logger.warning(msg)
+                except (InterfaceError, OperationalError):
+                    raise
+                except (
+                    smtplib.SMTPAuthenticationError,
+                    smtplib.SMTPDataError,
+                    smtplib.SMTPRecipientsRefused,
+                    smtplib.SMTPSenderRefused,
+                    OSError,
+                ) as err:
+                    if (
+                        app_settings.EMAIL_MAX_RETRIES is not None
+                        and message.retry_count >= app_settings.EMAIL_MAX_RETRIES
+                    ):
+                        logger.warning(
+                            "max retries reached, marking message %s as failed",
+                            message.id,
+                        )
+                        message.fail(log=str(err))
+                        connection = None
+                        counts["failed"] += 1
+                        continue
+
+                    logger.debug(
+                        "deferring message %s due to %s",
+                        message.id,
+                        err,
+                        exc_info=True,
                     )
-                    connection = get_connection(backend=relay_email_backend)
-                email = message.email
-                if email is not None:
-                    email.connection = connection
-                    email.send()
-                    logger.debug("sent message %s", message.id)
-                    message.mark_sent()
-                    counts["sent"] += 1
-                else:
-                    msg = f"Message {message.id} has no email object"
-                    message.fail(log=msg)
-                    counts["failed"] += 1
-                    logger.warning(msg)
-            except (
-                smtplib.SMTPAuthenticationError,
-                smtplib.SMTPDataError,
-                smtplib.SMTPRecipientsRefused,
-                smtplib.SMTPSenderRefused,
-                OSError,
-            ) as err:
-                if (
-                    app_settings.EMAIL_MAX_RETRIES is not None
-                    and message.retry_count >= app_settings.EMAIL_MAX_RETRIES
-                ):
+                    message.defer(log=str(err))
+                    connection = None
+                    counts["deferred"] += 1
+                except PersistedAttachmentError as err:
                     logger.warning(
-                        "max retries reached, marking message %s as failed", message.id
+                        "invalid stored attachments for message %s, marking as failed: %s",
+                        message.id,
+                        err,
                     )
                     message.fail(log=str(err))
                     connection = None
                     counts["failed"] += 1
-                    continue
-
-                logger.debug(
-                    "deferring message %s due to %s", message.id, err, exc_info=True
-                )
-                message.defer(log=str(err))
-                connection = None
-                counts["deferred"] += 1
-            except PersistedAttachmentError as err:
-                logger.warning(
-                    "invalid stored attachments for message %s, marking as failed: %s",
-                    message.id,
-                    err,
-                )
-                message.fail(log=str(err))
-                connection = None
-                counts["failed"] += 1
-            except Exception as err:
-                logger.exception(
-                    "unexpected error processing message %s, marking as failed.",
-                    message.id,
-                )
-                message.fail(log=str(err))
-                connection = None
-                counts["failed"] += 1
+                except Exception as err:
+                    logger.exception(
+                        "unexpected error processing message %s, marking as failed.",
+                        message.id,
+                    )
+                    message.fail(log=str(err))
+                    connection = None
+                    counts["failed"] += 1
+        except (InterfaceError, OperationalError) as err:
+            close_old_connections()
+            logger.warning(
+                "database error processing message %s; leaving it queued for retry: %s",
+                message.id,
+                err,
+            )
+            connection = None
+            break
 
         if (
             app_settings.EMAIL_MAX_DEFERRED is not None

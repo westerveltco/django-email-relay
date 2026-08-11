@@ -6,8 +6,6 @@ import pytest
 from django.apps import apps
 from django.db import connections
 from django.db import migrations
-from django.db.migrations.writer import MigrationWriter
-from django.test import override_settings
 from model_bakery import baker
 
 from email_relay.conf import EMAIL_RELAY_DATABASE_ALIAS
@@ -80,18 +78,11 @@ def test_attachment_migration_is_schema_only():
     )
 
 
-def test_attachment_storage_serializes_without_configured_alias():
-    file_field = MessageAttachment._meta.get_field("file")
-
-    with override_settings(
-        STORAGES={
-            "default": {"BACKEND": "django.core.files.storage.memory.InMemoryStorage"}
-        }
-    ):
-        _name, _path, _args, kwargs = file_field.deconstruct()
-        serialized, imports = MigrationWriter.serialize(kwargs["storage"])
-
-    assert serialized == (
-        "email_relay.attachment_storage.EmailRelayAttachmentStorage()"
+def test_attachment_migration_stores_raw_bytes():
+    assert MessageAttachment._meta.get_field("content").get_internal_type() == (
+        "BinaryField"
     )
-    assert imports == {"import email_relay.attachment_storage"}
+    assert not any(
+        field.name in {"file", "sha256"}
+        for field in MessageAttachment._meta.get_fields()
+    )

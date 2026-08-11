@@ -120,7 +120,7 @@ def relay_email_from_legacy_data(data: dict[str, Any]) -> RelayEmail:
 def serialize_legacy_email(
     email_message: EmailMessage | EmailMultiAlternatives,
 ) -> dict[str, Any]:
-    """Write the 0.6 JSON shape until all producers and rows converge."""
+    """Preserve the attachment format written by 0.6.x producers."""
     data = RelayEmailData.from_email_message(email_message).to_dict()
     version = data.pop("_email_relay_version")
     data["attachments"] = serialize_legacy_attachments(email_message)

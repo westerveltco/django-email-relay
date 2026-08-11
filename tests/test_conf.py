@@ -12,7 +12,6 @@ from email_relay.conf import resolved_database_alias
 @pytest.mark.parametrize(
     ("setting", "default_setting"),
     [
-        ("ATTACHMENT_STORAGE_ALIAS", "email_relay"),
         ("DATABASE_ALIAS", "email_relay_db"),
         ("EMAIL_MAX_BATCH", None),
         ("EMAIL_MAX_DEFERRED", None),
@@ -37,7 +36,6 @@ def test_default_settings(setting, default_setting):
 @pytest.mark.parametrize(
     ("setting", "user_setting"),
     [
-        ("ATTACHMENT_STORAGE_ALIAS", "custom_storage_name"),
         ("DATABASE_ALIAS", "custom_db_name"),
         ("EMAIL_MAX_BATCH", 10),
         ("EMAIL_MAX_DEFERRED", 10),

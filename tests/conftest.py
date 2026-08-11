@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 
 from django.conf import settings
 
@@ -22,28 +23,30 @@ def pytest_configure(config):
     )
 
 
+def database_settings(name: str) -> dict[str, object]:
+    if host := os.getenv("POSTGRES_HOST"):
+        return {
+            "ENGINE": "django.db.backends.postgresql",
+            "HOST": host,
+            "NAME": name,
+            "PASSWORD": os.getenv("POSTGRES_PASSWORD", "postgres"),
+            "PORT": int(os.getenv("POSTGRES_PORT", "5432")),
+            "USER": os.getenv("POSTGRES_USER", "postgres"),
+        }
+    return {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": ":memory:",
+    }
+
+
 TEST_SETTINGS = {
     "DATABASES": {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": ":memory:",
-        },
-        EMAIL_RELAY_DATABASE_ALIAS: {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": ":memory:",
-        },
+        "default": database_settings("defaultdb"),
+        EMAIL_RELAY_DATABASE_ALIAS: database_settings("relaydb"),
     },
     "DATABASE_ROUTERS": [
         "email_relay.db.EmailDatabaseRouter",
     ],
-    "STORAGES": {
-        "default": {
-            "BACKEND": "django.core.files.storage.memory.InMemoryStorage",
-        },
-        "email_relay": {
-            "BACKEND": "django.core.files.storage.memory.InMemoryStorage",
-        },
-    },
     "INSTALLED_APPS": [
         "django.contrib.contenttypes",
         "email_relay",

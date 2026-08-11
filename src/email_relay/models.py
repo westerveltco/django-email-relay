@@ -1,20 +1,15 @@
 from __future__ import annotations
 
 import datetime
-import hashlib
 import logging
-import re
 from itertools import chain
 
 from django.core.mail import EmailMessage
 from django.core.mail import EmailMultiAlternatives
 from django.db import models
+from django.db import transaction
 from django.utils import timezone
 
-from email_relay.attachment_storage import ATTACHMENT_STORAGE_PREFIX
-from email_relay.attachment_storage import attachment_storage
-from email_relay.attachment_storage import attachment_upload_to
-from email_relay.attachment_storage import read_attachment_file
 from email_relay.attachments import STORED_ATTACHMENTS_KEY
 from email_relay.attachments import AttachmentKind
 from email_relay.attachments import PersistedAttachmentError
@@ -28,6 +23,7 @@ from email_relay.email import relay_email_from_legacy_data
 from email_relay.email import serialize_legacy_email
 
 logger = logging.getLogger(__name__)
+RETENTION_DELETE_BATCH_SIZE = 1000
 
 
 class Priority(models.IntegerChoices):
@@ -45,19 +41,17 @@ class Status(models.IntegerChoices):
 
 class MessageManager(models.Manager["Message"]):
     def get_message_batch(self) -> list[Message]:
-        message_batch = list(
-            chain(
-                self.queued().prioritized(),  # type: ignore[attr-defined]
-                self.deferred().prioritized(),  # type: ignore[attr-defined]
-            )
-        )
+        queued = self.queued().prioritized()  # type: ignore[attr-defined]
+        deferred = self.deferred().prioritized()  # type: ignore[attr-defined]
+        if app_settings.EMAIL_MAX_BATCH is None:
+            message_batch = list(chain(queued, deferred))
+        else:
+            limit = app_settings.EMAIL_MAX_BATCH
+            queued_batch = list(queued[:limit])
+            deferred_batch = list(deferred[: limit - len(queued_batch)])
+            message_batch = queued_batch + deferred_batch
+            logger.debug("max batch size is %s", limit)
         logger.debug("found %s messages to send", len(message_batch))
-        if app_settings.EMAIL_MAX_BATCH is not None:
-            msg = f"max batch size is {app_settings.EMAIL_MAX_BATCH}"
-            if len(message_batch) > app_settings.EMAIL_MAX_BATCH:
-                msg += ", truncating"
-            logger.debug(msg)
-            message_batch = message_batch[: app_settings.EMAIL_MAX_BATCH]
         return message_batch
 
     def get_message_for_sending(self, message_id: int) -> Message:
@@ -73,11 +67,32 @@ class MessageManager(models.Manager["Message"]):
     def messages_available_to_send(self) -> bool:
         return self.queued().exists() or self.deferred().exists()  # type: ignore[attr-defined]
 
+    def _delete_messages(self, queryset: models.QuerySet[Message]) -> int:
+        deleted_messages = 0
+        while message_ids := list(
+            queryset.order_by().values_list("pk", flat=True)[
+                :RETENTION_DELETE_BATCH_SIZE
+            ]
+        ):
+            with transaction.atomic(using=self.db):
+                (
+                    MessageAttachment.objects.using(self.db)  # type: ignore[misc]
+                    .filter(message_id__in=message_ids)
+                    .only("pk")
+                    .delete()
+                )
+                _, deleted_by_model = queryset.filter(pk__in=message_ids).delete()
+            batch_count = deleted_by_model.get(queryset.model._meta.label, 0)
+            deleted_messages += batch_count
+            if batch_count == 0:
+                break
+        return deleted_messages
+
     def delete_all_sent_messages(self) -> int:
-        return self.sent().delete()[0]  # type: ignore[attr-defined]
+        return self._delete_messages(self.sent())  # type: ignore[attr-defined]
 
     def delete_messages_sent_before(self, dt: datetime.datetime) -> int:
-        return self.sent_before(dt).delete()[0]  # type: ignore[attr-defined]
+        return self._delete_messages(self.sent_before(dt))  # type: ignore[attr-defined]
 
 
 class MessageQuerySet(models.QuerySet["Message"]):
@@ -155,18 +170,18 @@ class Message(models.Model):
     def mark_sent(self):
         self.status = Status.SENT
         self.sent_at = timezone.now()
-        self.save()
+        self.save(update_fields=["status", "sent_at"])
 
     def defer(self, log: str = ""):
         self.status = Status.DEFERRED
         self.log = log
         self.retry_count += 1
-        self.save()
+        self.save(update_fields=["status", "log", "retry_count"])
 
     def fail(self, log: str = ""):
         self.status = Status.FAILED
         self.log = log
-        self.save()
+        self.save(update_fields=["status", "log"])
 
     @property
     def email(self) -> EmailMultiAlternatives | None:
@@ -208,10 +223,6 @@ class Message(models.Model):
 
         attachments: list[RelayAttachment] = []
         for row in rows:
-            if not re.fullmatch(r"[0-9a-f]{64}", row.sha256):
-                raise PersistedAttachmentError(
-                    f"Stored attachment {row.pk} has an invalid checksum"
-                )
             try:
                 kind = AttachmentKind(row.kind)
             except ValueError as exc:
@@ -222,21 +233,15 @@ class Message(models.Model):
                 raise PersistedAttachmentError(
                     f"Stored attachment {row.pk} has no content type"
                 )
-            if not isinstance(row.file.name, str) or not row.file.name.startswith(
-                ATTACHMENT_STORAGE_PREFIX
-            ):
-                raise PersistedAttachmentError(
-                    f"Stored attachment {row.pk} is outside the package storage prefix"
-                )
 
-            content = read_attachment_file(row)
+            content = bytes(row.content)
             if len(content) != row.size:
-                raise PersistedAttachmentError(
-                    f"Stored attachment {row.pk} size does not match its metadata"
-                )
-            if hashlib.sha256(content).hexdigest() != row.sha256:
-                raise PersistedAttachmentError(
-                    f"Stored attachment {row.pk} checksum does not match its metadata"
+                logger.warning(
+                    "stored attachment %s size metadata is %s, actual size is %s",
+                    row.pk,
+                    row.size,
+                    len(content),
+                    extra={"attachment_id": row.pk, "message_id": self.pk},
                 )
             attachments.append(
                 RelayAttachment(
@@ -283,13 +288,8 @@ class MessageAttachment(models.Model):
     )
     filename = models.TextField(null=True, blank=True)  # noqa: DJ001
     content_type = models.TextField()
-    file = models.FileField(
-        max_length=500,
-        storage=attachment_storage,
-        upload_to=attachment_upload_to,
-    )
+    content = models.BinaryField()
     size = models.PositiveBigIntegerField()
-    sha256 = models.CharField(max_length=64)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
 
     objects = _MessageAttachmentManager()

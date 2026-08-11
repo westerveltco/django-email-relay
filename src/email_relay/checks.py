@@ -8,7 +8,6 @@ from typing import Any
 from django.conf import settings
 from django.core.checks import Error
 from django.core.checks import register
-from django.core.files.storage import storages
 
 from email_relay.conf import app_settings
 
@@ -45,22 +44,6 @@ def check_relay_configuration(app_configs: Any = None, **kwargs: Any) -> list[Er
                     "DJANGO_EMAIL_RELAY['DATABASE_ALIAS'] to an existing alias."
                 ),
                 id="email_relay.E001",
-            )
-        )
-
-    storage_alias = app_settings.ATTACHMENT_STORAGE_ALIAS
-    try:
-        storages[storage_alias]
-    except Exception as exc:
-        errors.append(
-            Error(
-                f"Relay attachment storage alias {storage_alias!r} is invalid "
-                f"({type(exc).__name__}).",
-                hint=(
-                    "Add a working shared storage backend at "
-                    f"STORAGES[{storage_alias!r}]."
-                ),
-                id="email_relay.E002",
             )
         )
 

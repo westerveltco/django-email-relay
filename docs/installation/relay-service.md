@@ -30,9 +30,7 @@ docker run -d \
 
 It is recommended to pin to a specific version, though if you prefer, you can ride the lightning by always pulling the `latest` image.
 
-Before starting a Release A relay, configure `STORAGES__email_relay__BACKEND` and any provider options described in [Configuring the Relay Service](../configuration/relay-service.md). Build an image containing the selected storage backend package when it is not part of Django. The storage must be shared with every relay and with Release B producer projects.
-
-The `migrate` step is baked into the image, so there is no need to run it yourself. The attachment migration creates database schema only; it does not upload existing JSON attachments or contact storage.
+The `migrate` step is baked into the image, so there is no need to run it yourself. The attachment migration creates database schema only and leaves existing JSON attachments unchanged.
 
 See the documentation [here](../configuration/index.md) for general information about configuring `django-email-relay`, [here](../configuration/relay-service.md) for information about configuring the relay service, and [here](../configuration/relay-service.md#docker) for information specifically related to configuring the relay service as a Docker container.
 
@@ -56,21 +54,7 @@ INSTALLED_APPS = [
 ]
 ```
 
-3. Configure the package-specific shared attachment storage:
-
-```python
-STORAGES = {
-    # Keep the project's existing storage entries.
-    "email_relay": {
-        "BACKEND": "path.to.SharedStorageBackend",
-        "OPTIONS": {},
-    },
-}
-```
-
-All relay instances must use the same physical location. The `runrelay` command fails before processing messages when the alias is missing.
-
-4. Run the `migrate` management command to create the email relay database:
+3. Run the `migrate` management command to create the email relay database:
 
 ```shell
 python manage.py migrate --database email_relay_db
@@ -78,7 +62,7 @@ python manage.py migrate --database email_relay_db
 
 Replace `email_relay_db` when `DJANGO_EMAIL_RELAY["DATABASE_ALIAS"]` names another database. This migration changes schema only. Existing JSON attachments remain in `Message.data`.
 
-5. Run the `runrelay` management command to start the relay service. This can be done in many different ways, for instance, via a task runner, such as Celery or Django-Q2, or using [supervisord](https://supervisord.org/) or systemd service unit file.
+4. Run the `runrelay` management command to start the relay service. This can be done in many different ways, for instance, via a task runner, such as Celery or Django-Q2, or using [supervisord](https://supervisord.org/) or systemd service unit file.
 
 ```shell
 python manage.py runrelay

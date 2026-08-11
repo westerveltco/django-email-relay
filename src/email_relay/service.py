@@ -146,7 +146,6 @@ default_settings = {
     "DATABASES": {
         "default": env.dj_db_url("DATABASE_URL", default="sqlite://:memory:")
     },
-    "STORAGES": copy.deepcopy(global_settings.STORAGES),
     "LOGGING": {
         "version": 1,
         "disable_existing_loggers": False,
