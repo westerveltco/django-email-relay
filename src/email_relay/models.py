@@ -4,6 +4,7 @@ import datetime
 import logging
 from email.message import Message as MIMEMessage
 from itertools import chain
+from typing import Any
 
 from django.core.mail import EmailMessage
 from django.core.mail import EmailMultiAlternatives
@@ -166,28 +167,6 @@ class Message(models.Model):
         self.log = log
         self.save(update_fields=["status", "log"])
 
-    def _stored_email_attachments(
-        self, expected_count: int
-    ) -> list[tuple[str | None, bytes, str] | MIMEMessage]:
-        if self.pk is None:
-            raise PersistedAttachmentError("Stored message has not been saved")
-
-        database_alias = self._state.db or resolved_database_alias()
-        rows = list(
-            MessageAttachment.objects.using(database_alias)
-            .filter(message_id=self.pk)
-            .order_by("position")
-        )
-        if len(rows) != expected_count:
-            raise PersistedAttachmentError(
-                "Stored attachment count does not match attachment rows"
-            )
-        if [row.position for row in rows] != list(range(expected_count)):
-            raise PersistedAttachmentError(
-                "Stored attachment positions must be contiguous"
-            )
-        return [row.to_email_attachment() for row in rows]
-
     @property
     def email(self) -> EmailMultiAlternatives | None:
         data = self.data
@@ -210,8 +189,9 @@ class Message(models.Model):
                 "Message contains both legacy and stored attachments"
             )
 
-        attachment_count = parse_stored_attachment_marker(data[STORED_ATTACHMENTS_KEY])
-        prepared_attachments = self._stored_email_attachments(attachment_count)
+        prepared_attachments = MessageAttachment.objects.load_for_email(
+            message=self, marker=data[STORED_ATTACHMENTS_KEY]
+        )
 
         envelope_data = dict(data)
         del envelope_data[STORED_ATTACHMENTS_KEY]
@@ -230,6 +210,36 @@ class Message(models.Model):
     @email.setter
     def email(self, email_message: EmailMessage | EmailMultiAlternatives) -> None:
         self.data = RelayEmailData.from_email_message(email_message).to_dict()
+
+
+class MessageAttachmentManager(models.Manager["MessageAttachment"]):
+    def load_for_email(
+        self, *, message: Message, marker: Any
+    ) -> list[tuple[str | None, bytes, str] | MIMEMessage]:
+        expected_count = parse_stored_attachment_marker(marker)
+        if message.pk is None:
+            raise PersistedAttachmentError(
+                "Message with stored attachments has not been saved"
+            )
+
+        database_alias = message._state.db or resolved_database_alias()
+        rows = list(
+            self.using(database_alias)
+            .filter(message_id=message.pk)
+            .order_by("position")
+        )
+        if len(rows) != expected_count:
+            raise PersistedAttachmentError(
+                f"Stored attachment count for message {message.pk} does not match "
+                f"attachment rows: marker expects {expected_count}, found {len(rows)}"
+            )
+        positions = [row.position for row in rows]
+        if positions != list(range(expected_count)):
+            raise PersistedAttachmentError(
+                f"Stored attachment positions for message {message.pk} must be "
+                f"contiguous from 0, found {positions}"
+            )
+        return [row.to_email_attachment() for row in rows]
 
 
 class MessageAttachment(models.Model):
@@ -252,7 +262,7 @@ class MessageAttachment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    objects: models.Manager[MessageAttachment]
+    objects = MessageAttachmentManager()
 
     class Meta:
         constraints = [

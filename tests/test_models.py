@@ -948,6 +948,20 @@ class TestMessageModel:
         with pytest.raises(PersistedAttachmentError, match="Unknown"):
             _ = message.email
 
+    def test_stored_attachments_require_saved_message(self, data):
+        message = Message(
+            data={
+                **data,
+                "_email_relay_attachments": {
+                    "format": "stored-v1",
+                    "count": 0,
+                },
+            }
+        )
+
+        with pytest.raises(PersistedAttachmentError, match="not been saved"):
+            _ = message.email
+
     def test_stored_attachment_count_must_match_rows(self, data):
         message = Message.objects.create(
             data={

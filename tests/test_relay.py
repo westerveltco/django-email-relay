@@ -433,7 +433,7 @@ def test_send_all_fails_incomplete_stored_message_before_smtp(mailoutbox, caplog
     assert len(mailoutbox) == 0
     assert queued.status == Status.FAILED
     assert queued.retry_count == 0
-    assert "count does not match" in queued.log
+    assert "does not match attachment rows" in queued.log
     assert f"invalid stored attachments for message {queued.id}" in caplog.text
 
 
