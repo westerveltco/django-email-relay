@@ -14,7 +14,10 @@ PY311 = "3.11"
 PY312 = "3.12"
 PY313 = "3.13"
 PY314 = "3.14"
-PY_VERSIONS = [PY310, PY311, PY312, PY313, PY314]
+# 3.14 is excluded until https://github.com/yaml/pyyaml/issues/903 is fixed:
+# PyYAML 6.0.3's C extension segfaults on import under 3.14, and it reaches us
+# through `responses` in the dev group. The library itself is 3.14-clean.
+PY_VERSIONS = [PY310, PY311, PY312, PY313]
 PY_DEFAULT = PY_VERSIONS[0]
 PY_LATEST = PY_VERSIONS[-1]
 
