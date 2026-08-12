@@ -40,7 +40,6 @@ def send_all():
 
     for message in message_batch:
         outcome: str | None = None
-        skip_post_processing = False
         try:
             with transaction.atomic(using=database_alias):
                 try:
@@ -87,7 +86,6 @@ def send_all():
                         message.fail(log=str(err))
                         connection = None
                         outcome = "failed"
-                        skip_post_processing = True
                     else:
                         logger.debug(
                             "deferring message %s due to %s",
@@ -127,8 +125,6 @@ def send_all():
 
         if outcome is not None:
             counts[outcome] += 1
-        if skip_post_processing:
-            continue
 
         if (
             app_settings.EMAIL_MAX_DEFERRED is not None

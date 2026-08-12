@@ -27,6 +27,7 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 - Relay database transactions now use the same configured alias as message queries and row locks.
 - Message status updates now write only the fields that changed.
+- Send throttling now also applies after a message fails at its retry limit, since that attempt contacted the SMTP server like any other.
 
 ### Fixed
 

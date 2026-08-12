@@ -266,6 +266,34 @@ def test_send_all_fail_after_max_retries(mock_send, mailoutbox, caplog):
 
 
 @mock.patch("django.core.mail.message.EmailMultiAlternatives.send")
+def test_send_all_throttles_after_max_retries_failure(send, mailoutbox, caplog):
+    send.side_effect = smtplib.SMTPSenderRefused(
+        550, b"Test SMTP Error", "sender@example.com"
+    )
+    baker.make(
+        "email_relay.Message",
+        data={
+            "subject": "Test Subject",
+            "body": "Test Body",
+            "from_email": "from@example.com",
+            "to": ["to@example.com"],
+        },
+        retry_count=2,
+        status=Status.DEFERRED,
+    )
+
+    with (
+        override_settings(
+            DJANGO_EMAIL_RELAY={"EMAIL_MAX_RETRIES": 2, "EMAIL_THROTTLE": 0.01}
+        ),
+        mock.patch("email_relay.relay.time.sleep") as sleep,
+    ):
+        send_all()
+
+    sleep.assert_called_once_with(0.01)
+
+
+@mock.patch("django.core.mail.message.EmailMultiAlternatives.send")
 def test_send_all_fail_on_value_error(mock_send, mailoutbox, caplog):
     mock_send.side_effect = ValueError("Test Value Error")
     queued = baker.make(
