@@ -19,6 +19,7 @@ from model_bakery import baker
 
 from email_relay.attachments import PersistedAttachmentError
 from email_relay.attachments import normalize_attachment_filename
+from email_relay.attachments import validate_attachment_filename
 from email_relay.models import Message
 from email_relay.models import MessageAttachment
 from email_relay.models import Priority
@@ -998,10 +999,6 @@ class TestMessageModel:
                 },
                 "control characters",
             ),
-            (
-                {**STORED_ATTACHMENT_FIXTURE, "filename": "evil\x00.bin"},
-                "control characters",
-            ),
             ({**STORED_ATTACHMENT_FIXTURE, "content_type": ""}, "content type"),
             ({**STORED_ATTACHMENT_FIXTURE, "content_type": "/"}, "content type"),
             (
@@ -1045,6 +1042,11 @@ class TestMessageModel:
 
         with pytest.raises(PersistedAttachmentError, match=match):
             _ = message.email
+
+    # Tested without a database row: PostgreSQL text fields cannot store NUL.
+    def test_nul_filename_is_rejected(self):
+        with pytest.raises(PersistedAttachmentError, match="control characters"):
+            validate_attachment_filename("evil\x00.bin")
 
     def test_stored_text_bytes_use_django_attachment_handling(
         self, data, create_stored_attachment
