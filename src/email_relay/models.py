@@ -17,6 +17,7 @@ from email_relay.attachments import mime_attachment_from_bytes
 from email_relay.attachments import normalize_attachment_content_type
 from email_relay.attachments import normalize_attachment_filename
 from email_relay.attachments import parse_stored_attachment_marker
+from email_relay.attachments import validate_attachment_filename
 from email_relay.conf import app_settings
 from email_relay.conf import resolved_database_alias
 from email_relay.email import RelayEmailData
@@ -298,7 +299,7 @@ class MessageAttachment(models.Model):
         content = bytes(self.content)
 
         if self.kind == self.Kind.BYTES:
-            return self.filename, content, content_type
+            return validate_attachment_filename(self.filename), content, content_type
 
         if self.kind == self.Kind.MIME:
             mime_part = mime_attachment_from_bytes(content)

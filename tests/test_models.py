@@ -24,6 +24,8 @@ from email_relay.models import MessageAttachment
 from email_relay.models import Priority
 from email_relay.models import Status
 
+from .conftest import STORED_ATTACHMENT_FIXTURE
+
 STORED_MIME_CONTENT = (
     b"Content-Type: application/octet-stream\r\n"
     b"MIME-Version: 1.0\r\n"
@@ -44,25 +46,6 @@ STORED_8BIT_MIME_CONTENT = (
     b"\r\n"
     b"caf\xc3\xa9\r\n"
 )
-
-STORED_ATTACHMENT_FIXTURE = {
-    "position": 0,
-    "kind": "bytes",
-    "filename": "fixture.bin",
-    "content_type": "application/octet-stream",
-    "content": b"stored bytes",
-}
-
-
-def create_stored_attachment(message, fixture=STORED_ATTACHMENT_FIXTURE):
-    return MessageAttachment.objects.create(
-        message=message,
-        position=fixture["position"],
-        kind=fixture["kind"],
-        filename=fixture["filename"],
-        content_type=fixture["content_type"],
-        content=fixture["content"],
-    )
 
 
 @pytest.mark.django_db(databases=["default", "email_relay_db"])
@@ -160,7 +143,7 @@ class TestMessageManager:
     def test_messages_available_to_send_with_no_messages(self):
         assert not Message.objects.messages_available_to_send()
 
-    def test_delete_all_sent_messages(self):
+    def test_delete_all_sent_messages(self, create_stored_attachment):
         messages = baker.make("email_relay.Message", status=Status.SENT, _quantity=5)
         for message in messages:
             create_stored_attachment(message)
@@ -602,7 +585,7 @@ class TestMessageModel:
         assert email.subject == "Test"
         assert email.attachments == []
 
-    def test_literal_stored_attachment(self, data):
+    def test_literal_stored_attachment(self, data, create_stored_attachment):
         message = Message.objects.create(
             data={
                 **data,
@@ -641,7 +624,9 @@ class TestMessageModel:
 
         assert email.attachments[0][1] == b"stored bytes"
 
-    def test_stored_attachments_are_ordered_by_position(self, data):
+    def test_stored_attachments_are_ordered_by_position(
+        self, data, create_stored_attachment
+    ):
         second = {
             "position": 1,
             "kind": "bytes",
@@ -668,7 +653,7 @@ class TestMessageModel:
             "second.bin",
         ]
 
-    def test_complete_stored_mime_attachment(self, data):
+    def test_complete_stored_mime_attachment(self, data, create_stored_attachment):
         fixture = {
             "position": 0,
             "kind": "mime",
@@ -701,7 +686,9 @@ class TestMessageModel:
         assert b"X-Relay-Fixture: preserved" in serialized
         assert b"bWltZSBwYXlsb2Fk" in serialized
 
-    def test_stored_8bit_mime_attachment_serializes(self, data):
+    def test_stored_8bit_mime_attachment_serializes(
+        self, data, create_stored_attachment
+    ):
         fixture = {
             "position": 0,
             "kind": "mime",
@@ -734,7 +721,7 @@ class TestMessageModel:
         ],
     )
     def test_stored_mime_attachment_rejects_invalid_transfer_encoding(
-        self, data, transfer_encoding, match
+        self, data, transfer_encoding, match, create_stored_attachment
     ):
         content = STORED_8BIT_MIME_CONTENT.replace(
             b"Content-Transfer-Encoding: 8bit",
@@ -761,7 +748,9 @@ class TestMessageModel:
         with pytest.raises(PersistedAttachmentError, match=match):
             _ = message.email
 
-    def test_malformed_stored_mime_attachment_is_rejected(self, data):
+    def test_malformed_stored_mime_attachment_is_rejected(
+        self, data, create_stored_attachment
+    ):
         fixture = {
             "position": 0,
             "kind": "mime",
@@ -799,7 +788,7 @@ class TestMessageModel:
         ],
     )
     def test_stored_mime_attachment_rejects_invalid_base64(
-        self, data, transfer_encoding, payload, match
+        self, data, transfer_encoding, payload, match, create_stored_attachment
     ):
         content = STORED_MIME_CONTENT.replace(
             b"Content-Transfer-Encoding: base64",
@@ -828,7 +817,9 @@ class TestMessageModel:
 
         assert str(attachment.pk) in str(exc_info.value)
 
-    def test_stored_mime_attachment_rejects_multipart_root(self, data):
+    def test_stored_mime_attachment_rejects_multipart_root(
+        self, data, create_stored_attachment
+    ):
         fixture = {
             "position": 0,
             "kind": "mime",
@@ -852,7 +843,9 @@ class TestMessageModel:
         with pytest.raises(PersistedAttachmentError, match="Multipart"):
             _ = message.email
 
-    def test_stored_message_rfc822_mime_attachment(self, data):
+    def test_stored_message_rfc822_mime_attachment(
+        self, data, create_stored_attachment
+    ):
         nested = StandardEmailMessage()
         nested["Subject"] = "Nested message"
         nested["From"] = "nested@example.com"
@@ -976,7 +969,9 @@ class TestMessageModel:
         with pytest.raises(PersistedAttachmentError, match="count"):
             _ = message.email
 
-    def test_stored_attachment_positions_must_be_contiguous(self, data):
+    def test_stored_attachment_positions_must_be_contiguous(
+        self, data, create_stored_attachment
+    ):
         fixture = {**STORED_ATTACHMENT_FIXTURE, "position": 1}
         message = Message.objects.create(
             data={
@@ -996,6 +991,17 @@ class TestMessageModel:
         ("fixture", "match"),
         [
             ({**STORED_ATTACHMENT_FIXTURE, "kind": "unknown"}, "unknown kind"),
+            (
+                {
+                    **STORED_ATTACHMENT_FIXTURE,
+                    "filename": "evil\r\nBcc: spy@example.com",
+                },
+                "control characters",
+            ),
+            (
+                {**STORED_ATTACHMENT_FIXTURE, "filename": "evil\x00.bin"},
+                "control characters",
+            ),
             ({**STORED_ATTACHMENT_FIXTURE, "content_type": ""}, "content type"),
             ({**STORED_ATTACHMENT_FIXTURE, "content_type": "/"}, "content type"),
             (
@@ -1023,7 +1029,9 @@ class TestMessageModel:
             ),
         ],
     )
-    def test_invalid_stored_attachment_metadata_is_rejected(self, data, fixture, match):
+    def test_invalid_stored_attachment_metadata_is_rejected(
+        self, data, fixture, match, create_stored_attachment
+    ):
         message = Message.objects.create(
             data={
                 **data,
@@ -1038,7 +1046,9 @@ class TestMessageModel:
         with pytest.raises(PersistedAttachmentError, match=match):
             _ = message.email
 
-    def test_stored_text_bytes_use_django_attachment_handling(self, data):
+    def test_stored_text_bytes_use_django_attachment_handling(
+        self, data, create_stored_attachment
+    ):
         fixture = {
             **STORED_ATTACHMENT_FIXTURE,
             "content_type": "text/plain",
@@ -1057,7 +1067,9 @@ class TestMessageModel:
 
         assert message.email.attachments[0][2] == "application/octet-stream"
 
-    def test_stored_mime_content_type_is_case_insensitive(self, data):
+    def test_stored_mime_content_type_is_case_insensitive(
+        self, data, create_stored_attachment
+    ):
         fixture = {
             "position": 0,
             "kind": "mime",
@@ -1080,7 +1092,9 @@ class TestMessageModel:
             "application/octet-stream"
         )
 
-    def test_stored_mime_folded_headers_work_across_django_versions(self, data):
+    def test_stored_mime_folded_headers_work_across_django_versions(
+        self, data, create_stored_attachment
+    ):
         content = STORED_MIME_CONTENT.replace(
             b"Content-Type: application/octet-stream\r\n",
             b'Content-Type: application/octet-stream;\r\n name="mime.bin"\r\n',
@@ -1110,7 +1124,9 @@ class TestMessageModel:
 
         assert b'filename="mime.bin"' in serialized
 
-    def test_stored_mime_filename_is_normalized_across_django_versions(self, data):
+    def test_stored_mime_filename_is_normalized_across_django_versions(
+        self, data, create_stored_attachment
+    ):
         content = STORED_MIME_CONTENT.replace(
             b'filename="mime.bin"',
             b'filename="=?utf-8?b?Y2Fmw6kudHh0?="',
@@ -1138,7 +1154,9 @@ class TestMessageModel:
             == "café.txt"
         )
 
-    def test_stored_mime_rejects_malformed_encoded_filename(self, data):
+    def test_stored_mime_rejects_malformed_encoded_filename(
+        self, data, create_stored_attachment
+    ):
         malformed_filename = "=?utf-8?b?A?="
         content = STORED_MIME_CONTENT.replace(
             b'filename="mime.bin"',
@@ -1169,6 +1187,41 @@ class TestMessageModel:
 
         assert str(attachment.pk) in str(exc_info.value)
 
+    def test_stored_mime_rejects_encoded_filename_with_control_characters(
+        self, data, create_stored_attachment
+    ):
+        encoded_filename = "=?utf-8?b?{}?=".format(
+            base64.b64encode(b"evil\r\nBcc: spy@example.com").decode()
+        )
+        content = STORED_MIME_CONTENT.replace(
+            b'filename="mime.bin"',
+            f'filename="{encoded_filename}"'.encode(),
+        )
+        fixture = {
+            "position": 0,
+            "kind": "mime",
+            "filename": "irrelevant.bin",
+            "content_type": "application/octet-stream",
+            "content": content,
+        }
+        message = Message.objects.create(
+            data={
+                **data,
+                "_email_relay_attachments": {
+                    "format": "stored-v1",
+                    "count": 1,
+                },
+            }
+        )
+        attachment = create_stored_attachment(message, fixture)
+
+        with pytest.raises(
+            PersistedAttachmentError, match="control characters"
+        ) as exc_info:
+            _ = message.email
+
+        assert str(attachment.pk) in str(exc_info.value)
+
     @pytest.mark.parametrize(
         ("field", "value", "match"),
         [
@@ -1176,7 +1229,9 @@ class TestMessageModel:
             ("content_type", "application/pdf", "content type"),
         ],
     )
-    def test_stored_mime_metadata_must_match_content(self, data, field, value, match):
+    def test_stored_mime_metadata_must_match_content(
+        self, data, field, value, match, create_stored_attachment
+    ):
         fixture = {
             "position": 0,
             "kind": "mime",
@@ -1199,14 +1254,18 @@ class TestMessageModel:
         with pytest.raises(PersistedAttachmentError, match=match):
             _ = message.email
 
-    def test_stored_attachment_positions_are_unique(self, data):
+    def test_stored_attachment_positions_are_unique(
+        self, data, create_stored_attachment
+    ):
         message = Message.objects.create(data=data)
         create_stored_attachment(message)
 
         with pytest.raises(IntegrityError):
             create_stored_attachment(message)
 
-    def test_stored_attachment_coerces_database_binary_value(self, data):
+    def test_stored_attachment_coerces_database_binary_value(
+        self, data, create_stored_attachment
+    ):
         fixture = {
             **STORED_ATTACHMENT_FIXTURE,
             "content": memoryview(b"database bytes"),
@@ -1224,7 +1283,7 @@ class TestMessageModel:
 
         assert message.email.attachments[0][1] == b"database bytes"
 
-    def test_attachment_timestamps(self, data):
+    def test_attachment_timestamps(self, data, create_stored_attachment):
         message = Message.objects.create(data=data)
         attachment = create_stored_attachment(message)
         created_at = attachment.created_at

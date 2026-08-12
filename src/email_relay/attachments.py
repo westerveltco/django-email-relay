@@ -21,6 +21,7 @@ STORED_ATTACHMENTS_KEY = "_email_relay_attachments"
 STORED_ATTACHMENTS_FORMAT = "stored-v1"
 _MIME_TOKEN_PATTERN = re.compile(r"[!#$%&'+.^_`|~0-9A-Za-z-]+")
 _HEADER_FOLD_PATTERN = re.compile(r"\r?\n[ \t]+")
+_FILENAME_CONTROL_PATTERN = re.compile(r"[\r\n\x00]")
 _HEADER_REGISTRY = HeaderRegistry()
 _SUPPORTED_TRANSFER_ENCODINGS = {
     "7bit",
@@ -71,14 +72,22 @@ def _unfold_header(value: str) -> str:
     return _HEADER_FOLD_PATTERN.sub(" ", value)
 
 
+def validate_attachment_filename(value: str | None) -> str | None:
+    """Reject filenames that cannot be written into a message header."""
+    if value is not None and _FILENAME_CONTROL_PATTERN.search(value):
+        raise PersistedAttachmentError("filename contains control characters")
+    return value
+
+
 def normalize_attachment_filename(value: str | None) -> str | None:
     """Normalize a MIME filename across the supported parser policies."""
     if not value:
         return None
     try:
-        return str(make_header(decode_header(_unfold_header(value))))
+        decoded = str(make_header(decode_header(_unfold_header(value))))
     except (HeaderParseError, LookupError, UnicodeError, ValueError) as exc:
         raise PersistedAttachmentError("invalid filename") from exc
+    return validate_attachment_filename(decoded)
 
 
 def _validate_mime_attachment(mime_part: MIMEMessage) -> None:

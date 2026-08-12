@@ -29,30 +29,6 @@ def caplog_level(caplog):
         yield
 
 
-def create_stored_message(*, content=b"stored payload"):
-    message = baker.make(
-        "email_relay.Message",
-        data={
-            "subject": "Stored",
-            "to": ["to@example.com"],
-            "_email_relay_attachments": {
-                "format": "stored-v1",
-                "count": 1,
-            },
-        },
-        status=Status.QUEUED,
-    )
-    MessageAttachment.objects.create(
-        message=message,
-        position=0,
-        kind="bytes",
-        filename="fixture.bin",
-        content_type="application/octet-stream",
-        content=content,
-    )
-    return message
-
-
 def test_send_all_empty_queue(mailoutbox, caplog):
     send_all()
 
@@ -423,7 +399,9 @@ def test_send_all_fail_message_no_email_object(mock_email, mailoutbox, caplog):
     assert "sent 0 emails, deferred 0 emails, failed 1 emails" in caplog.text
 
 
-def test_send_all_fails_incomplete_stored_message_before_smtp(mailoutbox, caplog):
+def test_send_all_fails_incomplete_stored_message_before_smtp(
+    mailoutbox, caplog, create_stored_message
+):
     queued = create_stored_message()
     queued.attachments.all().delete()
 
@@ -437,7 +415,7 @@ def test_send_all_fails_incomplete_stored_message_before_smtp(mailoutbox, caplog
     assert f"invalid stored attachments for message {queued.id}" in caplog.text
 
 
-def test_send_all_sends_stored_attachment(mailoutbox, caplog):
+def test_send_all_sends_stored_attachment(mailoutbox, caplog, create_stored_message):
     queued = create_stored_message()
 
     send_all()
@@ -465,7 +443,9 @@ def test_send_all_retries_database_batch_error(mailoutbox, caplog):
 
 
 @pytest.mark.parametrize("error_type", [InterfaceError, OperationalError])
-def test_send_all_retries_attachment_query_error(error_type, mailoutbox, caplog):
+def test_send_all_retries_attachment_query_error(
+    error_type, mailoutbox, caplog, create_stored_message
+):
     stored = create_stored_message()
     stored.priority = Priority.HIGH
     stored.save(update_fields=["priority"])

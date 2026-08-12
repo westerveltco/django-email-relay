@@ -32,6 +32,8 @@ and this project attempts to adhere to [Semantic Versioning](https://semver.org/
 
 - Non-ASCII legacy text attachments now fall back to UTF-8 bytes instead of raising during Base64 detection.
 - Stored attachment sets are verified for format, count, and order before SMTP receives the message.
+- Stored attachment filenames containing newlines or NUL characters are rejected before SMTP instead of failing during message serialization.
+- The relay now locks only queued or deferred messages, so a message sent by another relay process between batch selection and row locking is skipped instead of resent.
 
 ## [0.6.0]
 

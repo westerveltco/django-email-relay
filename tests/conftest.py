@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 
+import pytest
 from django.conf import settings
 
 from email_relay.conf import EMAIL_RELAY_DATABASE_ALIAS
@@ -52,3 +53,51 @@ TEST_SETTINGS = {
         "email_relay",
     ],
 }
+
+
+STORED_ATTACHMENT_FIXTURE = {
+    "position": 0,
+    "kind": "bytes",
+    "filename": "fixture.bin",
+    "content_type": "application/octet-stream",
+    "content": b"stored bytes",
+}
+
+
+@pytest.fixture
+def create_stored_attachment():
+    # Imported here because conftest loads before `pytest_configure` runs
+    # `settings.configure`.
+    from model_bakery import baker
+
+    def _create(message, fixture=STORED_ATTACHMENT_FIXTURE):
+        return baker.make("email_relay.MessageAttachment", message=message, **fixture)
+
+    return _create
+
+
+@pytest.fixture
+def create_stored_message(create_stored_attachment):
+    from model_bakery import baker
+
+    from email_relay.models import Status
+
+    def _create(*, content=b"stored payload"):
+        message = baker.make(
+            "email_relay.Message",
+            data={
+                "subject": "Stored",
+                "to": ["to@example.com"],
+                "_email_relay_attachments": {
+                    "format": "stored-v1",
+                    "count": 1,
+                },
+            },
+            status=Status.QUEUED,
+        )
+        create_stored_attachment(
+            message, {**STORED_ATTACHMENT_FIXTURE, "content": content}
+        )
+        return message
+
+    return _create
