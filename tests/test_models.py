@@ -1163,7 +1163,7 @@ class TestMessageModel:
         attachment = create_stored_attachment(message, fixture)
 
         with pytest.raises(
-            PersistedAttachmentError, match="invalid MIME filename"
+            PersistedAttachmentError, match="invalid filename"
         ) as exc_info:
             _ = message.email
 

@@ -239,7 +239,16 @@ class MessageAttachmentManager(models.Manager["MessageAttachment"]):
                 f"Stored attachment positions for message {message.pk} must be "
                 f"contiguous from 0, found {positions}"
             )
-        return [row.to_email_attachment() for row in rows]
+
+        attachments = []
+        for row in rows:
+            try:
+                attachments.append(row.to_email_attachment())
+            except PersistedAttachmentError as exc:
+                raise PersistedAttachmentError(
+                    f"Stored attachment {row.pk}: {exc}"
+                ) from exc
+        return attachments
 
 
 class MessageAttachment(models.Model):
@@ -285,41 +294,24 @@ class MessageAttachment(models.Model):
         super().save(*args, **kwargs)
 
     def to_email_attachment(self) -> tuple[str | None, bytes, str] | MIMEMessage:
-        try:
-            content_type = normalize_attachment_content_type(self.content_type)
-        except PersistedAttachmentError as exc:
-            raise PersistedAttachmentError(
-                f"Stored attachment {self.pk} has an invalid content type"
-            ) from exc
-
+        content_type = normalize_attachment_content_type(self.content_type)
         content = bytes(self.content)
+
         if self.kind == self.Kind.BYTES:
             return self.filename, content, content_type
 
         if self.kind == self.Kind.MIME:
-            try:
-                mime_part = mime_attachment_from_bytes(content)
-            except PersistedAttachmentError as exc:
-                raise PersistedAttachmentError(
-                    f"Stored attachment {self.pk} MIME content is invalid: {exc}"
-                ) from exc
+            mime_part = mime_attachment_from_bytes(content)
             if mime_part.get_content_type() != content_type:
                 raise PersistedAttachmentError(
-                    f"Stored attachment {self.pk} MIME content type does not match its metadata"
+                    "MIME content type does not match its metadata"
                 )
-            try:
-                mime_filename = normalize_attachment_filename(mime_part.get_filename())
-                stored_filename = normalize_attachment_filename(self.filename)
-            except PersistedAttachmentError as exc:
-                raise PersistedAttachmentError(
-                    f"Stored attachment {self.pk} has an invalid MIME filename"
-                ) from exc
+            mime_filename = normalize_attachment_filename(mime_part.get_filename())
+            stored_filename = normalize_attachment_filename(self.filename)
             if mime_filename != stored_filename:
                 raise PersistedAttachmentError(
-                    f"Stored attachment {self.pk} MIME filename does not match its metadata"
+                    "MIME filename does not match its metadata"
                 )
             return mime_part
 
-        raise PersistedAttachmentError(
-            f"Stored attachment {self.pk} has an unknown kind"
-        )
+        raise PersistedAttachmentError(f"unknown kind {self.kind!r}")

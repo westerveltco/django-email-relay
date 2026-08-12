@@ -63,7 +63,7 @@ def normalize_attachment_content_type(value: str) -> str:
     """Validate and normalize a stored attachment content type."""
     parts = value.split("/")
     if len(parts) != 2 or not all(_is_mime_token(part) for part in parts):
-        raise PersistedAttachmentError("Stored attachment has an invalid content type")
+        raise PersistedAttachmentError("invalid content type")
     return value.lower()
 
 
@@ -78,25 +78,23 @@ def normalize_attachment_filename(value: str | None) -> str | None:
     try:
         return str(make_header(decode_header(_unfold_header(value))))
     except (HeaderParseError, LookupError, UnicodeError, ValueError) as exc:
-        raise PersistedAttachmentError(
-            "Stored attachment has an invalid filename"
-        ) from exc
+        raise PersistedAttachmentError("invalid filename") from exc
 
 
 def _validate_mime_attachment(mime_part: MIMEMessage) -> None:
     content_type_headers = mime_part.get_all("Content-Type", [])
     if len(content_type_headers) != 1:
-        raise PersistedAttachmentError("Stored MIME attachment is malformed")
+        raise PersistedAttachmentError("MIME attachment is malformed")
     if mime_part.get_content_maintype() == "multipart":
         raise PersistedAttachmentError("Multipart MIME attachments are unsupported")
 
     for part in mime_part.walk():
         if part.defects:
-            raise PersistedAttachmentError("Stored MIME attachment is malformed")
+            raise PersistedAttachmentError("MIME attachment is malformed")
 
         content_type_headers = part.get_all("Content-Type", [])
         if len(content_type_headers) > 1:
-            raise PersistedAttachmentError("Stored MIME attachment is malformed")
+            raise PersistedAttachmentError("MIME attachment is malformed")
         if content_type_headers:
             header = cast(
                 Any,
@@ -110,11 +108,11 @@ def _validate_mime_attachment(mime_part: MIMEMessage) -> None:
                 or not _is_mime_token(header.maintype)
                 or not _is_mime_token(header.subtype)
             ):
-                raise PersistedAttachmentError("Stored MIME attachment is malformed")
+                raise PersistedAttachmentError("MIME attachment is malformed")
 
         transfer_encodings = part.get_all("Content-Transfer-Encoding", [])
         if len(transfer_encodings) > 1:
-            raise PersistedAttachmentError("Stored MIME attachment is malformed")
+            raise PersistedAttachmentError("MIME attachment is malformed")
         transfer_encoding = None
         if transfer_encodings:
             transfer_encoding = transfer_encodings[0].strip().lower()
@@ -122,21 +120,21 @@ def _validate_mime_attachment(mime_part: MIMEMessage) -> None:
                 not _is_mime_token(transfer_encoding)
                 or transfer_encoding not in _SUPPORTED_TRANSFER_ENCODINGS
             ):
-                raise PersistedAttachmentError("Stored MIME attachment is malformed")
+                raise PersistedAttachmentError("MIME attachment is malformed")
 
         if part.is_multipart():
             continue
 
         payload = part.get_payload()
         if not isinstance(payload, str):
-            raise PersistedAttachmentError("Stored MIME attachment is malformed")
+            raise PersistedAttachmentError("MIME attachment is malformed")
 
         if transfer_encoding in (None, "7bit", "quoted-printable"):
             try:
                 payload.encode("ascii")
             except UnicodeEncodeError as exc:
                 raise PersistedAttachmentError(
-                    "Stored MIME attachment has invalid transfer encoding"
+                    "MIME attachment has invalid transfer encoding"
                 ) from exc
 
         if transfer_encoding == "base64":
@@ -146,11 +144,11 @@ def _validate_mime_attachment(mime_part: MIMEMessage) -> None:
                 decoded = base64.b64decode(compact, validate=True)
             except (UnicodeEncodeError, binascii.Error, ValueError) as exc:
                 raise PersistedAttachmentError(
-                    "Stored MIME attachment contains malformed Base64"
+                    "MIME attachment contains malformed Base64"
                 ) from exc
             if base64.b64encode(decoded) != compact:
                 raise PersistedAttachmentError(
-                    "Stored MIME attachment contains noncanonical Base64"
+                    "MIME attachment contains noncanonical Base64"
                 )
 
 
