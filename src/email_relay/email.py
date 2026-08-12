@@ -50,7 +50,7 @@ class RelayEmailData:
             try:
                 # Attempt to decode the base64 string into bytes
                 decoded_content = base64.b64decode(content)
-            except binascii.Error:
+            except (binascii.Error, ValueError):
                 # Fallback to assuming it's plain text, encoded as bytes
                 decoded_content = content.encode("utf-8")
 

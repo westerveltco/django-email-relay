@@ -5,9 +5,13 @@ import logging
 import time
 
 from django.core.management import BaseCommand
+from django.db import InterfaceError
+from django.db import OperationalError
+from django.db import close_old_connections
 from django.utils import timezone
 
 from email_relay.conf import app_settings
+from email_relay.conf import resolved_database_alias
 from email_relay.models import Message
 from email_relay.relay import send_all
 
@@ -25,13 +29,19 @@ class Command(BaseCommand):
         # it is not intended to be used in production
         loop_count = 0 if _loop_count is not None else None
 
+        # Validate the configured database before entering the retry loop.
+        resolved_database_alias()
         logger.info("starting relay")
 
         while True:
-            if Message.objects.messages_available_to_send():
-                send_all()
+            try:
+                if Message.objects.messages_available_to_send():
+                    send_all()
+                self.delete_old_messages()
+            except (InterfaceError, OperationalError) as err:
+                close_old_connections()
+                logger.warning("database error in relay loop: %s", err)
 
-            self.delete_old_messages()
             self.ping_healthcheck()
 
             msg = "loop complete"

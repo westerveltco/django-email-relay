@@ -183,3 +183,35 @@ def test_email_message_version():
     relay_email_data = RelayEmailData.from_email_message(email_message)
 
     assert relay_email_data._email_relay_version == __version__
+
+
+def test_to_email_message_with_non_ascii_legacy_attachment():
+    content = "\ufeffcaf\u00e9"
+    relay_email_data = RelayEmailData(
+        attachments=[
+            {
+                "filename": "legacy.csv",
+                "content": content,
+                "mimetype": "text/csv",
+            }
+        ]
+    )
+
+    email = relay_email_data.to_email_message()
+
+    assert email.attachments[0][1] == content
+
+
+def test_to_email_message_with_missing_legacy_mimetype():
+    relay_email_data = RelayEmailData(
+        attachments=[
+            {
+                "filename": "legacy.bin",
+                "content": "payload",
+            }
+        ]
+    )
+
+    email = relay_email_data.to_email_message()
+
+    assert email.attachments[0][2] == "application/octet-stream"

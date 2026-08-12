@@ -7,6 +7,7 @@ from django.core.mail import send_mail
 from django.test.utils import override_settings
 
 from email_relay.models import Message
+from email_relay.models import MessageAttachment
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -45,7 +46,11 @@ def test_email_message():
         "from_test@example.com",
         ["to_test@example.com"],
     )
+    email.attach("report.txt", b"legacy attachment", "text/plain")
 
     email.send()
 
-    assert Message.objects.count() == 1
+    message = Message.objects.get()
+    assert "attachments" in message.data
+    assert "_email_relay_attachments" not in message.data
+    assert MessageAttachment.objects.count() == 0

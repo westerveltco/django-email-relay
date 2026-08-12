@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 
 EMAIL_RELAY_SETTINGS_NAME = "DJANGO_EMAIL_RELAY"
 EMAIL_RELAY_DATABASE_ALIAS = "email_relay_db"
@@ -30,3 +31,12 @@ class AppSettings:
 
 
 app_settings = AppSettings()
+
+
+def resolved_database_alias() -> str:
+    alias = app_settings.DATABASE_ALIAS
+    if alias not in settings.DATABASES:
+        raise ImproperlyConfigured(
+            f"DJANGO_EMAIL_RELAY['DATABASE_ALIAS'] refers to unknown database {alias!r}"
+        )
+    return alias
